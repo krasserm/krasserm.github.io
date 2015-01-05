@@ -1,0 +1,13 @@
+# Permalinks
+permalink:           pretty
+relative_permalinks: true
+
+# Setup
+title:            Martin Krasser's Blog
+tagline:          ""
+url:              http://krasserm.github.io
+paginate:         1
+baseurl:          /
+author:
+  name:           Martin Krasser
+  url:            https://twitter.com/mrt1nz
