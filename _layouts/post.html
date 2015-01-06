@@ -1,0 +1,65 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+{% include head.html %}
+
+<body>
+
+<div class="container content">
+    <header class="masthead">
+        <h3 class="masthead-title">
+            <a href="{{ site.baseurl }}" title="Home">{{ site.title }}</a>
+            <small>{{ site.tagline }}</small>
+        </h3>
+    </header>
+
+    <main>
+        {{ content }}
+    </main>
+
+    <footer class="footer">
+        <div class="custom-social-buttons">
+            <div class="custom-social-button twitter">
+                <a id="twitter-link" href="#"><span class="socicon">a</span></a>
+            </div>
+            <div class="custom-social-button linkedin">
+                <a id="linkedin-link" href="#"><span class="socicon">j</span></a>
+            </div>
+            <div class="custom-social-button googleplus">
+                <a id="googleplus-link" href="#"><span class="socicon">c</span></a>
+            </div>
+        </div>
+        <script type="text/javascript">
+            window.onload = function() {
+                var blogDomain = encodeURIComponent("{{ site.url }}");
+                var pageTitleSpaces = encodeURIComponent("{{ page.title }}") + "&amp;";
+                var pageID = "{{ page.id }}";
+                var pageURL = encodeURIComponent(pageID) + "&amp;";
+
+                var twitterPartOne = "https://twitter.com/intent/tweet?original_referer=";
+                var twitterPartTwo = "text=";
+                var twitterPartThree = "tw_p=tweetbutton&amp;url=";
+                var twitterPartFour = "via=mrt1nz";
+                var twitterUrl = twitterPartOne + blogDomain + pageURL + twitterPartTwo + pageTitleSpaces + twitterPartThree + blogDomain + pageURL + twitterPartFour;
+                var twitterLink = document.getElementById("twitter-link");
+                twitterLink.onclick = function() { popUp=window.open(twitterUrl, 'popupwindow', 'scrollbars=yes,width=600,height=400');popUp.focus();return false };
+
+                var linkedinPartOne = "http://www.linkedin.com/shareArticle?mini=true&url=";
+                var linkedinPartTwo = "&title=";
+                var linkedinPartThree = "&summary=";
+                var linkedinPartFour = "&source=";
+                var linkedinUrl = linkedinPartOne + blogDomain + pageURL + linkedinPartTwo + pageTitleSpaces + linkedinPartFour + "@bigal";
+                var linkedInLink = document.getElementById("linkedin-link");
+                linkedInLink.onclick = function() { popUp=window.open(linkedinUrl, 'popupwindow', 'scrollbars=yes,width=600,height=400');popUp.focus();return false };
+
+                var googlePlusPartOne = "https://plus.google.com/share?url=";
+                var googlePlusUrl = googlePlusPartOne + blogDomain + pageID;
+                var googlePlusLink = document.getElementById("googleplus-link");
+                googlePlusLink.onclick = function() { popUp=window.open(googlePlusUrl, 'popupwindow', 'scrollbars=yes,width=600,height=400');popUp.focus();return false };
+            };
+        </script>
+    </footer>
+</div>
+
+</body>
+</html>
