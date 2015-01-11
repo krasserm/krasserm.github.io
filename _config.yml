@@ -11,3 +11,6 @@ baseurl:          /
 author:
   name:           Martin Krasser
   url:            https://twitter.com/mrt1nz
+
+gems:
+  - jekyll-sitemap
