@@ -27,14 +27,14 @@
 .highlight .s { color: #d44950 } /* Literal.String */
 .highlight .na { color: #4f9fcf } /* Name.Attribute */
 .highlight .nb { color: #366 } /* Name.Builtin */
-.highlight .nc { color: #0a8; } /* Name.Class */
+.highlight .nc { color: #0a5; } /* Name.Class */
 .highlight .no { color: #360 } /* Name.Constant */
 .highlight .nd { color: #99f } /* Name.Decorator */
 .highlight .ni { color: #999; } /* Name.Entity */
 .highlight .ne { color: #c00; } /* Name.Exception */
 .highlight .nf { color: #c0f } /* Name.Function */
 .highlight .nl { color: #99f } /* Name.Label */
-.highlight .nn { color: #0cf; } /* Name.Namespace */
+.highlight .nn { color: #078; } /* Name.Namespace */
 .highlight .nt { color: #2f6f9f; } /* Name.Tag */
 .highlight .nv { color: #033 } /* Name.Variable */
 .highlight .ow { color: #000; } /* Operator.Word */

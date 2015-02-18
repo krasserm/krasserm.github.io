@@ -42,27 +42,31 @@ Applications that want to use these CmRDTs don't need to interact directly with 
 
 `Counter[A]` CmRDTs are managed by `CounterService[A]` which provides the following read and update operations. 
 
-    class CounterService[A : Integral](val processId: String, val log: ActorRef) {
-      def value(id: String): Future[A] = { ... }
-      def update(id: String, delta: A): Future[A] = { ... }
-    }
+{% highlight scala %}
+class CounterService[A : Integral](val processId: String, val log: ActorRef) {
+  def value(id: String): Future[A] = { ... }
+  def update(id: String, delta: A): Future[A] = { ... }
+}
+{% endhighlight %}
 
 The `value` method reads a counter value, `update` updates a counter value with a given `delta`. Counter instances are identified by application-defined `id`s. Each `CounterService` replica must have a unique `processId` and a reference to the replicated event `log`. The following example creates and uses a `CounterService[Int]` for reading and updating `Counter[Int]` CmRDTs.
 
-    import akka.actor.ActorRef
-    import com.rbmhtechnology.eventuate.crdt.CounterService
+{% highlight scala %}
+import akka.actor.ActorRef
+import com.rbmhtechnology.eventuate.crdt.CounterService
 
-    val eventLog: ActorRef = ...
-    val counterService = new CounterService[Int]("counter-replica-1", eventLog)
+val eventLog: ActorRef = ...
+val counterService = new CounterService[Int]("counter-replica-1", eventLog)
 
-    // counter-1 usage
-    counterService.update("counter-1", 11) // increment
-    counterService.update("counter-1", -2) // decrement
-    counterService.value("counter-1")      // read
+// counter-1 usage
+counterService.update("counter-1", 11) // increment
+counterService.update("counter-1", -2) // decrement
+counterService.value("counter-1")      // read
 
-    // counter-2 usage
-    counterService.value("counter-2")     // read
-    counterService.update("counter-2", 3) // increment
+// counter-2 usage
+counterService.value("counter-2")     // read
+counterService.update("counter-2", 3) // increment
+{% endhighlight %}
 
 Counters are created on demand if referenced the first time by an update operation.
 
@@ -70,20 +74,24 @@ Counters are created on demand if referenced the first time by an update operati
 
 `MVRegister[A]` CmRDTs are managed by `MVRegisterService[A]` which provides the following read and update operations.
 
-    class MVRegisterService[A](val processId: String, val log: ActorRef) {
-      def value(id: String): Future[Set[A]] = { ... }
-      def set(id: String, value: A): Future[Set[A]] = { ... }
-    }
+{% highlight scala %}
+class MVRegisterService[A](val processId: String, val log: ActorRef) {
+  def value(id: String): Future[Set[A]] = { ... }
+  def set(id: String, value: A): Future[Set[A]] = { ... }
+}
+{% endhighlight %}
 
 ### OR-Set
 
 `ORSet[A]` CmRDTs are managed by `ORSetService[A]` which provides the following read and update operations.
 
-    class ORSetService[A](val processId: String, val log: ActorRef) {
-      def value(id: String): Future[Set[A]] = { ... }
-      def add(id: String, entry: A): Future[Set[A]] = { ... }
-      def remove(id: String, entry: A): Future[Set[A]] = { ... }
-    }
+{% highlight scala %}
+class ORSetService[A](val processId: String, val log: ActorRef) {
+  def value(id: String): Future[Set[A]] = { ... }
+  def add(id: String, entry: A): Future[Set[A]] = { ... }
+  def remove(id: String, entry: A): Future[Set[A]] = { ... }
+}
+{% endhighlight %}
 
 Running
 -------
