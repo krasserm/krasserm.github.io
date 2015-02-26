@@ -8,9 +8,9 @@ In a [previous post](http://krasserm.github.io/2015/01/13/event-sourcing-at-glob
 
 The [eventuate](https://github.com/RBMHTechnology/eventuate) project now provides implementations of [operation-based CRDTs](http://en.wikipedia.org/wiki/Conflict-free_replicated_data_type#Operation-based_CRDTs) (CmRDTs) as specified in the paper [A comprehensive study of Convergent and Commutative Replicated Data Types](http://hal.upmc.fr/docs/00/55/55/88/PDF/techreport.pdf) by Marc Shapiro et. al. Currently, the following CmRDTs are implemented (more coming soon):
 
-- [Counter](https://github.com/RBMHTechnology/eventuate/blob/blog-crdt/src/main/scala/com/rbmhtechnology/eventuate/crdt/Counter.scala) (specification 5)
-- [MV-Register](https://github.com/RBMHTechnology/eventuate/blob/blog-crdt/src/main/scala/com/rbmhtechnology/eventuate/crdt/MVRegister.scala) (op-based version of specification 10) 
-- [OR-Set](https://github.com/RBMHTechnology/eventuate/blob/blog-crdt/src/main/scala/com/rbmhtechnology/eventuate/crdt/ORSet.scala) (specification 15)
+- [Counter](https://github.com/RBMHTechnology/eventuate/blob/blog-crdt-code/src/main/scala/com/rbmhtechnology/eventuate/crdt/Counter.scala) (specification 5)
+- [MV-Register](https://github.com/RBMHTechnology/eventuate/blob/blog-crdt-code/src/main/scala/com/rbmhtechnology/eventuate/crdt/MVRegister.scala) (op-based version of specification 10) 
+- [OR-Set](https://github.com/RBMHTechnology/eventuate/blob/blog-crdt-code/src/main/scala/com/rbmhtechnology/eventuate/crdt/ORSet.scala) (specification 15)
 
 Basis for the implementation is a [replicated event log](https://github.com/RBMHTechnology/eventuate/blob/blog-crdt/README.md#event-log) and [event-sourced actors](https://github.com/RBMHTechnology/eventuate/blob/blog-crdt/README.md#event-sourced-actors). A replicated event log
 
@@ -96,4 +96,4 @@ class ORSetService[A](val processId: String, val log: ActorRef) {
 Running
 -------
 
-A running OR-Set example, based on a multi-JVM test, can be found [here](https://github.com/RBMHTechnology/eventuate/blob/blog-crdt/src/multi-jvm/scala/com/rbmhtechnology/eventuate/crdt/ReplicatedORSetSpec.scala).
+A running OR-Set example, based on a multi-JVM test, can be found [here](https://github.com/RBMHTechnology/eventuate/blob/blog-crdt-code/src/multi-jvm/scala/com/rbmhtechnology/eventuate/crdt/ReplicatedORSetSpec.scala).
