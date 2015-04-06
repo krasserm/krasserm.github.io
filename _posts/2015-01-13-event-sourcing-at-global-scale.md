@@ -2,6 +2,8 @@
 title: Event Sourcing at Global Scale 
 layout: post
 comments: true
+author: "Martin Krasser"
+header-img: "img/distributed.png"
 ---
 
 Together with an [international customer](http://www.redbullmediahouse.com/), I recently started to explore several options how to globally distribute an application that is based on [event sourcing](http://martinfowler.com/eaaDev/EventSourcing.html). The main driver behind this initiative is the requirement that geographically distinct locations (called _sites_) shall have low-latency access to the application: each site shall run the application in a near data center and application data shall be replicated across all sites. A site shall also remain available for writes if there are inter-site network partitions. When a partition heals, updates from different sites must be merged and conflicts (if any) resolved. 
@@ -33,16 +35,16 @@ In our implementation, we completely separate inter-site event replication from 
 
 ## Event-sourced actors
 
-We distinguish two types of actors that interact with the event log: [EventsourcedActor](http://rbmhtechnology.github.io/eventuate/architecture.html#event-sourced-actors) and [EventsourcedView](http://rbmhtechnology.github.io/eventuate/architecture.html#event-sourced-views). They correspond to `PersistentActor` and `PersistentView` in akka-persistence, respectively, but with a major difference in event consumption.
+We distinguish two types of actors that interact with the event log: [`EventsourcedActor`](http://rbmhtechnology.github.io/eventuate/architecture.html#event-sourced-actors) and [`EventsourcedView`](http://rbmhtechnology.github.io/eventuate/architecture.html#event-sourced-views). They correspond to `PersistentActor` and `PersistentView` in akka-persistence, respectively, but with a major difference in event consumption.
 
 Like in akka-persistence, `EventsourcedActor`s (EAs) produce events to the event log (during command processing) and consume events from the event log. A major difference is that EAs do not only consume events they produce themselves but also consume events that other EAs produce to the same event log (which can be customized by filter criteria). In other words, EAs do not only consume events to reconstruct internal state but also to collaborate with each other by exchanging events which is at the heart of [event-driven architectures](http://en.wikipedia.org/wiki/Event-driven_architecture) and [event collaboration](http://martinfowler.com/eaaDev/EventCollaboration.html). 
 
 From this perspective, a replicated event log is the backbone of a distributed, durable and causality-preserving event bus that also provides the full history of events, so that event consumers can reconstruct application state any time by replaying events. For exchanging events, EAs may be co-located at the same site (Fig. 1) or distributed across sites (Fig. 2)
 
-![Intra-site EA collaboration](/images/2015-01-13/intra-site.png "Intra-site EA collaboration")
+![Intra-site EA collaboration](/img/2015-01-13/intra-site.png "Intra-site EA collaboration")
 Fig. 1: Intra-site EA collaboration
 
-![Inter-site EA collaboration](/images/2015-01-13/inter-site.png "Inter-site EA collaboration")
+![Inter-site EA collaboration](/img/2015-01-13/inter-site.png "Inter-site EA collaboration")
 Fig. 2: Inter-site EA collaboration
 
 We think that our distributed event bus might be an interesting implementation option of Akka’s [event bus](http://doc.akka.io/docs/akka/2.3.8/scala/event-bus.html), especially for distributed event-based collaboration in an Akka [cluster](http://doc.akka.io/docs/akka/2.3.8/scala/cluster-usage.html). In this case, Akka cluster applications could also rely on causal ordering of events. 
@@ -78,7 +80,7 @@ Whether concurrent events are also conflicting events completely depends on appl
 
 If application state can be modeled with [commutative replicated data types](http://rbmhtechnology.github.io/eventuate/user-guide.html#commutative-replicated-data-types) (CmRDTs) alone, where state update operations are replicated via events, concurrent updates are not an issue at all. However, many state update operations in our application do not commutate and we support both interactive and automated conflict resolution strategies.
 
-Conflicting versions of application state are tracked in a concurrent versions tree (where the tree structure is determined by the vector timestamps of contributing events). For any state value of type `S` and updates of type `A`, concurrent versions of `S` can be tracked in a generic way with data type [ConcurrentVersions](http://rbmhtechnology.github.io/eventuate/user-guide.html#tracking-conflicting-versions). Concurrent versions can be tracked for different parts of application state independently, such as individual domain objects or even domain object fields, depending on which granularity level an application wants to detect and resolve conflicts. 
+Conflicting versions of application state are tracked in a concurrent versions tree (where the tree structure is determined by the vector timestamps of contributing events). For any state value of type `S` and updates of type `A`, concurrent versions of `S` can be tracked in a generic way with data type [`ConcurrentVersions`](http://rbmhtechnology.github.io/eventuate/user-guide.html#tracking-conflicting-versions). Concurrent versions can be tracked for different parts of application state independently, such as individual domain objects or even domain object fields, depending on which granularity level an application wants to detect and resolve conflicts. 
 
 During [interactive conflict resolution](http://rbmhtechnology.github.io/eventuate/user-guide.html#interactive-conflict-resolution), a user selects one of the conflicting versions as the “winner”. This selection is stored as explicit conflict resolution event in the event log so that no further user interaction is needed during later event replays. A possible extension could be an interactive merge of conflicting versions. In this case, the conflict resolution event must contain the merge details so that the merge is reproducible.
 

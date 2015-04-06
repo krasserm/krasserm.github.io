@@ -1,3 +1,1 @@
 # Martin Krasser's Blog
-
-... 

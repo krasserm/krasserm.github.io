@@ -2,6 +2,8 @@
 title: Implementing operation-based CRDTs in Scala 
 layout: post
 comments: true
+author: "Martin Krasser"
+header-img: "img/distributed.png"
 ---
 
 In a [previous post](http://krasserm.github.io/2015/01/13/event-sourcing-at-global-scale/) I described how actor state can be globally replicated via event sourcing. Keeping replicas available for writes during a network partition requires resolution of conflicting writes when the partition heals. In this context, [conflict-free replicated data types](http://en.wikipedia.org/wiki/Conflict-free_replicated_data_type) (CRDTs) have already been mentioned.
