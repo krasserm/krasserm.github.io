@@ -1,5 +1,5 @@
 ---
-title: Event Sourcing at Global Scale 
+title: Event sourcing at global scale 
 layout: post
 comments: true
 author: "Martin Krasser"

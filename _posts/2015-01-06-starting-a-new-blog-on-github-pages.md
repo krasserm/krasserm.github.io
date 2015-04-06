@@ -1,5 +1,5 @@
 ---
-title: Starting A New Blog on Github Pages 
+title: Starting a new blog on Github Pages 
 layout: post
 comments: false
 author: "Martin Krasser"
