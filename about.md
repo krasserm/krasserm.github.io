@@ -4,9 +4,6 @@ title: "About"
 header-img: "img/distributed.png"
 ---
 
-Martin
-------
-
 Distributed systems developer, Scala/Java programmer, integration specialist, freelancer, mountain bike freeride and downhill rider, guitar and bass player.
 
 Specialities
@@ -16,9 +13,7 @@ Distributed and concurrent computing, scalability, high-availability, fault-tole
 
 Open source
 -----------
-
-Here's an incomplete list of open source projects I'm currently working on or worked on in the past:
-
+<p/>
 |[Eventuate](https://github.com/RBMHTechnology/eventuate)|Founder, Committer|
 |[Eventsourced](https://github.com/eligosource/eventsourced)|Founder, Committer|
 |[Akka](http://akka.io/)|Committer|
@@ -27,5 +22,6 @@ Here's an incomplete list of open source projects I'm currently working on or wo
 |[Akka Analytics](https://github.com/krasserm/akka-analytics)|Founder, Committer|
 |[Apache Camel](http://camel.apache.org)|Committer|
 |[Streamz](https://github.com/krasserm/streamz)|Founder, Committer|
+|...||
 
 Find out more on my [Github profile](https://github.com/krasserm).
