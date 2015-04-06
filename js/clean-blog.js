@@ -51,6 +51,11 @@ $('#name').focus(function() {
     $('#success').html('');
 });
 
+// responsive tables
+$(document).ready(function() {
+	$("table").wrap("<div class='table-responsive'></div>");
+	$("table").addClass("table");
+});
 
 // Floating label headings for the contact form
 $(function() {
