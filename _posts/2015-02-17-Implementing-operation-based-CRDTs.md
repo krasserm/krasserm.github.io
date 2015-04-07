@@ -18,7 +18,7 @@ Basis for the implementation is a [replicated event log](http://rbmhtechnology.g
 
 - supports the reliable broadcast of update-operations.
 - chooses AP from [CAP](http://en.wikipedia.org/wiki/CAP_theorem) i.e. applications can continue writing to a local replica during a network partition.
-- preserves causal ordering of events which satisfies all _downstream_ preconditions of the CmRDTs specified in the paper.
+- preserves causal ordering of update-operations which satisfies all _downstream_ preconditions specified in the paper.
 
 Event-sourced actors
 
