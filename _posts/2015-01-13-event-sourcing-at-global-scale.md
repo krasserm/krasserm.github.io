@@ -78,7 +78,7 @@ Whether concurrent events are also conflicting events completely depends on appl
 
 ## Conflict resolution
 
-If application state can be modeled with [commutative replicated data types](http://rbmhtechnology.github.io/eventuate/user-guide.html#commutative-replicated-data-types) (CmRDTs) alone, where state update operations are replicated via events, concurrent updates are not an issue at all. However, many state update operations in our application do not commutate and we support both interactive and automated conflict resolution strategies.
+If application state can be modeled with [commutative replicated data types](http://rbmhtechnology.github.io/eventuate/user-guide.html#commutative-replicated-data-types) (CmRDTs) alone, where state update operations are replicated via events, concurrent updates are not an issue at all. However, many state update operations in our application do not commute and we support both interactive and automated conflict resolution strategies.
 
 Conflicting versions of application state are tracked in a concurrent versions tree (where the tree structure is determined by the vector timestamps of contributing events). For any state value of type `S` and updates of type `A`, concurrent versions of `S` can be tracked in a generic way with data type [`ConcurrentVersions`](http://rbmhtechnology.github.io/eventuate/user-guide.html#tracking-conflicting-versions). Concurrent versions can be tracked for different parts of application state independently, such as individual domain objects or even domain object fields, depending on which granularity level an application wants to detect and resolve conflicts. 
 
