@@ -54,7 +54,7 @@ The containers (and all stored data) can be removed with:
     cassandra-2
     cassandra-3
 
-I also started to work on a small [utilities project](https://github.com/RBMHTechnology/eventuate-chaos/) that provides scripts for starting and stopping Cassandra clusters. For example, starting a four node cluster is as simple as:
+I also started to work on a small [utilities project](https://github.com/RBMHTechnology/eventuate-chaos/tree/blog-01) that provides scripts for starting and stopping Cassandra clusters. For example, starting a four node cluster is as simple as:
 
     almdudler:eventuate-chaos martin$ ./cluster-start.sh 4
     cassandra-1
@@ -70,7 +70,7 @@ The script internally uses the above `docker` commands for starting and stopping
     cassandra-3
     cassandra-4
 
-Find more details in project’s [README](https://github.com/RBMHTechnology/eventuate-chaos/blob/master/README.md#manual-failure-generation).
+Find more details in project’s [README](https://github.com/RBMHTechnology/eventuate-chaos/blob/blog-01/README.md#manual-failure-generation).
 
 Accessing the nodes
 -------------------
@@ -118,7 +118,7 @@ Docker containers are now directly accessible from Mac OS. Assuming a running se
 Generating chaos
 ----------------
 
-For randomly stopping and restarting nodes, the [utilities project](https://github.com/RBMHTechnology/eventuate-chaos/) provides a coordinator application named [`ChaosCluster`](https://github.com/RBMHTechnology/eventuate-chaos/blob/master/src/main/scala/com/rbmhtechnology/eventuate/chaos/ChaosCluster.scala) which can be started from [sbt](http://www.scala-sbt.org/) and configured with the parameters defined in [reference.conf](https://github.com/RBMHTechnology/eventuate-chaos/blob/master/src/main/resources/reference.conf). Running `ChaosCluster` with default settings first starts a four node cluster:
+For randomly stopping and restarting nodes, the [utilities project](https://github.com/RBMHTechnology/eventuate-chaos/tree/blog-01) provides a coordinator application named [`ChaosCluster`](https://github.com/RBMHTechnology/eventuate-chaos/blob/blog-01/src/main/scala/com/rbmhtechnology/eventuate/chaos/ChaosCluster.scala) which can be started from [sbt](http://www.scala-sbt.org/) and configured with the parameters defined in [reference.conf](https://github.com/RBMHTechnology/eventuate-chaos/blob/blog-01/src/main/resources/reference.conf). Running `ChaosCluster` with default settings first starts a four node cluster:
 
     almdudler:eventuate-chaos martin$ sbt
     [info] Loading global plugins from /Users/martin/.sbt/0.13/plugins
@@ -157,4 +157,4 @@ Pressing any key a second time stops the cluster and removes all containers:
     Cluster stopped
     [success] Total time: 77 s, completed 11.07.2015 17:12:22
 
-The `ChaosCluster` application uses the [`scala.sys.process`](http://www.scala-lang.org/api/current/index.html#scala.sys.process.package) API for executing `docker` commands (see [`ChaosCommands`](https://github.com/RBMHTechnology/eventuate-chaos/blob/master/src/main/scala/com/rbmhtechnology/eventuate/chaos/ChaosCommands.scala) trait for details). Later versions of the project will additionally provide utilities for running distributed Eventuate applications in Docker containers that are also subject to random failures.
+The `ChaosCluster` application uses the [`scala.sys.process`](http://www.scala-lang.org/api/current/index.html#scala.sys.process.package) API for executing `docker` commands (see [`ChaosCommands`](https://github.com/RBMHTechnology/eventuate-chaos/blob/blog-01/src/main/scala/com/rbmhtechnology/eventuate/chaos/ChaosCommands.scala) trait for details). Later versions of the project will additionally provide utilities for running distributed Eventuate applications in Docker containers that are also subject to random failures.
