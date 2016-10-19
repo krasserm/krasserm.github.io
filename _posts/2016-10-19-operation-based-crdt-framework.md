@@ -1,7 +1,7 @@
 ---
 title: A service framework for operation-based CRDTs
 layout: post
-comments: false
+comments: true
 author: "Martin Krasser"
 header-img: "img/distributed.png"
 ---
