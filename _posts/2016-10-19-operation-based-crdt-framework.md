@@ -136,6 +136,7 @@ import com.typesafe.config.ConfigFactory
 def config(port: Int): String =
   // set port in akka-remote config (omitted)
 
+
 def service(locationId: String, port: Int, connectToPorts: Set[Int]): MVRegisterService[String] = {
   implicit val system: ActorSystem =
     ActorSystem(ReplicationConnection.DefaultRemoteSystemName, ConfigFactory.parseString(config(port)))
@@ -172,6 +173,7 @@ serviceB.assign(crdtId, "xyz").onSuccess {
 }
 
 // wait a bit ...
+
 Thread.sleep(1000)
 
 serviceC.value(crdtId).onSuccess {
