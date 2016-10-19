@@ -6,7 +6,7 @@ author: "Martin Krasser"
 header-img: "img/distributed.png"
 ---
 
-This article introduces a framework for developing operation-based CRDTs services. It is part of the [Eventuate](https://github.com/RBMHTechnology/eventuate) project and supports the integration of operation-based CRDTs into Eventuate’s reliable causal broadcast infrastructure. It exposes CRDT instances through an asynchronous service API, manages their durability and recovery and allows for CRDT replication up to global scale.
+This article introduces a framework for developing operation-based CRDT services. It is part of the [Eventuate](https://github.com/RBMHTechnology/eventuate) project and supports the integration of operation-based CRDTs into Eventuate’s reliable causal broadcast infrastructure. It exposes CRDT instances through an asynchronous service API, manages their durability and recovery and allows for CRDT replication up to global scale.
 
 After a brief introduction to operation-based CRDTs, their relation to Eventuate’s [event sourcing](http://rbmhtechnology.github.io/eventuate/architecture.html#event-sourcing) and [event collaboration](http://rbmhtechnology.github.io/eventuate/architecture.html#event-collaboration) features is discussed to get a better understanding of the inner workings of the framework. An example then demonstrates how to use the framework to implement a concrete CRDT service and how to run multiple replicas of that service. The rest of the article covers production deployment considerations and gives an overview of planned features.
 
