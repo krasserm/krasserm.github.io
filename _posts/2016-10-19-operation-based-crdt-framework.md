@@ -65,6 +65,7 @@ case class MVRegister[A](versioned: Set[Versioned[A]] = Set.empty[Versioned[A]])
 
   def assign(v: A, vectorTimestamp: VectorTime): MVRegister[A] = {
     // <-> operator returns true for concurrent vector timestamps
+    
     val concurrent = versioned.filter(_.vectorTimestamp <-> vectorTimestamp)
     copy(concurrent + Versioned(v, vectorTimestamp))
   }
