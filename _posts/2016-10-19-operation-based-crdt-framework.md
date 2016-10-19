@@ -152,9 +152,9 @@ def service(locationId: String, port: Int, connectToPorts: Set[Int]): MVRegister
   new MVRegisterService[String](s"service-$locationId", endpoint.logs(logName))
 }
 
-val serviceA = service("A", 2552, Set(2553, 2554)) // at location A
-val serviceB = service("B", 2553, Set(2552, 2554)) // at location B
-val serviceC = service("C", 2554, Set(2552, 2553)) // at location C
+val serviceA = service("A", 2552, Set(2553, 2554)) /* at location A */
+val serviceB = service("B", 2553, Set(2552, 2554)) /* at location B */
+val serviceC = service("C", 2554, Set(2552, 2553)) /* at location C */
 
 // ...
 {% endhighlight %}
