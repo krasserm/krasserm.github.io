@@ -4,24 +4,33 @@ title: "About"
 header-img: "img/distributed.png"
 ---
 
-Distributed systems developer, Scala/Java programmer, integration specialist, freelancer, mountain bike freeride and downhill rider, guitar and bass player.
+I'm a passionate software developer and architect, open source contributor, freeride mountain biker and guitar/bass player.
 
-Specialities
-------------
+Core competencies
+-----------------
 
-Distributed and concurrent computing, scalability, high-availability, fault-tolerance, application and system integration, event-driven architecture, event stream processing, event sourcing, service-oriented architecture, microservices architecture, in-memory computing, domain-driven design, functional programming, server-side application development, machine learning, large-scale data analysis.
+- Distributed systems, data-intensive applications, event sourcing and CQRS, domain-driven design and (micro)service architectures
+- Designing applications for vertical and horizontal scalability, elasticity, high-availability, fault tolerance and global distribution
+- Event stream processing for real-time data analytics and large-scale enterprise application integration
+- Server-side software development with functional and object-oriented programming languages, mainly Scala and Java
+- Supporting the full software development lifecycle from concept to production with agile development approaches
 
-Open source
------------
+Current interests
+-----------------
+
+- Distributed systems research
+- Artificial intelligence research
+- Machine learning and deep learning
+
+Open source projects
+--------------------
 <p/>
 |[Eventuate](https://github.com/RBMHTechnology/eventuate)|Founder, Committer|
-|[Eventsourced](https://github.com/eligosource/eventsourced)|Founder, Committer|
-|[Akka](http://akka.io/)|Committer|
-|[Akka Persistence Cassandra](https://github.com/krasserm/akka-persistence-cassandra)|Founder, Committer|
-|[Akka Persistence Kafka](https://github.com/krasserm/akka-persistence-kafka)|Founder, Committer|
-|[Akka Analytics](https://github.com/krasserm/akka-analytics)|Founder, Committer|
-|[Apache Camel](http://camel.apache.org)|Committer|
 |[Streamz](https://github.com/krasserm/streamz)|Founder, Committer|
+|[Akka](http://akka.io/)|Committer|
+|[Apache Camel](http://camel.apache.org)|Committer|
+|[Eventsourced](https://github.com/eligosource/eventsourced)|Founder, Committer|
+|[Open eHealth Integration Platform](http://oehf.github.io/ipf/)|Founder, Committer|
 |...||
 
 Find out more on my [Github profile](https://github.com/krasserm).
