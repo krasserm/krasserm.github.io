@@ -32,5 +32,3 @@ Open source projects
 |[Eventsourced](https://github.com/eligosource/eventsourced)|Founder, Committer|
 |[Open eHealth Integration Platform](http://oehf.github.io/ipf/)|Founder, Committer|
 |...||
-
-Find out more on my [Github profile](https://github.com/krasserm).

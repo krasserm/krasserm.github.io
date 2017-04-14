@@ -5,6 +5,7 @@ header-img: img/distributed.png
 description: ""
 baseurl: ""
 url: "http://krasserm.github.io"
+resume: true
 twitter_username: mrt1nz
 github_username:  krasserm
 linkedin_username: krasserm
@@ -18,3 +19,4 @@ exclude: ["less","node_modules","Gruntfile.js","package.json","README.md"]
 
 gems:
   - jekyll-sitemap
+  - jekyll-paginate
