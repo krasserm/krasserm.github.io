@@ -40,7 +40,8 @@ See also [Stories](/stories/) for some details.
 Self-employed, [http://www.martin-krasser.de](http://www.martin-krasser.de)  
 
 - Software development and consulting services with a focus on distributed systems, system integration, data-intensive 
-applications, machine learning, including deep learning. 
+applications, machine learning, including deep learning.
+- Sabbatical year since 09.2017 for going deeper into machine learning and statistics.
 
 ### Since 02.2017, Freelance software engineer and consultant
 
