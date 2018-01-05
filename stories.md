@@ -102,7 +102,7 @@ initial results in protein structure prediction accuracy.
 I also applied machine learning in several other projects. For example, for an international pharmaceutical company I 
 implemented and optimized hierarchical clustering algorithms that were then used in production in their drug discovery 
 pipeline. In more recent projects streaming data analytics and machine learning played a significant role for predicting 
-distributed application behavior using predictive models that were trained with data from an applications's event history.
+distributed application behavior using predictive models that were trained with data from an application's event history.
 
 In September 2017, I decided to take a sabbatical year to go deeper into machine learning theory and application. I'm 
 especially interested in machine learning from a probabilistic perspective, deep learning and reinforcement learning. 
