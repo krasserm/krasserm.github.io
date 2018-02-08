@@ -6,7 +6,7 @@ author: "Martin Krasser"
 header-img: "img/distributed.png"
 ---
 
-**There is also [companion notebook](http://nbviewer.jupyter.org/github/krasserm/face-recognition/blob/master/face-recognition.ipynb) of this article in [this repository](https://github.com/krasserm/face-recognition) on Github.**
+**There is also [companion notebook](http://nbviewer.jupyter.org/github/krasserm/face-recognition/blob/master/face-recognition.ipynb?flush_cache=true) of this article in [this repository](https://github.com/krasserm/face-recognition) on Github.**
 
 Face recognition identifies persons on face images or video frames. In a nutshell, a face recognition system extracts features from an input face image and compares them to the features of labeled faces in a database. Comparison is based on a feature similarity metric and the label of the most similar database entry is used to label the input image. If the similarity value is above a certain threshold the input image is labeled as *unknown*. Comparing two face images to determine if they show the same person is known as face verification.
 
