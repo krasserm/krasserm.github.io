@@ -107,10 +107,10 @@ recent project, I trained models with data from an application's event history t
 background jobs.
 
 In September 2017, I decided to take a sabbatical year to go deeper into machine learning theory and practice. Besides
-classical machine learning, I'm especially interested in deep learning, reinforcement learning and Bayesian methods. 
+classical machine learning, I'm especially interested in deep learning, reinforcement learning and Bayesian statistics. 
 Having spent the first half of my sabbatical on fundamentals (see [literature](/2018/01/03/machine-learning-resources/), 
 [courses](/resume#courses) and [some exercises](https://github.com/krasserm/machine-learning-notebooks)) I'm now 
 investing more and more time to work on realistic use cases and datasets as well as advanced concepts for gaining 
 the experience needed to be a successful machine learning practitioner. I see the gained machine learning know-how as
 an important complement to my software engineering experience, a combination that enables me to build more intelligent 
-systems with more business value.
+systems with higher business value.
