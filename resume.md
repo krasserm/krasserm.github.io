@@ -181,14 +181,16 @@ Platform.
 - 05.2008, ICW Developer Conference, Walldorf - [Instance-based Security with the Security Annotation Framework](https://de.slideshare.net/krasserm/instancebased-security-with-the-security-annotation-framework).
 - 11.2007, SOACon, Munich - [Implementierung von Enterprise Integration Patterns auf einem JBI ESB](https://de.slideshare.net/krasserm/implementierung-von-enterprise-integration-patterns-auf-einem-jbi-esb).
 
-## Courses
+## Certificates
 
-- 12.2017, [Convolutional Neural Networks](https://www.coursera.org/account/accomplishments/records/FXK2NXAY7T6R).
-- 12.2017, [Structuring Machine Learning Projects](https://www.coursera.org/account/accomplishments/records/QDSE89HXE67X).
-- 12.2017, [Improving Deep Neural Networks: Hyperparameter tuning, Regularization and Optimization](https://www.coursera.org/account/accomplishments/records/XZ5GPJYQY3VR).
-- 12.2017, [Neural networks and deep learning](https://www.coursera.org/account/accomplishments/records/6DKEQ7G5Q6WQ).
-- 11.2017, [Bayesian statistics](https://www.coursera.org/account/accomplishments/records/38R78T7RNRFL).
-- 11.2017, [Inferential statistics](https://www.coursera.org/account/accomplishments/records/Q69C4NJ6TYRY).
+- 02.2018, [Deep learning specialization](https://www.coursera.org/account/accomplishments/specialization/certificate/N7D4G6K9RUJ5).
+  - 02.2018, [Sequence Models](https://www.coursera.org/account/accomplishments/certificate/LW9F67WHE9BD).
+  - 12.2017, [Convolutional Neural Networks](https://www.coursera.org/account/accomplishments/certificate/KHC48MXMABUS).
+  - 12.2017, [Structuring Machine Learning Projects](https://www.coursera.org/account/accomplishments/certificate/BZ4VKF7ZP4D8).
+  - 12.2017, [Improving Deep Neural Networks: Hyperparameter tuning, Regularization and Optimization](https://www.coursera.org/account/accomplishments/certificate/SRW2KEFARWQD).
+  - 12.2017, [Neural networks and deep learning](https://www.coursera.org/account/accomplishments/certificate/9H2KQFF4UZJF).
+- 11.2017, [Bayesian statistics](https://www.coursera.org/account/accomplishments/certificate/Y6BXN4STWKTA).
+- 11.2017, [Inferential statistics](https://www.coursera.org/account/accomplishments/certificate/CC2MMS6X7H86).
 - 04.2014, [Machine Learning](http://martin-krasser.de/certificates/coursera/machinelearning/certificate-2014-machine-learning.pdf).
 - 01.2014, [Principles of Reactive Programming](http://martin-krasser.de/certificates/coursera/reactive/certificate-2014-reactive.pdf).
 - 05.2012, [Functional programming principles in Scala](http://martin-krasser.de/certificates/coursera/fpscala/certificate-2012-fpscala.pdf).
