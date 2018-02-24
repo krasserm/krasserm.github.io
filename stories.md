@@ -97,20 +97,13 @@ My first contact with machine learning dates back to 1999 where I worked on
 [statistical potentials](https://en.wikipedia.org/wiki/Statistical_potential) i.e. *potentials of mean force* (PMFs) 
 from structures in the [Protein Data Bank](http://www.wwpdb.org/) and used them as energy function to be 
 minimized during protein folding simulations. These simulations followed a simulated annealing approach combined with 
-further stochastic methods to escape local minima. My work extended previous work on protein backbone-atom PMFs to all-atom 
-PMFs with promising initial results in protein structure prediction accuracy.
+other probabilistic methods to avoid local minima. My work extended previous work on protein backbone-atom PMFs to 
+all-atom PMFs with promising initial results in protein structure prediction accuracy.
 
-I also applied machine learning in several other projects. For example, for an international pharmaceutical company I 
-implemented and optimized hierarchical clustering algorithms for detecting structural and behavioral patterns in chemical 
-compounds. These algorithms were used in the company's drug discovery pipeline for several years in production. In a more
-recent project, I trained models with data from an application's event history to predict execution times of distributed 
-background jobs.
-
-In September 2017, I decided to take a sabbatical year to go deeper into machine learning theory and practice. Besides
-classical machine learning, I'm especially interested in deep learning, reinforcement learning and Bayesian statistics. 
-Having spent the first half of my sabbatical on fundamentals (see [literature](/2018/01/03/machine-learning-resources/), 
-[courses](/resume#courses) and [some exercises](https://github.com/krasserm/machine-learning-notebooks)) I'm now 
-investing more and more time to work on realistic use cases and datasets as well as advanced concepts for gaining 
-the experience needed to be a successful machine learning practitioner. I see the gained machine learning know-how as
-an important complement to my software engineering experience, a combination that enables me to build more intelligent 
-systems with higher business value.
+For a customer in the pharmaceutical industry, I worked on several smaller machine learning projects for detecting structural 
+and behavioral patterns in chemical compounds. The developed algorithms and solutions were used in the company's drug 
+discovery pipeline for many years in production. In more recent projects, streaming data analysis played an important 
+role for processing application events from durable event logs. In September 2017 I finally decided to take a sabbatical 
+year to go deeper into machine learning theory and practice. I'm especially interested in Bayesian methods for machine 
+learning, deep learning and reinforcement learning. See also my [personal blog](/), [Github profile](https://github.com/krasserm) 
+and [certificates](/resume#certificates) for further information ... 
