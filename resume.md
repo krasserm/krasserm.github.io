@@ -4,16 +4,14 @@ title: "Resume"
 header-img: "img/distributed.png"
 ---
 
-I'm a passionate software engineer and architect with 20 years industry experience. I primarily work on distributed 
-systems, system integration, event sourcing, event stream processing and machine learning, including deep learning. 
-I have experience with all phases of the software development lifecycle and with working in leadership roles. I'm a 
-continuous learner and contributor to several open source projects. I enjoy working in teams and helping others to 
-work more effectively.
+I'm a passionate software engineer and architect with 20 years industry experience. My main interests are distributed 
+systems, machine learning and functional programming. I have experience with all phases of the software development 
+lifecycle and with working in leadership roles. I'm a continuous learner and contributor to several open source projects. 
+I enjoy working in teams and helping others to work more effectively.
 
 ## Specialities
 
 Distributed systems, 
-microservice systems, 
 system and application integration,
 event sourcing and CQRS,
 event stream processing, 
@@ -33,7 +31,7 @@ object-oriented programming.
 
 ## Work experience
 
-See also [Stories](/stories/) for some details.
+See also [Stories](/stories/) for more details.
 
 ### Since 04.2011, Software architect, engineer and consultant
 
@@ -47,8 +45,9 @@ applications, machine learning, including deep learning.
 
 fine.lines.software GmbH, [https://bullet.io](https://bullet.io)
 
-- Consultancy regarding the design and implementation of a distributed system architecture based on event sourcing 
-with explicit causality that also includes mobile devices. Development of prototypes. 
+- Design and implementation of a distributed system architecture based on event sourcing with explicit causality that 
+also includes mobile devices. 
+- Consulting activities and development of prototypes. 
 
 ### 09.2014 - 08.2017, Freelance software architect and engineer
 
