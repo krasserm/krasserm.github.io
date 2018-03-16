@@ -183,17 +183,19 @@ Platform.
 
 ## Certificates
 
-- 02.2018, [Deep learning specialization](https://www.coursera.org/account/accomplishments/specialization/certificate/N7D4G6K9RUJ5).
+- Advanced Machine Learning Specialization
+  - 03.2018 [Bayesian Methods for Machine Learning](https://www.coursera.org/account/accomplishments/certificate/JCLCTLAFA6FL)
+- 02.2018, [Deep Learning Specialization](https://www.coursera.org/account/accomplishments/specialization/certificate/N7D4G6K9RUJ5).
   - 02.2018, [Sequence Models](https://www.coursera.org/account/accomplishments/certificate/LW9F67WHE9BD).
   - 12.2017, [Convolutional Neural Networks](https://www.coursera.org/account/accomplishments/certificate/KHC48MXMABUS).
   - 12.2017, [Structuring Machine Learning Projects](https://www.coursera.org/account/accomplishments/certificate/BZ4VKF7ZP4D8).
   - 12.2017, [Improving Deep Neural Networks: Hyperparameter tuning, Regularization and Optimization](https://www.coursera.org/account/accomplishments/certificate/SRW2KEFARWQD).
-  - 12.2017, [Neural networks and deep learning](https://www.coursera.org/account/accomplishments/certificate/9H2KQFF4UZJF).
-- 11.2017, [Bayesian statistics](https://www.coursera.org/account/accomplishments/certificate/Y6BXN4STWKTA).
+  - 12.2017, [Neural Networks and Deep Learning](https://www.coursera.org/account/accomplishments/certificate/9H2KQFF4UZJF).
+- 11.2017, [Bayesian Statistics](https://www.coursera.org/account/accomplishments/certificate/Y6BXN4STWKTA).
 - 11.2017, [Inferential statistics](https://www.coursera.org/account/accomplishments/certificate/CC2MMS6X7H86).
 - 04.2014, [Machine Learning](http://martin-krasser.de/certificates/coursera/machinelearning/certificate-2014-machine-learning.pdf).
 - 01.2014, [Principles of Reactive Programming](http://martin-krasser.de/certificates/coursera/reactive/certificate-2014-reactive.pdf).
-- 05.2012, [Functional programming principles in Scala](http://martin-krasser.de/certificates/coursera/fpscala/certificate-2012-fpscala.pdf).
+- 05.2012, [Functional Programming Principles in Scala](http://martin-krasser.de/certificates/coursera/fpscala/certificate-2012-fpscala.pdf).
 
 ## Education
 
