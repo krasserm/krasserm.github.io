@@ -1,7 +1,7 @@
 ---
 title: Gaussian processes
 layout: post
-comments: False
+comments: True
 author: "Martin Krasser"
 header-img: "img/distributed.png"
 ---
