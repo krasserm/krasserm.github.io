@@ -448,8 +448,8 @@ plt.legend();
 ```
 
     Baseline neg. MSE = -3498.95
-    Random search neg. MSE = -3778.84
-    Bayesian optimization neg. MSE = -3179.79
+    Random search neg. MSE = -3678.77
+    Bayesian optimization neg. MSE = -3185.50
 
 
 
