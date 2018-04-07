@@ -38,8 +38,8 @@ See also [Stories](/stories/) for more details.
 Self-employed, [http://www.martin-krasser.de](http://www.martin-krasser.de)  
 
 - Software development and consulting services with a focus on distributed systems, system integration, data-intensive 
-applications, machine learning, including deep learning.
-- Sabbatical year since 09.2017 for going deeper into machine learning and statistics.
+applications and machine learning.
+- Sabbatical year since 09.2017 for going deeper into machine learning, statistics and mathematics.
 
 ### Since 02.2017, Freelance software engineer and consultant
 
@@ -136,6 +136,8 @@ The following is an incomplete list of open source projects I'm currently workin
 - [Eventuate](https://github.com/RBMHTechnology/eventuate). A toolkit for event sourcing and event collaboration at global 
 scale with causal consistency. Founder and lead developer during my work at the Red Bull Media House and active contributor 
 today.
+- [Bayesian machine learning](https://github.com/krasserm/bayesian-machine-learning). Collection of notebooks related to 
+Bayesian machine learning. Extended when I'm writing new articles on that topic.
 - [Akka](https://akka.io/). A toolkit for building highly concurrent, distributed, and resilient message-driven applications for Java and 
 Scala. Contributed Akka Persistence and Akka Camel.
 - [Streamz](https://github.com/krasserm/streamz). A combinator library for integrating Functional Streams for Scala (FS2), 

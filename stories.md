@@ -104,7 +104,9 @@ For a customer in the pharmaceutical industry, I worked on several smaller machi
 and behavioral patterns in chemical compounds. The developed algorithms and solutions were used in the company's drug 
 discovery pipeline for many years in production. In more recent projects, streaming data analytics played an important 
 role for extracting knowledge from application events. In September 2017 I finally decided to take a sabbatical 
-year to go deeper into machine learning theory and practice. I'm especially interested in Bayesian methods for machine 
-learning, deep learning and reinforcement learning. I share related work on my [personal blog](/) and my 
-[Github profile](https://github.com/krasserm) and maintain a list of [attended courses](/resume#certificates) in my 
-resume. 
+year to go deeper into machine learning, statistics and mathematics. I'm especially interested in Bayesian methods for 
+machine learning, deep learning and reinforcement learning.
+
+I share work in this context on my [blog](/) and on my [Github profile](https://github.com/krasserm) (e.g. in the 
+[bayesian-machine-learning](https://github.com/krasserm/bayesian-machine-learning) repository, among others). I also 
+maintain a list of attended online courses and [earned certificates](/resume#certificates).
