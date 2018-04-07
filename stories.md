@@ -107,6 +107,6 @@ role for extracting knowledge from application events. In September 2017 I final
 year to go deeper into machine learning, statistics and mathematics. I'm especially interested in Bayesian methods for 
 machine learning, deep learning and reinforcement learning.
 
-I share work in this context on my [blog](/) and on my [Github profile](https://github.com/krasserm) (e.g. in the 
+I share work in this context on my [blog](/) and my [Github profile](https://github.com/krasserm) (e.g. in the 
 [bayesian-machine-learning](https://github.com/krasserm/bayesian-machine-learning) repository, among others). I also 
 maintain a list of attended online courses and [earned certificates](/resume#certificates).
