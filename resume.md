@@ -64,8 +64,8 @@ agido GmbH, [http://www.agido.com](http://www.agido.com)
 
 - Architecture and design consulting for an online sports betting web application with an event sourcing and event 
 stream processing architecture. 
-- Usage of Eventuate as technical basis for the web application backend. Development of data analytics extensions 
-for Eventuate.
+- Usage of Eventuate as technical basis for the web application backend. Development of streaming data analytics 
+extensions for Eventuate.
 
 ### 10.2013 – 02.2014, Freelance software engineer
 
