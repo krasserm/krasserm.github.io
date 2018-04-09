@@ -29,7 +29,7 @@ p(\mathbf{x};\mathbf\theta) =
 \tag{3}
 $$
 
-Usually, we choose a latent variable model such that parameter estimation for the conditional likelihood $p(\mathbf{x} \lvert \mathbf{t};\mathbf\theta)$ is easier than for the marginal likelihood $p(\mathbf{x};\mathbf\theta)$. For example, the conditional likelihood of a Gaussian [mixture model](https://en.wikipedia.org/wiki/Mixture_model) (GMM) is a single Gaussian for which parameter estimation is easier than for the marginal likelihood which is a mixture of Gaussians. The latent variable $\mathbf{t}$ in a GMM determines the soft-assignment to mixture components and follows a categorical distribution. If we can solve the integral in Eq. 3 we can also compute the posterior distribution of the latent variables by using [Bayes' theorem](https://en.wikipedia.org/wiki/Bayes%27_theorem):
+Usually, we choose a latent variable model such that parameter estimation for the conditional likelihood $p(\mathbf{x} \lvert \mathbf{t};\mathbf\theta)$ is easier than for the marginal likelihood $p(\mathbf{x};\mathbf\theta)$. For example, the conditional likelihood of a Gaussian [mixture model](https://en.wikipedia.org/wiki/Mixture_model) (GMM) is a single Gaussian for which parameter estimation is easier than for the marginal likelihood which is a mixture of Gaussians. The latent variable $\mathbf{t}$ in a GMM determines the assignment to mixture components and follows a categorical distribution. If we can solve the integral in Eq. 3 we can also compute the posterior distribution of the latent variables by using [Bayes' theorem](https://en.wikipedia.org/wiki/Bayes%27_theorem):
 
 $$
 p(\mathbf{t} \lvert \mathbf{x};\mathbf\theta) = 
