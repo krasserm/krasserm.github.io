@@ -65,7 +65,7 @@ related to those of operation-based CRDTs which is further described in [this bl
 In 2007, I started to work on a project in which we integrated the hospital information systems of several customers
 using IHE standards. Technical basis for the integration solutions was the [Apache Camel](http://camel.apache.org/) 
 integration framework for which I developed integration components that implement actor interfaces of several 
-[IHE] profiles(https://www.ihe.net/) and a DSL for processing  [HL7](http://www.hl7.org/) messages and 
+[IHE](https://www.ihe.net/) profiles and a DSL for processing  [HL7](http://www.hl7.org/) messages and 
 [CDA](http://hl7.de/themen/hl7-cda-clinical-document-architecture/) documents (see also 
 [this article](https://dzone.com/articles/introduction-open-ehealth) for an introduction). In 2009, these extensions have 
 been open sourced as [Open eHealth Integration Platform](http://oehf.github.io/ipf/) (IPF) of which I'm the founder and 
