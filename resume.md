@@ -151,7 +151,7 @@ at the moment.
 - [Eventsourced](https://github.com/eligosource/eventsourced). A library for building reliable, scalable and distributed 
 event-sourced applications in Scala. Founder and lead developer during my work at Eligotech. Evolved into Akka Persistence 
 and is not maintained any more.
-- [Open eHealth Integration Platform](https://github.com/oehf/ipf). A platform for developing health-care integration 
+- [Open eHealth Integration Platform](https://github.com/oehf/ipf). A platform for developing eHealth integration 
 solutions. Founder and lead developer during my work at ICW.
 - [Apache Camel](http://camel.apache.org/). An integration framework based on known Enterprise Integration Patterns. 
 Contributed several integration components as well as core functionality during my work on the Open eHealth Integration 
