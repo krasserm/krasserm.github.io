@@ -145,7 +145,7 @@ Akka Streams and Apache Camel. Personal project that I'm still actively developi
 Apache Camel and successor of Akka Camel.
 - [akka-persistence-cassandra](https://github.com/akka/akka-persistence-cassandra). Storage plugin for Akka Persistence. 
 Started as personal project and now officially maintained by Lightbend.
-- [akka-stream-eventsourcing](https://github.com/krasserm/akka-stream-eventsourcing). Personal project brings to Akka 
+- [akka-stream-eventsourcing](https://github.com/krasserm/akka-stream-eventsourcing). Personal project that brings to Akka 
 Streams what Akka Persistence brings to Akka Actors: persistence via event sourcing. This is experimental work, inactive 
 at the moment.
 - [Eventsourced](https://github.com/eligosource/eventsourced). A library for building reliable, scalable and distributed 
