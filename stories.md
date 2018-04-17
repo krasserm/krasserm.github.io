@@ -11,7 +11,7 @@ open-sourced but also some proprietary work.
 ## Distributed systems
 
 In the past few years I mainly worked on the global distribution of an [international customer](https://www.redbullmediahouse.com/)'s 
-in-house asset management platform. State replication across multiple datacenters, low-latency write access to replicated 
+in-house digital asset management platform. State replication across multiple datacenters, low-latency write access to replicated 
 state and write-availability during inter-datacenter network partitions were important requirements from the very beginning. 
 We decided to follow an event sourcing approach for persistence and developed an event replication mechanism that preserves 
 the causal ordering of events in event streams. For replicated state, we used a causal consistency model which is the strongest 
