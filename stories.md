@@ -102,11 +102,18 @@ all-atom PMFs with promising initial results in protein structure prediction acc
 
 For a customer in the pharmaceutical industry, I worked on several smaller machine learning projects for detecting structural 
 and behavioral patterns in chemical compounds. The developed algorithms and solutions were used in the company's drug 
-discovery pipeline for many years in production. In more recent projects, streaming data analytics played an important 
-role for extracting knowledge from application events. In September 2017 I finally decided to take a sabbatical 
-year to go deeper into machine learning, statistics and mathematics. I'm especially interested in Bayesian methods for 
-machine learning, deep learning and reinforcement learning.
-
-I share work in this context on my [blog](/) and my [Github profile](https://github.com/krasserm) (e.g. in the 
-[bayesian-machine-learning](https://github.com/krasserm/bayesian-machine-learning) repository, among others). I also 
-maintain a list of attended online courses and [earned certificates](/resume#certificates).
+discovery pipeline for many years in production. In more recent projects, streaming data analytics with Apache Spark played 
+an important role. In this context, I developed a [Spark integration for Eventuate](http://rbmhtechnology.github.io/eventuate/adapters/spark.html) 
+as well as statistical models on top of it for commercial applications.
+ 
+In September 2017 I finally decided to take a sabbatical year to go deeper into machine learning, statistics and mathematics. 
+I'm especially interested in Bayesian methods for machine learning, deep learning and reinforcement learning. I spend most 
+of my time with [reading books](/2018/01/03/machine-learning-resources/), 
+[attending online courses](/resume/#certificates), 
+[writing articles](/) and coding whenever possible (see 
+[machine-learning-notebooks](https://github.com/krasserm/machine-learning-notebooks), 
+[bayesian-machine-learning](https://github.com/krasserm/bayesian-machine-learning) or 
+[face-recognition](http://nbviewer.jupyter.org/github/krasserm/face-recognition/blob/master/face-recognition.ipynb?flush_cache=true) 
+for some public work samples). A main motivation for taking a sabbatical was to combine my software engineering skills 
+with a deeper understanding of machine learning and statistics. I see this as a critical skill set for my future as software 
+developer and architect.
