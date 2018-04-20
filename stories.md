@@ -114,6 +114,6 @@ of my time with [reading books](/2018/01/03/machine-learning-resources/),
 [machine-learning-notebooks](https://github.com/krasserm/machine-learning-notebooks), 
 [bayesian-machine-learning](https://github.com/krasserm/bayesian-machine-learning) or 
 [face-recognition](http://nbviewer.jupyter.org/github/krasserm/face-recognition/blob/master/face-recognition.ipynb?flush_cache=true) 
-for some public work samples). A main motivation for taking a sabbatical was to combine my software engineering skills 
+for some public work samples). My main motivation for taking a sabbatical was to combine my software engineering skills 
 with a deeper understanding of machine learning and statistics. I see this as a critical skill set for my future as software 
 developer and architect.
