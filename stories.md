@@ -95,7 +95,7 @@ official replacement for akka-camel and part of the [Alpakka](https://github.com
 My first contact with machine learning dates back to 1999 where I worked on 
 [ab-initio protein structure prediction](https://en.wikipedia.org/wiki/De_novo_protein_structure_prediction). I derived 
 [statistical potentials](https://en.wikipedia.org/wiki/Statistical_potential) i.e. *potentials of mean force* (PMFs) 
-from structures in the [Protein Data Bank](http://www.wwpdb.org/) and used them as energy function to be 
+from structures in the [Protein Data Bank](http://www.wwpdb.org/) and used them as energy functions to be 
 minimized during protein folding simulations. These simulations followed a simulated annealing approach combined with 
 other probabilistic methods to avoid local minima. My work extended previous work on protein backbone-atom PMFs to 
 all-atom PMFs with promising initial results in protein structure prediction accuracy.
