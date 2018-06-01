@@ -47,7 +47,7 @@ A major challenge in Bayesian inference is that the integral in Eq. 3 is often i
 Basis for many Bayesian inference methods is the [expectation-maximization](https://en.wikipedia.org/wiki/Expectation-maximization_algorithm) (EM) algorithm. It is an iterative algorithm for estimating the parameters of latent variable models, often with closed-form updates at each step. We start with a rather general view of the EM algorithm that also serves as a basis for discussing variational inference methods later. It is straightforward to show<sup>[2]</sup> that the marginal log likelihood can be written as 
 
 $$
-\log p(\mathbf{t} \lvert \mathbf{x};\mathbf\theta) = 
+\log p(\mathbf{x};\mathbf\theta) = 
   \mathcal{L}(q, \mathbf\theta) + 
   \mathrm{KL}(q \mid\mid p)
 \tag{5}
@@ -58,7 +58,7 @@ with
 $$
 \mathcal{L}(q, \mathbf\theta) = \int q(\mathbf{t}) \log 
   \frac{p(\mathbf{x},\mathbf{t};\mathbf\theta)}
-       {q(\mathbf{t})}
+       {q(\mathbf{t})} d\mathbf{t}
 \tag{6}
 $$
 
@@ -67,7 +67,7 @@ and
 $$
 \mathrm{KL}(q \mid\mid p) = - \int q(\mathbf{t}) \log 
   \frac{p(\mathbf{t} \lvert \mathbf{x};\mathbf\theta)}
-       {q(\mathbf{t})}
+       {q(\mathbf{t})} d\mathbf{t}
 \tag{7}
 $$
 
