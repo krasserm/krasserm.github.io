@@ -92,28 +92,21 @@ official replacement for akka-camel and part of the [Alpakka](https://github.com
 
 ## Machine learning
 
-My first contact with machine learning dates back to 1999 where I worked on 
-[ab-initio protein structure prediction](https://en.wikipedia.org/wiki/De_novo_protein_structure_prediction). I derived 
-[statistical potentials](https://en.wikipedia.org/wiki/Statistical_potential) i.e. *potentials of mean force* (PMFs) 
-from structures in the [Protein Data Bank](http://www.wwpdb.org/) and used them as energy functions to be 
-minimized during protein folding simulations. These simulations followed a simulated annealing approach combined with 
-other probabilistic methods to avoid local minima. My work extended previous work on protein backbone-atom PMFs to 
-all-atom PMFs with promising initial results in protein structure prediction accuracy.
+I had my first contact with machine learning in 2003 where I implemented and optimized a 
+[hierarchical clustering](https://en.wikipedia.org/wiki/Hierarchical_clustering) algorithm for chemical compounds for the 
+drug discovery pipeline of an international pharmaceutical company. The algorithm was an agglomerative hierarchical clustering 
+algorithm and supported single linkage, complete linkage and average linkage clustering. Chemical compounds were described 
+by binary molecular fingerprints and distance measures were configurable. The company selected this custom implementation 
+instead of alternatives from competitors because of its low time and space complexity 
+([nearest neighbor chain algorithm](https://en.wikipedia.org/wiki/Nearest-neighbor_chain_algorithm)) and used it for many 
+years in production. 
 
-For a customer in the pharmaceutical industry, I worked on several smaller machine learning projects for detecting structural 
-and behavioral patterns in chemical compounds. The developed algorithms and solutions were used in the company's drug 
-discovery pipeline for many years in production. In more recent projects, streaming data analytics with Apache Spark played 
-an important role. In this context, I developed a [Spark integration for Eventuate](http://rbmhtechnology.github.io/eventuate/adapters/spark.html) 
-as well as statistical models on top of it for commercial applications.
- 
-In September 2017 I finally decided to take a sabbatical year to go deeper into machine learning, statistics and mathematics. 
-I'm especially interested in Bayesian methods for machine learning, deep learning and reinforcement learning. I spend most 
-of my time with [reading books](/2018/01/03/machine-learning-resources/), 
-[attending online courses](/resume/#certificates), 
-[writing articles](/) and coding whenever possible (see 
-[machine-learning-notebooks](https://github.com/krasserm/machine-learning-notebooks), 
-[bayesian-machine-learning](https://github.com/krasserm/bayesian-machine-learning) or 
-[face-recognition](http://nbviewer.jupyter.org/github/krasserm/face-recognition/blob/master/face-recognition.ipynb?flush_cache=true) 
-for some public work samples). My main motivation for taking a sabbatical was to combine my software engineering skills 
-with a deeper understanding of machine learning and statistics. I see this as a critical skill set for my future as software 
-developer and architect.
+I resumed using machine learning approaches in 2014 when they became increasingly important for the projects I worked on. 
+I took a machine learning course that enabled me to contribute to software development in this area. In 2017 I finally 
+decided to take a sabbatical year to go much deeper into machine learning, statistics and mathematics. During that time I 
+took several [courses](/resume/#certificates), read a lot of [books](/2018/01/03/machine-learning-resources/) and published 
+[articles](/) and exercise code for [machine learning basics](https://github.com/krasserm/machine-learning-notebooks), 
+[deep face recognition](https://github.com/krasserm/face-recognition) and 
+[Bayesian machine learning](https://github.com/krasserm/bayesian-machine-learning). 
+I meanwhile work as machine learning engineer on computer vision problems such as face recognition or image restoration with 
+deep learning approaches. More details coming soon ...
