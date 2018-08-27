@@ -61,7 +61,7 @@ Z =
 \end{cases}
 $$
 
-where $\mu(\mathbf{x})$ and $\sigma(\mathbf{x})$ are the mean and the standard deviation of the GP pesterior predictive at $\mathbf{x}$, respectively. $\Phi$ and $\phi$ are the PDF and CDF of the standard normal distribution, respectively. The first summation term in Equation (2) is the exploitation term and second summation term is the exploration term.
+where $\mu(\mathbf{x})$ and $\sigma(\mathbf{x})$ are the mean and the standard deviation of the GP pesterior predictive at $\mathbf{x}$, respectively. $\Phi$ and $\phi$ are the CDF and PDF of the standard normal distribution, respectively. The first summation term in Equation (2) is the exploitation term and second summation term is the exploration term.
 
 Parameter $\xi$ in Equation (2) determines the amount of exploration during optimization and higher $\xi$ values lead to more exploration. In other words, with increasing $\xi$ values, the importance of improvements predicted by the GP posterior mean $\mu(\mathbf{x})$ decreases relative to the importance of potential improvements in regions of high prediction uncertainty, represented by large $\sigma(\mathbf{x})$ values. A recommended default value for $\xi$ is $0.01$.
 
@@ -144,7 +144,7 @@ def expected_improvement(X, X_sample, Y_sample, gpr, xi=0.01):
     with np.errstate(divide='warn'):
         imp = mu - mu_sample_opt - xi
         Z = imp / sigma
-        ei = imp * norm.pdf(Z) + sigma * norm.pdf(Z)
+        ei = imp * norm.cdf(Z) + sigma * norm.pdf(Z)
         ei[sigma == 0.0] = 0.0
 
     return ei
