@@ -4,19 +4,19 @@ title: "Resume"
 header-img: "img/distributed.png"
 ---
 
-I'm a software engineer and architect with a focus on distributed systems, machine learning and data science. I combine 
-solid software engineering skills with good machine learning know-how to ensure that developed machine learning solutions 
-also run reliably in production and are maintainable. I'm passionate about technology, a continuous learner and a contributor 
-to several open source projects. I enjoy working in teams and helping others to meet project goals more effectively.
+I'm a data scientist and software engineer with a focus on machine learning and distributed systems. I have a strong 
+interest in machine learning theory and in developing machine learning solutions that run reliably in production and 
+are maintainable. I'm passionate about technology, a continuous learner and a contributor to several open source 
+projects. I enjoy working in teams and helping others to meet project goals more effectively.
 
 ## Specialities
 
 Distributed systems, 
-system integration,
+data-intensive applications,
+data science,
 machine learning,
 deep learning,
-data science,
-data-intensive applications,
+system integration,
 event sourcing and CQRS,
 event stream processing, 
 event-driven architectures,
@@ -32,24 +32,22 @@ reactive programming.
 
 See also [Stories](/stories/) for more details.
 
-### Since 04.2018, Freelance machine learning engineer
+### Since 04.2018, Freelance data scientist and software engineer
 
 MerlinOne, [https://merlinone.com](https://merlinone.com)
 
-- Development of a scalable face recognition system. Usage of deep neural networks for face detection and learning of 
-face embeddings. One-shot learning of a person's identity and face recognition via nearest neighbor search in embedding
-space. Scalability via data parallelism.
-- Responsible for all machine learning and software engineering aspects of the project including deployment to production 
+- Development of a scalable face recognition system, an image aesthetic assessment service and image restoration models 
+  with a focus on single image super-resolution, all based on deep learning approaches.
+- Responsible for all machine learning and software engineering aspects of the projects including deployment to production 
 environments. 
 
-### Since 04.2011, Freelance software engineer, machine learning engineer and data scientist
+### Since 04.2011, Freelance data scientist and software engineer
 
 Self-employed, [http://www.martin-krasser.de](http://www.martin-krasser.de)  
 
-- Software development and consulting services with a focus on distributed systems, system integration, data-intensive 
-applications, machine learning and data science.
-- Sabbatical year from 05.2017 to 03.2018 to extend my knowledge about machine learning, data science, statistics and 
-mathematics.
+- Software development and consulting services with a focus on machine learning, data-intensive applications and 
+  distributed systems.
+- Sabbatical year from 05.2017 to 03.2018 to go deeper into data science, machine learning, statistics and mathematics.
 
 ### 02.2017 - 03.2018, Freelance software engineer and consultant
 
@@ -131,7 +129,7 @@ Austrian Red Cross, [http://www.roteskreuz.at/](http://www.roteskreuz.at/)
 ## Tools
 
 - Programming languages: Scala, Java, Python, C/C++, Haskell.
-- Machine learning: scikit-learn, Tensorflow, Keras, Spark MLlib, R, PyMC3. 
+- Machine learning: scikit-learn, Tensorflow, Keras, PyTorch, Spark MLlib, R, PyMC3. 
 - Stream processing: Spark Streaming, Akka Streams, Kafka Streams.
 - Databases: MySQL, PostgreSQL, Oracle, Cassandra, HBase, DynamoDB, MongoDB, LMDB, LevelDB, ...
 - Cloud computing: Amazon Web Services and Google Cloud Platform.
@@ -142,18 +140,20 @@ Austrian Red Cross, [http://www.roteskreuz.at/](http://www.roteskreuz.at/)
 ## Open source projects
 
 The following is an incomplete list of open source projects I'm currently working on or worked on in the past. See also
-[Stories](/stories/) for some details and [my Github account](https://github.com/krasserm) for a complete list.
+[Stories](/stories/) for some details and my [Github account](https://github.com/krasserm) for a complete list.
+
+### Machine learning
+
+- [WDSR](https://github.com/krasserm/wdsr). Keras-based implementation of WDSR and EDSR for single image super-resolution. 
+- [Bayesian machine learning](https://github.com/krasserm/bayesian-machine-learning). Collection of notebooks related to 
+Bayesian machine learning. Extended when I'm writing new articles on that topic.
+- [Machine learning basics](https://github.com/krasserm/machine-learning-notebooks). Stanford machine learning course 
+exercises re-written in Python and scikit-learn.
+
+### Distributed systems and stream processing
 
 - [Eventuate](https://github.com/RBMHTechnology/eventuate). A toolkit for event sourcing and event collaboration at global 
-scale with causal consistency. Founder and lead developer during my work at the Red Bull Media House and active contributor 
-today.
-- Machine learning projects such as  
-  - [Bayesian machine learning](https://github.com/krasserm/bayesian-machine-learning). Collection of notebooks related to 
-    Bayesian machine learning. Extended when I'm writing new articles on that topic.
-  - [Face recognition](https://github.com/krasserm/face-recognition). An introduction to face recognition with deep neural 
-    networks and a lightweight example implementation. 
-  - [Machine learning basics](https://github.com/krasserm/machine-learning-notebooks). Stanford machine learning course 
-    exercises re-written in Python and scikit-learn.
+  scale with causal consistency. Founder and lead developer during my work at the Red Bull Media House.
 - [Akka](https://akka.io/). A toolkit for building highly concurrent, distributed, and resilient message-driven applications 
   for Java and Scala. Contributed Akka Persistence and Akka Camel.
 - [Streamz](https://github.com/krasserm/streamz). A combinator library for integrating Functional Streams for Scala (FS2), 
@@ -167,6 +167,9 @@ today.
 - [Eventsourced](https://github.com/eligosource/eventsourced). A library for building reliable, scalable and distributed 
   event-sourced applications in Scala. Founder and lead developer during my work at Eligotech. Evolved into Akka Persistence 
   and is not maintained any more.
+
+### System integration
+
 - [Open eHealth Integration Platform](https://github.com/oehf/ipf). A platform for developing eHealth integration 
   solutions. Founder and lead developer during my work at ICW.
 - [Apache Camel](http://camel.apache.org/). An integration framework based on known Enterprise Integration Patterns. 
