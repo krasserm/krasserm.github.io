@@ -93,17 +93,18 @@ official replacement for akka-camel and part of the [Alpakka](https://github.com
 ## Machine learning
 
 I had my first contact with machine learning and statistical mechanics in 1999 when I worked on ab-initio protein structure
-prediction at the University of Salzburg. Focus of my work was [knowledge based potentials](https://en.wikipedia.org/wiki/Statistical_potential) 
-used to assess protein structures and to guide protein folding simulations. In 2003 I developed several machine learning 
-models for the drug discovery pipeline of an international pharmaceutical company. These were mainly hierarchical clustering 
+prediction at the University of Salzburg. Focus of my work were [knowledge based potentials](https://en.wikipedia.org/wiki/Statistical_potential) 
+for protein structure assessment and for guiding protein folding simulations. In 2003 I implemented several machine learning 
+algorithms for the drug discovery pipeline of an international pharmaceutical company. These were mainly hierarchical clustering 
 algorithms for grouping chemical compounds. Some implementations were based on the [nearest neighbor chain algorithm](https://en.wikipedia.org/wiki/Nearest-neighbor_chain_algorithm)
-to achieve low time and space complexity. The company used these implementations for several years in production.
+to achieve low time and space complexity, an important requirement in this context. The company used these implementations 
+for several years in production.
 
-I resumed working on machine learning solutions in 2014 when they became increasingly important for my projects. I used 
-classical machine learning approaches mainly for predicting distributed systems behavior (distributed job execution 
-times, ...). In 2017 I finally decided to take a sabbatical year to go deeper into machine learning, statistics and mathematics. 
-During that time I took several [courses](/resume/#certificates), read many [books](/2018/01/03/machine-learning-resources/) 
+I resumed working with machine learning in 2014 as it became increasingly important for my projects. I implemented learning 
+algorithms for predicting distributed systems behavior, such as job execution times across multiple data centers, and for
+influencing resource allocation. In 2017, I finally decided to take a sabbatical year to go deeper into machine learning, 
+statistics and mathematics. During that time I took several [courses](/resume/#certificates), read many [books](/2018/01/03/machine-learning-resources/) 
 and published [articles](/) and exercise code about [machine learning basics](https://github.com/krasserm/machine-learning-notebooks), 
 [Bayesian machine learning](https://github.com/krasserm/bayesian-machine-learning) and [other topics](https://github.com/krasserm). 
-I meanwhile work as data scientist and software engineer on computer vision problems such as face recognition, image aesthetic assessment and
-[single image super-resolution](https://github.com/krasserm/wdsr) with deep learning approaches. 
+I meanwhile work as data scientist and software engineer on computer vision problems such as face recognition, image aesthetic 
+assessment and [single image super-resolution](https://github.com/krasserm/wdsr) with deep learning approaches. 
