@@ -10,7 +10,7 @@ open-sourced but also some proprietary work.
 
 ## Distributed systems
 
-In the past few years I mainly worked on the global distribution of an [international customer](https://www.redbullmediahouse.com/)'s 
+From 2014 to 2017, I mainly worked on the global distribution of an [international customer](https://www.redbullmediahouse.com/)'s 
 in-house digital asset management platform. State replication across multiple datacenters, low-latency write access to replicated 
 state and write-availability during inter-datacenter network partitions were important requirements from the very beginning. 
 We decided to follow an event sourcing approach for persistence and developed an event replication mechanism that preserves 
@@ -94,7 +94,7 @@ official replacement for akka-camel and part of the [Alpakka](https://github.com
 
 I had my first contact with machine learning and statistical mechanics in 1999 when I worked on ab-initio protein structure
 prediction at the University of Salzburg. Focus of my work were [knowledge based potentials](https://en.wikipedia.org/wiki/Statistical_potential) 
-for protein structure assessment and for guiding protein folding simulations. In 2003 I implemented several machine learning 
+for protein structure assessment and for guiding protein folding simulations. In 2003, I implemented several machine learning 
 algorithms for the drug discovery pipeline of an international pharmaceutical company. These were mainly hierarchical clustering 
 algorithms for grouping chemical compounds. Some implementations were based on the [nearest neighbor chain algorithm](https://en.wikipedia.org/wiki/Nearest-neighbor_chain_algorithm)
 to achieve low time and space complexity, an important requirement in this context. The company used these implementations 
