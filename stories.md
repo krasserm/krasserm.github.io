@@ -100,9 +100,9 @@ algorithms for grouping chemical compounds. Some implementations were based on t
 to achieve low time and space complexity, an important requirement in this context. The company used these implementations 
 for several years in production.
 
-I resumed working with machine learning in 2014 as it became increasingly important for my projects. I implemented learning 
-algorithms for predicting distributed systems behavior, such as job execution times across multiple data centers, and for
-influencing resource allocation. In 2017, I finally decided to take a sabbatical year to go deeper into machine learning, 
+I resumed working with machine learning and statistics in 2014 as it became increasingly important for my projects. I used 
+it to predict distributed systems behavior, such as job execution times across multiple data centers, and for analyzing 
+application-level event logs. In 2017, I finally decided to take a sabbatical year to go deeper into machine learning, 
 statistics and mathematics. During that time I took several [courses](/resume/#certificates), read many [books](/2018/01/03/machine-learning-resources/) 
 and published [articles](/) and exercise code about [machine learning basics](https://github.com/krasserm/machine-learning-notebooks), 
 [Bayesian machine learning](https://github.com/krasserm/bayesian-machine-learning) and [other topics](https://github.com/krasserm). 
