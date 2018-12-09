@@ -4,10 +4,10 @@ title: "Resume"
 header-img: "img/distributed.png"
 ---
 
-I'm a data scientist and software engineer with a focus on machine learning and distributed systems. I have a strong 
-interest in both machine learning theory and in developing machine learning solutions that run reliably in production and 
-are maintainable. I'm passionate about technology, a continuous learner and a contributor to several open source 
-projects. I enjoy working in teams and helping others to meet project goals more effectively.
+I'm a data scientist and software engineer with a focus on machine learning and distributed systems. I have not only a
+strong interest in the algorithmic and experimental part of my work but also in developing data-driven applications that 
+run reliably in production and are maintainable. I'm passionate about technology, a continuous learner and a contributor 
+to several open source projects. 
 
 ## Specialities
 
