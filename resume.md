@@ -4,10 +4,10 @@ title: "Resume"
 header-img: "img/distributed.png"
 ---
 
-I'm a data scientist and software engineer with a focus on machine learning and distributed systems. I have not only a
-strong interest in the algorithmic and experimental part of my work but also in developing data-driven applications that 
-run reliably in production and are maintainable. I'm passionate about technology, a continuous learner and a contributor 
-to several open source projects. 
+I'm a machine learning and software engineer with a focus on Bayesian methods, deep learning and distributed systems. 
+I have not only a strong interest in the algorithmic and experimental part of my work but also in developing data-driven 
+applications that run reliably in production and are maintainable. I'm passionate about technology, a continuous learner 
+and a contributor to several open source projects. 
 
 ## Specialities
 
@@ -32,7 +32,7 @@ reactive programming.
 
 See also [Stories](/stories/) for more details.
 
-### Since 04.2018, Freelance data scientist and software engineer
+### Since 04.2018, Freelance machine learning and software engineer
 
 MerlinOne, [https://merlinone.com](https://merlinone.com)
 
@@ -42,7 +42,7 @@ MerlinOne, [https://merlinone.com](https://merlinone.com)
 - Responsible for all data processing, machine learning and software engineering aspects of the projects including deployment 
   to production environments. 
 
-### Since 04.2011, Freelance data scientist and software engineer
+### Since 04.2011, Freelance machine learning and software engineer
 
 Self-employed, [http://www.martin-krasser.de](http://www.martin-krasser.de)  
 
