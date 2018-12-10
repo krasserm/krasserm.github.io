@@ -36,10 +36,11 @@ See also [Stories](/stories/) for more details.
 
 MerlinOne, [https://merlinone.com](https://merlinone.com)
 
-- Development of a scalable face recognition system, an image aesthetic assessment service and image restoration models 
-  with a focus on single image super-resolution, all based on deep learning approaches.
-- Responsible for all machine learning and software engineering aspects of the projects including deployment to production 
-environments. 
+- Development of a highly scalable face recognition system, image aesthetic assessment algorithms, a content-based image 
+  retrieval service and image restoration models with a focus on single image super-resolution, all based on deep learning 
+  approaches.
+- Responsible for all data processing, machine learning and software engineering aspects of the projects including deployment 
+  to production environments. 
 
 ### Since 04.2011, Freelance data scientist and software engineer
 
@@ -144,9 +145,10 @@ The following is an incomplete list of open source projects I'm currently workin
 
 ### Machine learning
 
-- [WDSR](https://github.com/krasserm/wdsr). Keras-based implementation of WDSR and EDSR for single image super-resolution. 
+- [WDSR](https://github.com/krasserm/wdsr). Keras-based implementation of WDSR and EDSR for single image super-resolution.
+- [Face recognition](https://github.com/krasserm/face-recognition). Deep face recognition with Keras, Dlib and OpenCV. 
 - [Bayesian machine learning](https://github.com/krasserm/bayesian-machine-learning). Collection of notebooks related to 
-Bayesian machine learning. Extended when I'm writing new articles on that topic.
+Bayesian machine learning. Extended when I'm writing new articles about that topic.
 - [Machine learning basics](https://github.com/krasserm/machine-learning-notebooks). Stanford machine learning course 
 exercises re-written in Python and scikit-learn.
 

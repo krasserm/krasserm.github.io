@@ -106,5 +106,6 @@ application-level event logs. In 2017, I finally decided to take a sabbatical ye
 statistics and mathematics. During that time I took several [courses](/resume/#certificates), read many [books](/2018/01/03/machine-learning-resources/) 
 and published [articles](/) and exercise code about [machine learning basics](https://github.com/krasserm/machine-learning-notebooks), 
 [Bayesian machine learning](https://github.com/krasserm/bayesian-machine-learning) and [other topics](https://github.com/krasserm). 
-I meanwhile work as data scientist and software engineer on computer vision problems such as face recognition, image aesthetic 
-assessment and [single image super-resolution](https://github.com/krasserm/wdsr) with deep learning approaches. 
+I meanwhile work as machine learning engineer on computer vision problems such as face recognition, image aesthetic 
+assessment, content-based image retrieveal and [single image super-resolution](https://github.com/krasserm/wdsr), all based
+on deep learning approaches. In my personal projects I mainly work with Bayesian methods for machine learning.
