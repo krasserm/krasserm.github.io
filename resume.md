@@ -4,10 +4,10 @@ title: "Resume"
 header-img: "img/distributed.png"
 ---
 
-I'm a machine learning and software engineer with a focus on Bayesian methods, deep learning and distributed systems. 
-I have not only a strong interest in the algorithmic and experimental part of my work but also in developing data-driven 
-applications that run reliably in production and are maintainable. I'm passionate about technology, a continuous learner 
-and a contributor to several open source projects. 
+I'm a machine learning and software engineer with a focus on Bayesian methods for machine learning, deep learning and 
+distributed systems. I have not only a strong interest in the algorithmic and experimental part of my work but also in 
+developing data-driven applications that run reliably in production and are maintainable. I'm passionate about technology, 
+a continuous learner and a contributor to several open source projects. 
 
 ## Specialities
 
@@ -30,7 +30,7 @@ reactive programming.
 
 ## Work experience
 
-See also [Stories](/stories/) for more details.
+See also [Stories](/stories/) for further information.
 
 ### Since 04.2018, Freelance machine learning and software engineer
 
