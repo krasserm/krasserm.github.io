@@ -31,12 +31,13 @@ this template (but less elegant compared to a generic wrapper as described furth
 [`Conv2DWeightNorm`](https://github.com/ychfan/tf_estimator_barebone/blob/master/common/layers.py) code doesn't provide 
 a procedure for data-based initialization though. For the special case of [WDSR](https://arxiv.org/abs/1808.08718), this 
 is not needed as data-based initialization has a similar effect as batch-normalization which is known to harm single 
-image super-resolution training but this cannot be generalized to other projects, of course.
-
-I also tested the `Conv2DWeightNorm` layer in the Keras version of WDSR (see section [Weight normalization](https://github.com/krasserm/wdsr#weight-normalization)) 
+image super-resolution training but this cannot be generalized to other projects, of course. I also tested the 
+`Conv2DWeightNorm` layer in the Keras version of WDSR (see section [Weight normalization](https://github.com/krasserm/wdsr#weight-normalization)) 
 and convergence is similar to that of Adam-based weight normalization. The latter shows slightly better initial 
 convergence but training with `Conv2DWeightNorm` in combination with a default Adam optimizer quickly catches up. The 
-difference is probably due to different weight initializations. There's also a long-time open [pull request](https://github.com/tensorflow/tensorflow/pull/21276) 
+difference is probably due to different weight initializations. 
+
+There's also a long-time open [pull request](https://github.com/tensorflow/tensorflow/pull/21276) 
 for adding weight normalization to Tensorflow, also supporting the bundled Keras version, but review is still pending. 
 It is a generic wrapper layer that works for several types of Tensorflow and Keras layers. Data-based initialization is 
 also supported but only in eager mode. 
