@@ -9,7 +9,7 @@ distributed systems. I have not only a strong interest in the algorithmic and ex
 developing data-driven applications that run reliably in production and are maintainable. I'm passionate about technology, 
 a continuous learner and a contributor to several open source projects. 
 
-## Specialities
+## Specialties
 
 Distributed systems, 
 data-intensive applications,
