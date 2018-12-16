@@ -43,28 +43,22 @@ documents = [['Python', 'Scala', 'Python', 'Python', 'Java'],
              ['Cassandra', 'Cassandra', 'Postgres', 'Scala', 'MySQL', 'MySQL']]
 
 # Number of topics
-
 K = 3
 
 # Number of documents 
-
 D = len(documents)
 
 # (Ab)use label encoder for categorical encoding of words
-
 encoder = LabelEncoder()
 encoder.fit([word for document in documents for word in document])
 
 # Vocabulary derived from documents
-
 vocabulary = encoder.classes_
 
 # Vocabulary size 
-
 V = len(vocabulary)
 
 # Encoded documents
-
 X = [encoder.transform(d) for d in documents]
 ```
 
@@ -102,29 +96,23 @@ import numpy as np
 import pymc3 as pm
 
 # Hyper-parameter for uniform Dirichlet prior
-
 alpha = np.ones(K)
 
 # Hyper-parameter for sparse Dirichlet prior
-
 beta = np.ones(V) * 0.3
 
 with pm.Model() as model:
     # Global topic distribution
-
     theta = pm.Dirichlet('theta', a=alpha)
     
     # Word distributions for K topics
-
     phi = pm.Dirichlet('phi', a=beta, shape=(K, V))
     
     # Topic of documents
-
     z = pm.Categorical('z', p=theta, shape=(D,))
     
     for i in range(D):
         # Words of document
-
         w = pm.Categorical(f'w_{i}', p=phi[z[i]], observed=X[i])
 ```
 
