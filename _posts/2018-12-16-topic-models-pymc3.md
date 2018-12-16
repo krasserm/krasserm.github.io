@@ -1,7 +1,7 @@
 ---
 title: Introduction to topic modeling with PyMC3 
 layout: post
-comments: False
+comments: True
 author: "Martin Krasser"
 header-img: "img/distributed.png"
 ---
