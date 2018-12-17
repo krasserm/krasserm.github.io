@@ -1,5 +1,5 @@
 ---
-title: Introduction to topic modeling with PyMC3 
+title: Topic modeling with PyMC3 
 layout: post
 comments: True
 author: "Martin Krasser"
