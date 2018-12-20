@@ -117,7 +117,7 @@ plot_gp(mu, cov, X, samples=samples)
 ![png](/img/2018-03-19/output_6_0.png)
 
 
-The `plot_gp` function is defined [here](gaussian_processes_util.py).
+The `plot_gp` function is defined [here](https://github.com/krasserm/bayesian-machine-learning/blob/af6882305d9d65dbbf60fd29b117697ef250d4aa/gaussian_processes_util.py#L7).
 
 ### Prediction from noise-free training data
 
