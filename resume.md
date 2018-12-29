@@ -145,7 +145,8 @@ The following is an incomplete list of open source projects I'm currently workin
 
 ### Machine learning
 
-- [WDSR](https://github.com/krasserm/wdsr). Keras-based implementation of WDSR and EDSR for single image super-resolution.
+- [Super resolution](https://github.com/krasserm/super-resolution). Keras-based implementation of WDSR and EDSR for single 
+  image super-resolution.
 - [Face recognition](https://github.com/krasserm/face-recognition). Deep face recognition with Keras, Dlib and OpenCV. 
 - [Bayesian machine learning](https://github.com/krasserm/bayesian-machine-learning). Collection of notebooks related to 
 Bayesian machine learning. Extended when I'm writing new articles about that topic.
