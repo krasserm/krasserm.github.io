@@ -4,8 +4,8 @@ title: "Resume"
 header-img: "img/distributed.png"
 ---
 
-I'm a machine learning and software engineer with a focus on Bayesian methods for machine learning, deep learning and 
-distributed systems. I have not only a strong interest in the algorithmic and experimental part of my work but also in 
+I'm a machine learning practitioner and software engineer with a focus on Bayesian methods for machine learning, deep learning 
+and distributed systems. I have not only a strong interest in the algorithmic and experimental part of my work but also in 
 developing data-driven applications that run reliably in production and are maintainable. I'm passionate about technology, 
 a continuous learner and a contributor to several open source projects. 
 
@@ -36,7 +36,7 @@ See also [Stories](/stories/) for further information.
 
 MerlinOne, [https://merlinone.com](https://merlinone.com)
 
-- Development of a highly scalable face recognition system, image aesthetic assessment algorithms, a content-based image 
+- Development of a highly scalable face recognition system, image aesthetic assessment models, a content-based image 
   retrieval service and image restoration models with a focus on single image super-resolution, all based on deep learning 
   approaches.
 - Responsible for all data processing, machine learning and software engineering aspects of the projects including deployment 
