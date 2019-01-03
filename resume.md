@@ -32,7 +32,7 @@ reactive programming.
 
 See also [Stories](/stories/) for further information.
 
-### Since 04.2018, Freelance machine learning and software engineer
+### Since 04.2018, Freelance machine learning engineer
 
 MerlinOne, [https://merlinone.com](https://merlinone.com)
 
