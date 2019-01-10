@@ -44,7 +44,7 @@ A major challenge in Bayesian inference is that the integral in Eq. 3 is often i
 
 ## Expectation maximization (EM)
 
-Basis for many Bayesian inference methods is the [expectation-maximization](https://en.wikipedia.org/wiki/Expectation-maximization_algorithm) (EM) algorithm. It is an iterative algorithm for estimating the parameters of latent variable models, often with closed-form updates at each step. We start with a rather general view of the EM algorithm that also serves as a basis for discussing variational inference methods later. It is straightforward to show<sup>[2]</sup> that the marginal log likelihood can be written as 
+Basis for many inference methods is the [expectation-maximization](https://en.wikipedia.org/wiki/Expectation-maximization_algorithm) (EM) algorithm. It is an iterative algorithm for estimating the parameters of latent variable models, often with closed-form updates at each step. We start with a rather general view of the EM algorithm that also serves as a basis for discussing variational inference methods later. It is straightforward to show<sup>[2]</sup> that the marginal log likelihood can be written as 
 
 $$
 \log p(\mathbf{x};\mathbf\theta) = 
@@ -111,7 +111,7 @@ $$
 \mathbf\theta^{l} = \underset{\mathbf\theta}{\mathrm{argmax}}\ \mathcal{L}(q^{l}, \mathbf\theta)\tag{13}
 $$
 
-The mean field approach allows inference for many interesting latent variable models but it requires analytical solutions w.r.t. the approximate posterior which is not always possible. Especially when used in context of deep learning where the approximate posterior $q(\mathbf{t})$ and the conditional likelihood $p(\mathbf{t} \lvert \mathbf{x};\mathbf\theta)$ are neural networks with at least one non-linear hidden layer, the mean field approach is not applicable any more<sup>[4]</sup>. Further approximations are required.
+The mean field approach allows inference for many interesting latent variable models but it requires analytical solutions for the approximate posterior which is not always possible. Especially when used in context of deep learning where the approximate posterior $q(\mathbf{t})$ and the conditional likelihood $p(\mathbf{x} \lvert \mathbf{t};\mathbf\theta)$ are neural networks with at least one non-linear hidden layer, the mean field approach is not applicable any more<sup>[4]</sup>. Further approximations are required.
 
 ## Stochastic variational inference
 
@@ -133,9 +133,7 @@ q^{(i)}(\mathbf{t}^{(i)}) = \mathcal{N}(\mathbf{t}^{(i)} \lvert
 \tag{15}
 $$
 
-So we finally have a variational distribution $q(\mathbf{t} \lvert \mathbf{x};\mathbf\phi)$ with a fixed number of parameters $\mathbf\phi$ as approximation for the true but unknown posterior $p(\mathbf{t} \lvert \mathbf{x};\mathbf\theta)$. To implement the (complex) functions $m$ and $s$ that map from an input image to the mean and the variance of that distribution we can use a [convolutional neural network](https://de.wikipedia.org/wiki/Convolutional_Neural_Network) (CNN) that is parameterized by $\mathbf\phi$. 
-
-Similarly, for implementing $p(\mathbf{x} \lvert \mathbf{t};\mathbf\theta)$ we can use another neural network, parameterized by $\mathbf\theta$, that maps a latent vector $\mathbf{t}$ to the sufficient statistics of that probability distribution. Since $\mathbf{t}$ is often a lower-dimensional embedding or code of image $\mathbf{x}$, $q(\mathbf{t} \lvert \mathbf{x};\mathbf\phi)$ is referred to as *probabilistic encoder* and $p(\mathbf{x} \lvert \mathbf{t};\mathbf\theta)$ as *probabilistic decoder*. 
+So we finally have a variational distribution $q(\mathbf{t} \lvert \mathbf{x};\mathbf\phi)$ with a fixed number of parameters $\mathbf\phi$ as approximation for the true but unknown posterior $p(\mathbf{t} \lvert \mathbf{x};\mathbf\theta)$. To implement the (complex) functions $m$ and $s$ that map from an input image to the mean and the variance of that distribution we can use a [convolutional neural network](https://de.wikipedia.org/wiki/Convolutional_Neural_Network) (CNN) that is parameterized by $\mathbf\phi$. Similarly, for implementing $p(\mathbf{x} \lvert \mathbf{t};\mathbf\theta)$ we can use another neural network, parameterized by $\mathbf\theta$, that maps a latent vector $\mathbf{t}$ to the sufficient statistics of that probability distribution. Since $\mathbf{t}$ is often a lower-dimensional embedding or code of image $\mathbf{x}$, $q(\mathbf{t} \lvert \mathbf{x};\mathbf\phi)$ is referred to as *probabilistic encoder* and $p(\mathbf{x} \lvert \mathbf{t};\mathbf\theta)$ as *probabilistic decoder*. 
 
 ![](/img/2018-04-03/auto-encoder-1.png)
 
