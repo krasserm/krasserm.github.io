@@ -5,10 +5,10 @@ header-img: "img/distributed.png"
 ---
 
 I'm a self-employed machine learning and software engineer with 20 years industry experience. My current focus is on 
-computer vision, deep learning, probabilistic machine learning and distributed systems. I'm not only motivated by the 
-scientific part of my work but also have a strong interest in developing machine learning applications run reliably in 
-production and are maintainable. I'm passionate about technology, a continuous learner and a contributor to several open 
-source projects.
+deep learning in computer vision, probabilistic machine learning and distributed systems. I'm not only passionate about 
+the scientific part in machine learning projects but also have a strong interest in developing data-driven applications 
+that run reliably in production and are maintainable. I'm a continuous learner and a contributor to several open source 
+projects.
 
 ## Specialties
 

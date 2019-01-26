@@ -108,4 +108,4 @@ and published [articles](/) and exercise code about [machine learning basics](ht
 [Bayesian machine learning](https://github.com/krasserm/bayesian-machine-learning) and [other topics](https://github.com/krasserm). 
 I meanwhile work as machine learning engineer on computer vision problems such as face recognition, image aesthetic 
 assessment, content-based image retrieveal and [single image super-resolution](https://github.com/krasserm/wdsr), all based
-on deep learning approaches. In my personal projects I mainly work with Bayesian methods for machine learning.
+on deep learning approaches. In my private projects I'm experimenting with Bayesian methods for machine learning.
