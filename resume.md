@@ -5,8 +5,8 @@ header-img: "img/distributed.png"
 ---
 
 I'm a self-employed machine learning and software engineer with 20 years industry experience. My current focus is on 
-deep learning in computer vision, probabilistic machine learning and distributed systems. I'm not only passionate about 
-the scientific part in machine learning projects but also have a strong interest in developing data-driven applications 
+deep learning for computer vision, probabilistic machine learning and distributed systems. I'm not only passionate about 
+the scientific part of machine learning projects but also have a strong interest in developing data-driven applications 
 that run reliably in production and are maintainable. I'm a continuous learner and a contributor to several open source 
 projects.
 
@@ -131,7 +131,7 @@ Austrian Red Cross, [http://www.roteskreuz.at/](http://www.roteskreuz.at/)
 ## Tools
 
 - Programming languages: Scala, Java, Python, C/C++, Haskell.
-- Machine learning: scikit-learn, Tensorflow, Keras, PyTorch, Spark MLlib, R, PyMC3. 
+- Machine learning: scikit-learn, Tensorflow, Keras, PyTorch, PyMC3, Spark MLlib, R. 
 - Stream processing: Spark Streaming, Akka Streams, Kafka Streams.
 - Databases: MySQL, PostgreSQL, Oracle, Cassandra, HBase, DynamoDB, MongoDB, LMDB, LevelDB, ...
 - Cloud computing: Amazon Web Services and Google Cloud Platform.
@@ -146,23 +146,23 @@ The following is an incomplete list of open source projects I'm currently workin
 
 ### Machine learning
 
+- [Bayesian machine learning](https://github.com/krasserm/bayesian-machine-learning). Collection of notebooks related to 
+Bayesian machine learning. Extended when I'm writing new articles about that topic.
 - [Super resolution](https://github.com/krasserm/super-resolution). Keras-based implementation of WDSR, EDSR and SRGAN for 
   single image super-resolution.
 - [Face recognition](https://github.com/krasserm/face-recognition). Deep face recognition with Keras, Dlib and OpenCV. 
-- [Bayesian machine learning](https://github.com/krasserm/bayesian-machine-learning). Collection of notebooks related to 
-Bayesian machine learning. Extended when I'm writing new articles about that topic.
-- [Machine learning basics](https://github.com/krasserm/machine-learning-notebooks). Stanford machine learning course 
+- [Machine learning notebooks](https://github.com/krasserm/machine-learning-notebooks). Stanford machine learning course 
 exercises re-written in Python and scikit-learn.
 
 ### Distributed systems and stream processing
 
 - [Eventuate](https://github.com/RBMHTechnology/eventuate). A toolkit for event sourcing and event collaboration at global 
   scale with causal consistency. Founder and lead developer during my work at the Red Bull Media House.
-- [Akka](https://akka.io/). A toolkit for building highly concurrent, distributed, and resilient message-driven applications 
-  for Java and Scala. Contributed Akka Persistence and Akka Camel.
 - [Streamz](https://github.com/krasserm/streamz). A combinator library for integrating Functional Streams for Scala (FS2), 
   Akka Streams and Apache Camel. Personal project that I'm still actively developing. Functional programming API on top of 
   Apache Camel and successor of Akka Camel.
+- [Akka](https://akka.io/). A toolkit for building highly concurrent, distributed, and resilient message-driven applications 
+  for Java and Scala. Contributed Akka Persistence and Akka Camel.
 - [akka-persistence-cassandra](https://github.com/akka/akka-persistence-cassandra). Storage plugin for Akka Persistence. 
   Started as personal project and now officially maintained by Lightbend.
 - [akka-stream-eventsourcing](https://github.com/krasserm/akka-stream-eventsourcing). Personal project that brings to Akka 
