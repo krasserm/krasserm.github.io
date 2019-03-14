@@ -1,5 +1,5 @@
 ---
-title: Variational Bayesian learning of neural network parameters 
+title: Bayesian learning of neural network parameter distributions
 layout: post
 comments: True
 author: "Martin Krasser"
