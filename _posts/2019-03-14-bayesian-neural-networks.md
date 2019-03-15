@@ -10,15 +10,15 @@ header-img: "img/distributed.png"
 
 This article demonstrates how to implement and train a Bayesian neural network with Keras following the approach described in [Weight Uncertainty in Neural Networks](https://arxiv.org/abs/1505.05424) (*Bayes by Backprop*). The implementation is kept simple for illustration purposes and uses Keras 2.2.4 and Tensorflow 1.12.0. For more advanced implementations of Bayesian learning methods for neural networks consider using [Tensorflow Probability](https://www.tensorflow.org/probability), for example.
 
-Bayesian neural networks differ from plain neural networks in that their weights are assigned a probability distribution instead of a single value or point estimate. These probability distributions describe the uncertainty in weights and can be used to estimate uncertainty in predictions. Training a Bayesian neural network learns the parameters of these distributions instead of weight values directly.
+Bayesian neural networks differ from plain neural networks in that their weights are assigned a probability distribution instead of a single value or point estimate. These probability distributions describe the uncertainty in weights and can be used to estimate uncertainty in predictions. Training a Bayesian neural network learns the parameters of these distributions instead of the weights directly.
 
 ## Probabilistic model
 
 A neural network can be viewed as probabilistic model $p(y \lvert \mathbf{x},\mathbf{w})$. For classification, $y$ is a set of classes and $p(y \lvert \mathbf{x},\mathbf{w})$ is a categorical distribution. For regression, $y$ is a continuous variable and $p(y \lvert \mathbf{x},\mathbf{w})$ is a Gaussian distribution. 
 
-Given a training dataset $$\mathcal{D} = \left\{\mathbf{x}^{(i)}, y^{(i)}\right\}$$ we can construct the likelihood function $p(\mathcal{D} \lvert \mathbf{w}) = \prod_i p(y^{(i)} \lvert \mathbf{x}^{(i)}, \mathbf{w})$ which is a function of parameters $\mathbf{w}$. Maximizing the likelihood function gives the maximimum likelihood estimate (MLE) of $\mathbf{w}$. The usual optimization objective during training is the negative log likelihood. For a categorical distribution this is proportional to the *cross entropy* error function, for a Gaussian distribution this is proportional to the *sum of squares* error function. MLE can lead to severe overfitting though.
+Given a training dataset $$\mathcal{D} = \left\{\mathbf{x}^{(i)}, y^{(i)}\right\}$$ we can construct the likelihood function $p(\mathcal{D} \lvert \mathbf{w}) = \prod_i p(y^{(i)} \lvert \mathbf{x}^{(i)}, \mathbf{w})$ which is a function of parameters $\mathbf{w}$. Maximizing the likelihood function gives the maximimum likelihood estimate (MLE) of $\mathbf{w}$. The usual optimization objective during training is the negative log likelihood. For a categorical distribution this is the *cross entropy* error function, for a Gaussian distribution this is proportional to the *sum of squares* error function. MLE can lead to severe overfitting though.
 
-Multiplying the likelihood with a prior distribution $p(\mathbf{w})$ is, by Bayes theorem, proportional to the posterior distribution $p(\mathbf{w} \lvert \mathcal{D}) \propto p(\mathcal{D} \lvert \mathbf{w}) p(\mathbf{w})$. Maximizing $p(\mathcal{D} \lvert \mathbf{w}) p(\mathbf{w})$ gives the maximum a posteriori (MAP) estimate of $\mathbf{w}$. Computing the MAP estimate has a regularizing effect and can prevent overfitting. The error functions here are the same as for MLE plus a regularization term coming from the log prior.
+Multiplying the likelihood with a prior distribution $p(\mathbf{w})$ is, by Bayes theorem, proportional to the posterior distribution $p(\mathbf{w} \lvert \mathcal{D}) \propto p(\mathcal{D} \lvert \mathbf{w}) p(\mathbf{w})$. Maximizing $p(\mathcal{D} \lvert \mathbf{w}) p(\mathbf{w})$ gives the maximum a posteriori (MAP) estimate of $\mathbf{w}$. Computing the MAP estimate has a regularizing effect and can prevent overfitting. The optimization objectives here are the same as for MLE plus a regularization term coming from the log prior.
 
 Both MLE and MAP give point estimates of parameters. If we instead had a full posterior distribution over parameters we could make predictions that take weight uncertainty into account. This is covered by the posterior predictive distribution $p(y \lvert \mathbf{x},\mathcal{D}) = \int p(y \lvert \mathbf{x}, \mathbf{w}) p(\mathbf{w} \lvert \mathcal{D}) d\mathbf{w}$ in which the parameters have been marginalized out. This is equivalent to averaging predictions from an ensemble of neural networks weighted by the posterior probabilities of their parameters $\mathbf{w}$. 
 
@@ -54,11 +54,11 @@ $$
 $$
 
 
-In the following example, we'll use a Gaussian distribution for the variational posterior, parameterized by $\boldsymbol{\theta} = (\boldsymbol{\mu}, \boldsymbol{\sigma})$ where $\boldsymbol{\mu}$ is the mean vector of the distribution and $\boldsymbol{\sigma}$ the standard deviation vector. The elements of $\boldsymbol{\sigma}$ are the elements of the diagonal covariance matrix which means that weights are assumed to be uncorrelated. Instead of parameterizing the neural network with weights $\mathbf{w}$ directly we parameterize it with $\boldsymbol{\mu}$ and $\boldsymbol{\sigma}$ and therefore double the number of parameters compared to a plain neural network. 
+In the following example, we'll use a Gaussian distribution for the variational posterior, parameterized by $\boldsymbol{\theta} = (\boldsymbol{\mu}, \boldsymbol{\sigma})$ where $\boldsymbol{\mu}$ is the mean vector of the distribution and $\boldsymbol{\sigma}$ the standard deviation vector. The elements of $\boldsymbol{\sigma}$ are the elements of a diagonal covariance matrix which means that weights are assumed to be uncorrelated. Instead of parameterizing the neural network with weights $\mathbf{w}$ directly we parameterize it with $\boldsymbol{\mu}$ and $\boldsymbol{\sigma}$ and therefore double the number of parameters compared to a plain neural network. 
 
 ## Network training
 
-A training iteration consists of a forward-pass and and backward-pass. During a forward pass a single sample is drawn from the variational posterior distribution. It is used to evaluate the approximate cost function defined by equation $3$. The first two terms of the cost function are data-independent and can be evaluated layer-wise, the last term is data-dependent and is evaluated at the end of the forward-pass. During a backward-pass, gradients of $\boldsymbol{\mu}$ and $\boldsymbol{\sigma}$ are calculated via backpropagation and their values updated by an optimizer.
+A training iteration consists of a forward-pass and and backward-pass. During a forward pass a single sample is drawn from the variational posterior distribution. It is used to evaluate the approximate cost function defined by equation $3$. The first two terms of the cost function are data-independent and can be evaluated layer-wise, the last term is data-dependent and is evaluated at the end of the forward-pass. During a backward-pass, gradients of $\boldsymbol{\mu}$ and $\boldsymbol{\sigma}$ are calculated via backpropagation so that their values can be updated by an optimizer.
 
 Since a forward pass involves a stochastic sampling step we have to apply the so-called *re-parameterization trick* for backpropagation to work. The trick is to sample from a parameter-free distribution and then transform the sampled $\boldsymbol{\epsilon}$ with a deterministic function $t(\boldsymbol{\mu}, \boldsymbol{\sigma}, \boldsymbol{\epsilon})$ for which a gradient can be defined. Here, $\boldsymbol{\epsilon}$ is drawn from a standard normal distribution i.e. $\boldsymbol{\epsilon} \sim \mathcal{N}(\mathbf{0}, \mathbf{I})$ and function $t(\boldsymbol{\mu}, \boldsymbol{\sigma}, \boldsymbol{\epsilon}) = \boldsymbol{\mu} + \boldsymbol{\sigma} \odot \boldsymbol{\epsilon}$ shifts the sample by mean $\boldsymbol{\mu}$ and scales it with $\boldsymbol{\sigma}$ where $\odot$ is element-wise multiplication.
 
@@ -66,11 +66,11 @@ For numeric stability we will parameterize the network with $\boldsymbol{\rho}$ 
 
 ## Uncertainty characterization
 
-Uncertainty in predictions that arise from the uncertainty in weights is called [epistemic uncertainty](https://en.wikipedia.org/wiki/Uncertainty_quantification). It can be reduced if we get more data. Consequently,  epistemic uncertainty is higher in regions of no or little training data and lower in regions of more training data. Epistemic uncertainty is covered by the variational posterior distribution. Uncertainty coming from the inherent noise in training data is an example of [aleatoric uncertainty](https://en.wikipedia.org/wiki/Uncertainty_quantification). It cannot be reduced if we get more data. Aleatoric uncertainty is covered by the probability distribution used to define the likelihood function. 
+Uncertainty in predictions that arise from the uncertainty in weights is called [epistemic uncertainty](https://en.wikipedia.org/wiki/Uncertainty_quantification). This kind of uncertainty can be reduced if we get more data. Consequently,  epistemic uncertainty is higher in regions of no or little training data and lower in regions of more training data. Epistemic uncertainty is covered by the variational posterior distribution. Uncertainty coming from the inherent noise in training data is an example of [aleatoric uncertainty](https://en.wikipedia.org/wiki/Uncertainty_quantification). It cannot be reduced if we get more data. Aleatoric uncertainty is covered by the probability distribution used to define the likelihood function. 
 
 ## Implementation example
 
-Variational inference of neural network parameters is now demonstrated on a simple regression problem. We therefore assume a Gaussian distribution for $p(y \lvert \mathbf{x},\mathbf{w})$ and consequently use a sum-of-squares error function as likelihood cost, corresponding to the last term in equation $3$. The training dataset consists of 32 noisy samples `X`, `y` drawn from a sinusoidal function.
+Variational inference of neural network parameters is now demonstrated on a simple regression problem. We therefore use a Gaussian distribution for $p(y \lvert \mathbf{x},\mathbf{w})$. The training dataset consists of 32 noisy samples `X`, `y` drawn from a sinusoidal function.
 
 
 ```python
@@ -84,10 +84,11 @@ def f(x, sigma):
     return 10 * np.sin(2 * np.pi * (x)) + epsilon
 
 train_size = 32
+noise = 1.0
 
 X = np.linspace(-0.5, 0.5, train_size).reshape(-1, 1)
-y = f(X, sigma=1)
-y_true = f(X, sigma=0)
+y = f(X, sigma=noise)
+y_true = f(X, sigma=0.0)
 
 plt.scatter(X, y, marker='+', label='Training data')
 plt.plot(X, y_true, label='Truth')
@@ -157,7 +158,7 @@ class DenseVariational(Layer):
 
         bias_sigma = tf.math.softplus(self.bias_rho)
         bias = self.bias_mu + bias_sigma * tf.random.normal(self.bias_mu.shape)
-        
+                
         self.add_loss(self.kl_loss(kernel, self.kernel_mu, kernel_sigma) + 
                       self.kl_loss(bias, self.bias_mu, bias_sigma))
         
@@ -174,7 +175,7 @@ class DenseVariational(Layer):
     Using TensorFlow backend.
 
 
-Our model is a neural network with two `DenseVariational` hidden layers, each having 20 units, and one `DenseVariational` output layer with one unit. Instead of modeling a full probability distribution $p(y \lvert \mathbf{x},\mathbf{w})$ as output of the network the output is simply the mean of the corresponding Gaussian distribution. In other words, we do not model aleatoric uncertainty here, only epistemic uncertainty.
+Our model is a neural network with two `DenseVariational` hidden layers, each having 20 units, and one `DenseVariational` output layer with one unit. Instead of modeling a full probability distribution $p(y \lvert \mathbf{x},\mathbf{w})$ as output the network simply outputs the mean of the corresponding Gaussian distribution. In other words, we do not model aleatoric uncertainty here and assume it is known. We only model epistemic uncertainty via the `DenseVariational` layers.
 
 Since the training dataset has only 32 examples we train the network with all 32 examples per epoch so that the number of batches per epoch is 1. For other configurations, the complexity cost (`kl_loss`) must be weighted by $1/M$ as described in section 3.4 of the paper where $M$ is the number of mini-batches per epoch.
 
@@ -195,20 +196,21 @@ x = DenseVariational(1, kl_loss_weight=kl_loss_weight)(x)
 model = Model(x_in, x)
 ```
 
-The network can now be trained as usual using a `sum_of_squares_error` function as loss function.
+The network can now be trained with a Gaussian negative log likelihood function (`neg_log_likelihood`) as loss function assuming a fixed standard deviation (`noise`). This corresponds to the *likelihood cost*, the last term in equation $3$. 
 
 
 ```python
 from keras import callbacks, optimizers
 
-def sum_of_squares_error(y_true, y_pred):
-    return K.sum(K.square(y_pred - y_true))
+def neg_log_likelihood(y_true, y_pred, sigma=noise):
+    dist = tf.distributions.Normal(loc=y_true, scale=sigma)
+    return K.sum(-dist.log_prob(y_pred))
 
-model.compile(loss=sum_of_squares_error, optimizer=optimizers.Adam(lr=0.05), metrics=['mse'])
-model.fit(X, y, batch_size=batch_size, epochs=1000, verbose=0);
+model.compile(loss=neg_log_likelihood, optimizer=optimizers.Adam(lr=0.03), metrics=['mse'])
+model.fit(X, y, batch_size=batch_size, epochs=1500, verbose=0);
 ```
 
-When calling `model.predict` we draw a random sample from the variational posterior distribution and use it to compute the output of the network. This is equivalent to obtaining the output from a single member of a hypothetical ensemble of neural networks. Drawing 500 samples means that we get predictions from 500 ensemble members. From these predictions we can compute statistics such as the mean and standard deviation. In our example, the standard deviation is a measure of epistemic uncertainty.
+When calling `model.predict` we draw a random sample from the variational posterior distribution and use it to compute the output value of the network. This is equivalent to obtaining the output from a single member of a hypothetical ensemble of neural networks. Drawing 500 samples means that we get predictions from 500 ensemble members. From these predictions we can compute statistics such as the mean and standard deviation. In our example, the standard deviation is a measure of epistemic uncertainty.
 
 
 ```python
@@ -232,11 +234,11 @@ plt.fill_between(X_test.ravel(),
                  y_mean + 2 * y_sigma, 
                  y_mean - 2 * y_sigma, 
                  alpha=0.5, label='Epistemic uncertainty')
-plt.title('Ensemble prediction')
+plt.title('Prediction')
 plt.legend();
 ```
 
-    100%|██████████| 500/500 [00:05<00:00, 86.25it/s]
+    100%|██████████| 500/500 [00:05<00:00, 89.00it/s]
 
 
 
