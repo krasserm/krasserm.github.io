@@ -1,5 +1,5 @@
 ---
-title: Bayesian learning of neural network parameter distributions
+title: Variational inference for Bayesian neural networks
 layout: post
 comments: True
 author: "Martin Krasser"
@@ -10,7 +10,7 @@ header-img: "img/distributed.png"
 
 This article demonstrates how to implement and train a Bayesian neural network with Keras following the approach described in [Weight Uncertainty in Neural Networks](https://arxiv.org/abs/1505.05424) (*Bayes by Backprop*). The implementation is kept simple for illustration purposes and uses Keras 2.2.4 and Tensorflow 1.12.0. For more advanced implementations of Bayesian learning methods for neural networks consider using [Tensorflow Probability](https://www.tensorflow.org/probability), for example.
 
-Bayesian neural networks differ from plain neural networks in that their weights are assigned a probability distribution instead of a single value or point estimate. These probability distributions describe the uncertainty in weights and can be used to estimate uncertainty in predictions. Training a Bayesian neural network learns the parameters of these distributions instead of the weights directly.
+Bayesian neural networks differ from plain neural networks in that their weights are assigned a probability distribution instead of a single value or point estimate. These probability distributions describe the uncertainty in weights and can be used to estimate uncertainty in predictions. Training a Bayesian neural network via variational inference learns the parameters of these distributions instead of the weights directly.
 
 ## Probabilistic model
 
