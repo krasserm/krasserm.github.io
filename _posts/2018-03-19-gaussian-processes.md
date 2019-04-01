@@ -51,8 +51,8 @@ With $N$ training data and $$N_*$$ new input data, $$\mathbf{K}_y = \kappa(\math
 
 $$
 \begin{align*}
-\boldsymbol{\mu_*} &= \mathbf{K}_*^T \mathbf{K}_*^{-1} \mathbf{y}\tag{4}\label{eq4} \\
-\boldsymbol{\Sigma_*} &= \mathbf{K}_{**} - \mathbf{K}_*^T \mathbf{K}_*^{-1} \mathbf{K}_*\tag{5}\label{eq5}
+\boldsymbol{\mu_*} &= \mathbf{K}_*^T \mathbf{K}_y^{-1} \mathbf{y}\tag{4}\label{eq4} \\
+\boldsymbol{\Sigma_*} &= \mathbf{K}_{**} - \mathbf{K}_*^T \mathbf{K}_y^{-1} \mathbf{K}_*\tag{5}\label{eq5}
 \end{align*}
 $$
 
