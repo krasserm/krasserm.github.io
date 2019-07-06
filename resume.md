@@ -49,7 +49,9 @@ Self-employed, [http://www.martin-krasser.de](http://www.martin-krasser.de)
 - Software development and consulting services with a focus on machine learning, data-intensive applications and 
   distributed systems.
   
-### 05.2017 to 04.2018, Sabbatical: machine learning specialization
+### 05.2017 to 04.2018, Machine learning sabbatical
+
+Sabbatical year
 
 - Deep dive into statistics, classical machine learning and deep learning.
 - [Certifications](#certifications) received in statistics and machine learning MOOCs.
