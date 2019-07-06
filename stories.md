@@ -92,20 +92,18 @@ official replacement for akka-camel and part of the [Alpakka](https://github.com
 
 ## Machine learning
 
-I had my first contact with machine learning and statistical mechanics in 1999 when I worked on ab-initio protein structure
-prediction at the University of Salzburg. Focus of my work were [knowledge based potentials](https://en.wikipedia.org/wiki/Statistical_potential) 
-for protein structure assessment and for guiding protein folding simulations. In 2003, I implemented several machine learning 
-algorithms for the drug discovery pipeline of an international pharmaceutical company. These were mainly hierarchical clustering 
-algorithms for grouping chemical compounds. Some implementations were based on the [nearest neighbor chain algorithm](https://en.wikipedia.org/wiki/Nearest-neighbor_chain_algorithm)
-to achieve low time and space complexity, an important requirement in this context. The company used these implementations 
-for several years in production.
-
-I resumed working with machine learning and statistics in 2014 as it became increasingly important for my projects. I used 
-it to predict distributed systems behavior, such as job execution times across multiple data centers, and for analyzing 
-application-level event logs. In 2017, I finally decided to take a sabbatical year to go deeper into machine learning, 
-statistics and mathematics. During that time I took several [courses](/resume/#certificates), read many [books](/2018/01/03/machine-learning-resources/) 
-and published [articles](/) and exercise code about [machine learning basics](https://github.com/krasserm/machine-learning-notebooks), 
-[Bayesian machine learning](https://github.com/krasserm/bayesian-machine-learning) and [other topics](https://github.com/krasserm). 
-I meanwhile work as machine learning engineer on computer vision problems such as face recognition, image aesthetic 
-assessment, content-based image retrieveal and [single image super-resolution](https://github.com/krasserm/wdsr), all based
-on deep learning approaches. In my private projects I'm experimenting with Bayesian methods for machine learning.
+I got into machine learning in 2014 after having attended Andrew Ng's machine learning course on Coursera. After having 
+applied machine learning in several private projects I decided in 2017 to take a sabattical for going much deeper into
+statistics, classical machine learning and deep learning. I took several [courses](/resume/#certifications) and spend a
+lot of time reading [books](/2018/01/03/machine-learning-resources/) and doing exercises. I published part of my exercise 
+work in [articles](/) and [open source projects](/resume#open-source-projects). I also developed a special interest in 
+[Bayesian methods for machine learning](https://github.com/krasserm/bayesian-machine-learning) which I also apply in 
+context of deep learning.
+ 
+Even before my sabbatical year ended I was offered a machine learning position based on the [articles](/) I wrote. In this 
+position I'm extending the customer's digital asset management system with features like [facial recognition](https://resources.merlinone.com/facial-recognition), 
+[content-based image retrieval](https://resources.merlinone.com/image-similarity), image aesthetics assessment and 
+[single image super-resolution](https://github.com/krasserm/super-resolution), all based on deep learning methods. I 
+especially like the good balance between scientific and engineering work in this project. Ethical aspects like avoiding 
+racial bias in facial recognition also play an important role. The developed machine learning solutions meanwhile run 
+in production at several customer sites in a Docker-based service-oriented architecture.
