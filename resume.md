@@ -2,11 +2,21 @@
 layout: page
 title: "Resume"
 header-img: "img/distributed.png"
+header-includes:
+  - \hypersetup{colorlinks=false,
+            allbordercolors={0 0 0},
+            pdfborderstyle={/S/U/W 1}}
 ---
 
+# Martin Krasser
+
 I'm a self-employed software engineer and architect with a focus on machine learning, data-intensive applications and
-distributed systems. I support customers with the scientific, engineering and management aspects of their AI projects. 
+distributed systems. I support customers in their AI projects from a scientific, engineering and management perspective.
 I'm a continuous learner, passionate about technology and contributor to several open source projects.
+
+[http://martin-krasser.de](http://martin-krasser.de)  
+[https://twitter.com/mrt1nz](https://twitter.com/mrt1nz)  
+[https://github.com/krasserm](https://github.com/krasserm)  
 
 ## Specialties
 
@@ -29,7 +39,7 @@ probabilistic programming.
 
 ## Work experience
 
-See also [Stories](/stories/) for further information.
+See also [Stories](https://krasserm.github.io/stories/) for further information.
 
 ### Since 04.2018, Freelance machine learning engineer
 
@@ -55,7 +65,7 @@ Sabbatical year
 
 - Deep dive into statistics, classical machine learning and deep learning.
 - [Certifications](#certifications) received in statistics and machine learning MOOCs.
-- Publication of some exercise work in [articles](/) and [open source projects](#open-source-projects).
+- Publication of some exercise work in [articles](https://krasserm.github.io) and [open source projects](#open-source-projects).
 - Equal focus on theoretical and engineering aspects of machine learning.
 
 ### 02.2017 - 04.2017, Freelance software engineer and consultant
@@ -149,7 +159,7 @@ Austrian Red Cross, [http://www.roteskreuz.at/](http://www.roteskreuz.at/)
 ## Open source projects
 
 The following is an incomplete list of open source projects I'm currently working on or worked on in the past. See also
-[Stories](/stories/) for some details and my [Github account](https://github.com/krasserm) for a complete list.
+[Stories](https://krasserm.github.io/stories/) for some details and my [Github account](https://github.com/krasserm) for a complete list.
 
 ### Machine learning
 
@@ -190,13 +200,13 @@ exercises re-written in Python and scikit-learn.
 ## Certifications
 
 - Advanced Machine Learning Specialization.
-  - 03.2018 [Bayesian Methods for Machine Learning](https://www.coursera.org/account/accomplishments/certificate/JCLCTLAFA6FL).
+    - 03.2018 [Bayesian Methods for Machine Learning](https://www.coursera.org/account/accomplishments/certificate/JCLCTLAFA6FL).
 - 02.2018, [Deep Learning Specialization](https://www.coursera.org/account/accomplishments/specialization/certificate/N7D4G6K9RUJ5).
-  - 02.2018, [Sequence Models](https://www.coursera.org/account/accomplishments/certificate/LW9F67WHE9BD).
-  - 12.2017, [Convolutional Neural Networks](https://www.coursera.org/account/accomplishments/certificate/KHC48MXMABUS).
-  - 12.2017, [Structuring Machine Learning Projects](https://www.coursera.org/account/accomplishments/certificate/BZ4VKF7ZP4D8).
-  - 12.2017, [Improving Deep Neural Networks: Hyperparameter tuning, Regularization and Optimization](https://www.coursera.org/account/accomplishments/certificate/SRW2KEFARWQD).
-  - 12.2017, [Neural Networks and Deep Learning](https://www.coursera.org/account/accomplishments/certificate/9H2KQFF4UZJF).
+    - 02.2018, [Sequence Models](https://www.coursera.org/account/accomplishments/certificate/LW9F67WHE9BD).
+    - 12.2017, [Convolutional Neural Networks](https://www.coursera.org/account/accomplishments/certificate/KHC48MXMABUS).
+    - 12.2017, [Structuring Machine Learning Projects](https://www.coursera.org/account/accomplishments/certificate/BZ4VKF7ZP4D8).
+    - 12.2017, [Improving Deep Neural Networks: Hyperparameter tuning, Regularization and Optimization](https://www.coursera.org/account/accomplishments/certificate/SRW2KEFARWQD).
+    - 12.2017, [Neural Networks and Deep Learning](https://www.coursera.org/account/accomplishments/certificate/9H2KQFF4UZJF).
 - 11.2017, [Bayesian Statistics](https://www.coursera.org/account/accomplishments/certificate/Y6BXN4STWKTA).
 - 11.2017, [Inferential statistics](https://www.coursera.org/account/accomplishments/certificate/CC2MMS6X7H86).
 - 04.2014, [Machine Learning](http://martin-krasser.de/certificates/coursera/machinelearning/certificate-2014-machine-learning.pdf).
@@ -206,8 +216,8 @@ exercises re-written in Python and scikit-learn.
 ## Articles
 
 - [Blog posts](http://krasserm.github.io) 
-  - at [krasserm.github.io](http://krasserm.github.io) since 01.2015, 
-  - at [krasserm.blogspot.com](http://krasserm.blogspot.com) until 12.2014.
+    - at [krasserm.github.io](http://krasserm.github.io) since 01.2015, 
+    - at [krasserm.blogspot.com](http://krasserm.blogspot.com) until 12.2014.
 - [Introduction to the Open eHealth Integration Platform](https://dzone.com/articles/introduction-open-ehealth). DZone, 
 05.2011.
 - [Akka and Camel](https://manning-content.s3.amazonaws.com/download/b/ae4ebfa-c4dd-413f-8f1a-1ce1f86816b8/appEsample.pdf), 
