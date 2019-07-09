@@ -11,7 +11,7 @@ header-includes:
 # Martin Krasser
 
 I'm a self-employed software engineer and architect with a focus on machine learning, data-intensive applications and
-distributed systems. I support customers in their AI projects from a scientific, engineering and management perspective.
+distributed systems. In AI projects, I support customers in scientific, engineering and project management tasks.
 I'm a continuous learner, passionate about technology and contributor to several open source projects.
 
 [http://martin-krasser.de](http://martin-krasser.de)  
