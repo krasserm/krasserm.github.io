@@ -202,9 +202,9 @@ The network can now be trained with a Gaussian negative log likelihood function 
 ```python
 from keras import callbacks, optimizers
 
-def neg_log_likelihood(y_true, y_pred, sigma=noise):
+def neg_log_likelihood(y_obs, y_pred, sigma=noise):
     dist = tf.distributions.Normal(loc=y_pred, scale=sigma)
-    return K.sum(-dist.log_prob(y_true))
+    return K.sum(-dist.log_prob(y_obs))
 
 model.compile(loss=neg_log_likelihood, optimizer=optimizers.Adam(lr=0.03), metrics=['mse'])
 model.fit(X, y, batch_size=batch_size, epochs=1500, verbose=0);
