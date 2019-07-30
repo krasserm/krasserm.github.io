@@ -6,7 +6,7 @@ author: "Martin Krasser"
 header-img: "img/distributed.png"
 ---
 
-*This article is an export of the [Gaussian processes](http://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/master/gaussian_processes.ipynb?flush_cache=true) notebook which is part of the [bayesian-machine-learning](https://github.com/krasserm/bayesian-machine-learning) repo on Github.*
+*This article is an export of the [Gaussian processes](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/master/gaussian_processes.ipynb) notebook which is part of the [bayesian-machine-learning](https://github.com/krasserm/bayesian-machine-learning) repo on Github.*
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/krasserm/bayesian-machine-learning/blob/master/gaussian_processes.ipynb)
 
 ## Introduction
@@ -249,30 +249,50 @@ In the following we will minimize the negative marginal log-likelihood w.r.t. pa
 
 
 ```python
-from numpy.linalg import cholesky
+from numpy.linalg import cholesky, det, lstsq
 from scipy.optimize import minimize
 
-def nll_fn(X_train, Y_train, noise):
+def nll_fn(X_train, Y_train, noise, naive=True):
     '''
-    Returns a function that computes the negative log-likelihood
-    for training data X_train and Y_train and given noise level.
+    Returns a function that computes the negative marginal log-
+    likelihood for training data X_train and Y_train and given 
+    noise level.
     
     Args:
         X_train: training locations (m x d).
         Y_train: training targets (m x 1).
         noise: known noise level of Y_train.
+        naive: if True use a naive implementation of Eq. (7), if 
+               False use a numerically more stable implementation. 
         
     Returns:
         Minimization objective.
     '''
-    def step(theta):
+    def nll_naive(theta):
+        # Naive implementation of Eq. (7). Works well for the examples 
+        # in this article but is numerically less stable compared to 
+        # the implementation in nll_stable below.
         K = kernel(X_train, X_train, l=theta[0], sigma_f=theta[1]) + \
             noise**2 * np.eye(len(X_train))
-        # Compute determinant via Cholesky decomposition
-        return np.sum(np.log(np.diagonal(cholesky(K)))) + \
+        return 0.5 * np.log(det(K)) + \
                0.5 * Y_train.T.dot(inv(K).dot(Y_train)) + \
                0.5 * len(X_train) * np.log(2*np.pi)
-    return step
+
+    def nll_stable(theta):
+        # Numerically more stable implementation of Eq. (7) as described
+        # in http://www.gaussianprocess.org/gpml/chapters/RW2.pdf, Section
+        # 2.2, Algorithm 2.1.
+        K = kernel(X_train, X_train, l=theta[0], sigma_f=theta[1]) + \
+            noise**2 * np.eye(len(X_train))
+        L = cholesky(K)
+        return np.sum(np.log(np.diagonal(L))) + \
+               0.5 * Y_train.T.dot(lstsq(L.T, lstsq(L, Y_train)[0])[0]) + \
+               0.5 * len(X_train) * np.log(2*np.pi)
+    
+    if naive:
+        return nll_naive
+    else:
+        return nll_stable
 
 # Minimize the negative log-likelihood w.r.t. parameters l and sigma_f.
 # We should actually run the minimization several times with different
