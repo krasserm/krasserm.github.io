@@ -17,7 +17,7 @@ of Tensorflow, I recommend using one of these implementations. The Keras-based i
 optimizer with weight normalization functionality in a generic way so that different Keras layers (convolutional, dense, ...) 
 can be trained with weight normalization. A procedure for data-based initialization is also provided. A Keras 2.x port of 
 that code is available [here](https://github.com/krasserm/weightnorm/tree/master/keras_2). I tested 
-the Adam-based weight normalization implementation in [another project](https://github.com/krasserm/wdsr) (an implementation
+the Adam-based weight normalization implementation in [another project](https://github.com/krasserm/super-resolution/tree/previous) (an implementation
 of [WDSR](https://arxiv.org/abs/1808.08718) for single image super-resolution) and get almost identical results as the 
 PyTorch-based [reference implementation](https://github.com/JiahuiYu/wdsr_ntire2018) (PyTorch already contains an 
 [official implementation](https://pytorch.org/docs/stable/nn.html#weight-norm) of weight normalization). 
@@ -32,7 +32,7 @@ this template (but less elegant compared to a generic wrapper as described furth
 a procedure for data-based initialization though. For the special case of [WDSR](https://arxiv.org/abs/1808.08718), this 
 is not needed as data-based initialization has a similar effect as batch-normalization which is known to harm single 
 image super-resolution training but this cannot be generalized to other projects, of course. I also tested the 
-`Conv2DWeightNorm` layer in the Keras version of WDSR (see section [Weight normalization](https://github.com/krasserm/wdsr#weight-normalization)) 
+`Conv2DWeightNorm` layer in the Keras version of WDSR (see section [Weight normalization](https://github.com/krasserm/super-resolution/tree/previous#weight-normalization)) 
 and convergence is similar to that of Adam-based weight normalization. The latter shows slightly better initial 
 convergence but training with `Conv2DWeightNorm` in combination with a default Adam optimizer quickly catches up. The 
 difference is probably due to different weight initializations. 
@@ -40,7 +40,8 @@ difference is probably due to different weight initializations.
 There's also a long-time open [pull request](https://github.com/tensorflow/tensorflow/pull/21276) 
 for adding weight normalization to Tensorflow, also supporting the bundled Keras version, but review is still pending. 
 It is a generic wrapper layer that works for several types of Tensorflow and Keras layers. Data-based initialization is 
-also supported but only in eager mode. 
+also supported but only in eager mode. **Update:** this is now part of the [Tensorflow Addons](https://github.com/tensorflow/addons) 
+project and used in the [Tensorflow 2.0 port of WDSR](https://github.com/krasserm/super-resolution).
 
 Several other implementations are evailable but most of them are slight variations of what I presented here. I hope 
 this post saves you some time finding a weight normalization implementation for your project. If I missed something or 
