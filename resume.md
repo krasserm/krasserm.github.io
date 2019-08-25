@@ -110,7 +110,7 @@ Eligotech BV, [http://www.eligotech.com](http://www.eligotech.com)
 - Conception and development of [Eventsourced](https://github.com/eligosource/eventsourced), an open source project for 
 building reliable, scalable and distributed event-sourced applications in Scala.
 
-### 02.2011 – 04.2011,  Software engineer and architect
+### 02.2011 – 04.2011,  Senior software architect and engineer
 
 Talend, [http://www.talend.com](http://www.talend.com)
 
