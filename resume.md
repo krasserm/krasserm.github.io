@@ -10,9 +10,10 @@ header-includes:
 
 # Martin Krasser
 
-I'm a self-employed software engineer and architect with a focus on machine learning, data-intensive applications and
-distributed systems. I'm a continuous learner, passionate about technology and contributor to several open source 
-projects.
+I'm a self-employed machine learning engineer and distributed systems specialist with a strong software engineering 
+background. I have experience in both, classical machine learning and deep learning (mainly computer vision but also
+natural language processing) including Bayesian methods. I'm a continuous learner, passionate about technology and 
+contributor to several open source projects.
 
 [http://martin-krasser.de](http://martin-krasser.de)  
 [https://twitter.com/mrt1nz](https://twitter.com/mrt1nz)  
@@ -41,7 +42,7 @@ probabilistic programming.
 
 See also [Stories](https://krasserm.github.io/stories/) for further information.
 
-### Since 04.2018, Freelance machine learning engineer
+### Since 04.2018, Machine learning engineer
 
 MerlinOne, [https://merlinone.com](https://merlinone.com)
 
@@ -52,31 +53,32 @@ MerlinOne, [https://merlinone.com](https://merlinone.com)
 - Responsible for the scientific and engineering parts of all machine learning projects.
 - Support production deployments to several customer sites (hosted and on-premise). 
  
-### Since 04.2011, Freelance software engineer, architect and consultant
+### Since 04.2011, Machine learning engineer, software engineer and architect
 
 Self-employed, [http://www.martin-krasser.de](http://www.martin-krasser.de)  
 
-- Software development and consulting services with a focus on machine learning, data-intensive applications and 
-  distributed systems.
+- Machine learning research and development services (incl. deep learning).
+- Distributed systems development and consulting services.
+- Work as contractor for customers since 2011.
   
 ### 05.2017 to 04.2018, Machine learning sabbatical
 
-Sabbatical year
+Sabbatical year 
 
 - Deep dive into statistics, classical machine learning and deep learning.
 - [Certifications](#certifications) received in statistics and machine learning MOOCs.
 - Publication of some exercise work in [articles](https://krasserm.github.io) and [open source projects](#open-source-projects).
 - Equal focus on theoretical and engineering aspects of machine learning.
 
-### 02.2017 - 04.2017, Freelance software engineer and consultant
+### 02.2017 - 04.2017, Distributed systems engineer
 
-fine.lines.software GmbH, [https://bullet.io](https://bullet.io)
+fine.lines.software GmbH, [https://bullet.io](https://bullet.io) (contractor)
 
 - Design and implementation of a distributed system architecture based on event sourcing with explicit causality that 
 also includes mobile devices. 
 - Consulting activities and development of prototypes. 
 
-### 09.2014 - 08.2017, Freelance software architect and engineer
+### 09.2014 - 08.2017, Distributed systems engineer
 
 Red Bull Media House, [http://www.redbullmediahouse.com](http://www.redbullmediahouse.com)
 
@@ -85,7 +87,7 @@ implementation.
 - Conception and development of [Eventuate](https://github.com/RBMHTechnology/eventuate), a toolkit for event sourcing 
 and event collaboration at global scale with causal consistency.
 
-### 10.2015 - 07.2017, Freelance software architect and engineer
+### 10.2015 - 07.2017, Software engineer and consultant
 
 agido GmbH, [http://www.agido.com](http://www.agido.com)
 
@@ -94,13 +96,13 @@ stream processing architecture.
 - Usage of Eventuate as technical basis for the web application backend. Development of streaming data analytics 
 extensions for Eventuate.
 
-### 10.2013 – 02.2014, Freelance software engineer
+### 10.2013 – 02.2014, Software engineer and architect
 
 Lightbend, [http://www.lightbend.com/](http://www.lightbend.com/) (formerly Typesafe)
 
 - Conception and development of [Akka Persistence](https://doc.akka.io/docs/akka/current/persistence.html).  
 
-### 03.2012 – 10.2013, Freelance software architect and engineer
+### 03.2012 – 10.2013, Software engineer and architect
 
 Eligotech BV, [http://www.eligotech.com](http://www.eligotech.com) 
 
@@ -108,7 +110,7 @@ Eligotech BV, [http://www.eligotech.com](http://www.eligotech.com)
 - Conception and development of [Eventsourced](https://github.com/eligosource/eventsourced), an open source project for 
 building reliable, scalable and distributed event-sourced applications in Scala.
 
-### 02.2011 – 04.2011,  Software architect and engineer
+### 02.2011 – 04.2011,  Software engineer and architect
 
 Talend, [http://www.talend.com](http://www.talend.com)
 
