@@ -10,10 +10,12 @@ header-includes:
 
 # Martin Krasser
 
-I'm a self-employed machine learning engineer and distributed systems specialist with a strong software engineering 
-background. I have experience in both, classical machine learning and deep learning (mainly computer vision but also
-natural language processing) including Bayesian methods. I'm a continuous learner, passionate about technology and 
-contributor to several open source projects.
+I'm a self-employed machine learning engineer and distributed systems specialist with a strong background in software
+engineering. I have experience with "traditional" machine learning, deep learning and Bayesian methods for machine 
+learning. My deep learning projects mainly focus on computer vision problems but recently also on natural language
+processing. My distributed systems experience comes from the development of numerous large-scale event-driven systems 
+as well as globally distributed systems that provide causal consistency guarantees. I'm a continuous learner, passionate 
+about technology and contributor to several open source projects.
 
 [http://martin-krasser.de](http://martin-krasser.de)  
 [https://twitter.com/mrt1nz](https://twitter.com/mrt1nz)  
@@ -59,13 +61,13 @@ Self-employed, [http://www.martin-krasser.de](http://www.martin-krasser.de)
 
 - Machine learning research and development services (incl. deep learning).
 - Distributed systems development and consulting services.
-- Work as contractor for customers since 2011.
+- See other positions since 2011 for further details. 
   
 ### 05.2017 to 04.2018, Machine learning sabbatical
 
 Sabbatical year 
 
-- Deep dive into statistics, classical machine learning and deep learning.
+- Deep dive into statistics, "traditional" machine learning and deep learning.
 - [Certifications](#certifications) received in statistics and machine learning MOOCs.
 - Publication of some exercise work in [articles](https://krasserm.github.io) and [open source projects](#open-source-projects).
 - Equal focus on theoretical and engineering aspects of machine learning.
