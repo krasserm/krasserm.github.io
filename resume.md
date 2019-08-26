@@ -59,7 +59,7 @@ MerlinOne, [https://merlinone.com](https://merlinone.com)
 
 Self-employed, [http://www.martin-krasser.de](http://www.martin-krasser.de)  
 
-- Machine learning research and development services (incl. deep learning).
+- Research and software development in context of industry machine learning projects.
 - Distributed systems development and consulting services.
 - See other positions since 2011 for further details. 
   
