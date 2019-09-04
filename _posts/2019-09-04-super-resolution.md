@@ -6,6 +6,8 @@ author: "Martin Krasser"
 header-img: "img/distributed.png"
 ---
 
+*You can find the notebook for this article [here](https://nbviewer.jupyter.org/github/krasserm/super-resolution/blob/master/article.ipynb). It is part of the [super-resolution](https://github.com/krasserm/super-resolution) repo on Github.*
+
 This article is an introduction to single image super-resolution. It covers some important developments in recent years and shows their implementation in Tensorflow 2.0. The primary focus is on specialized residual network architectures and generative adversarial networks (GANs) for fine-tuning super-resolution models. 
 
 Super-resolution is the process of recovering a high-resolution (HR) image from a low-resolution (LR) image. We will refer to a recovered HR image as *super-resolved image* or *SR image*. Super-resolution is an ill-posed problem since a large number of solutions exist for a single pixel in an LR image. Simple approaches like bilinear or bicubic interpolation use only local information in an LR image to compute pixel values in the corresponding SR image. 
