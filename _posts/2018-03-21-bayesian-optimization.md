@@ -134,7 +134,7 @@ def expected_improvement(X, X_sample, Y_sample, gpr, xi=0.01):
     mu, sigma = gpr.predict(X, return_std=True)
     mu_sample = gpr.predict(X_sample)
 
-    sigma = sigma.reshape(-1, X_sample.shape[1])
+    sigma = sigma.reshape(-1, 1)
     
     # Needed for noise-based model,
     # otherwise use np.max(Y_sample).
