@@ -149,7 +149,7 @@ Data-dependent initialization of weight normalization layer parameters is not do
 
 ## Model training
 
-If you want to skip running trained code in this section, you can download pre-trained models [here](https://drive.google.com/open?id=1wN4JxevxQ8muL3gCFEyrQMSTHSIUqgPS) and use in the [next section](#results) for generating SR images from LR images. 
+If you want to skip running trained code in this section, you can download pre-trained models [here](https://drive.google.com/open?id=1sIxKFWbUHlywyDqIFdVt8081VBbVypg3) and use in the [next section](#results) for generating SR images from LR images. 
 
 ### Data
 
@@ -369,7 +369,7 @@ generator.save_weights(os.path.join(weights_dir, 'weights-wdsr-b-32-x4-fine-tune
 
 ## Results
 
-If you didn't run training code in the [previous section](#model-training), download model weights [here](https://drive.google.com/open?id=1wN4JxevxQ8muL3gCFEyrQMSTHSIUqgPS) and extract the downloaded archive. The trained EDSR model can now be used to create SR images from [LR images](https://github.com/krasserm/super-resolution/tree/master/demo). One can clearly see how fine-tuning with a perceptual loss creates more realistic textures in SR images compared to training with a pixel-wise loss alone.
+If you didn't run training code in the [previous section](#model-training), download model weights [here](https://drive.google.com/open?id=1sIxKFWbUHlywyDqIFdVt8081VBbVypg3) and extract the downloaded archive. The trained EDSR model can now be used to create SR images from [LR images](https://github.com/krasserm/super-resolution/tree/master/demo). One can clearly see how fine-tuning with a perceptual loss creates more realistic textures in SR images compared to training with a pixel-wise loss alone.
 
 
 ```python
