@@ -44,11 +44,11 @@ probabilistic programming.
 
 See also [Stories](https://krasserm.github.io/stories/) for further information.
 
-### Since 04.2018, Machine learning engineer
+### Since 04.2018, Machine learning engineer (freelancer)
 
 MerlinOne, [https://merlinone.com](https://merlinone.com)
 
-- Extension of the MerlinOne digital asset management system with artificial intelligence functionality.
+- Design and implementation of AI extensions for the MerlinOne digital asset management system.
 - Application of deep learning methods for large-scale [facial recognition](https://resources.merlinone.com/facial-recognition), 
   [content-based image retrieval](https://resources.merlinone.com/image-similarity), image aesthetics assessment and 
   [single image super-resolution](https://github.com/krasserm/super-resolution). 
@@ -72,15 +72,15 @@ Sabbatical year
 - Publication of some exercise work in [articles](https://krasserm.github.io) and [open source projects](#open-source-projects).
 - Equal focus on theoretical and engineering aspects of machine learning.
 
-### 02.2017 - 04.2017, Distributed systems engineer
+### 02.2017 - 04.2017, Distributed systems engineer (freelancer)
 
-fine.lines.software GmbH, [https://bullet.io](https://bullet.io) (contractor)
+fine.lines.software GmbH, [https://bullet.io](https://bullet.io)
 
 - Design and implementation of a distributed system architecture based on event sourcing with explicit causality that 
 also includes mobile devices. 
 - Consulting activities and development of prototypes. 
 
-### 09.2014 - 08.2017, Distributed systems engineer
+### 09.2014 - 08.2017, Distributed systems engineer (freelancer)
 
 Red Bull Media House, [http://www.redbullmediahouse.com](http://www.redbullmediahouse.com)
 
@@ -89,7 +89,7 @@ implementation.
 - Conception and development of [Eventuate](https://github.com/RBMHTechnology/eventuate), a toolkit for event sourcing 
 and event collaboration at global scale with causal consistency.
 
-### 10.2015 - 07.2017, Software engineer and consultant
+### 10.2015 - 07.2017, Software engineer and architect (freelancer)
 
 agido GmbH, [http://www.agido.com](http://www.agido.com)
 
@@ -98,13 +98,13 @@ stream processing architecture.
 - Usage of Eventuate as technical basis for the web application backend. Development of streaming data analytics 
 extensions for Eventuate.
 
-### 10.2013 – 02.2014, Software engineer and architect
+### 10.2013 – 02.2014, Software engineer and architect (freelancer)
 
 Lightbend, [http://www.lightbend.com/](http://www.lightbend.com/) (formerly Typesafe)
 
 - Conception and development of [Akka Persistence](https://doc.akka.io/docs/akka/current/persistence.html).  
 
-### 03.2012 – 10.2013, Software engineer and architect
+### 03.2012 – 10.2013, Software engineer and architect (freelancer)
 
 Eligotech BV, [http://www.eligotech.com](http://www.eligotech.com) 
 
