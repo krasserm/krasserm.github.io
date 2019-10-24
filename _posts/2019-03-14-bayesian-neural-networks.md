@@ -169,7 +169,7 @@ class DenseVariational(Layer):
     
     def kl_loss(self, w, mu, sigma):
         variational_dist = tf.distributions.Normal(mu, sigma)
-        return kl_loss_weight * K.sum(variational_dist.log_prob(w) - log_mixture_prior_prob(w))
+        return self.kl_loss_weight * K.sum(variational_dist.log_prob(w) - log_mixture_prior_prob(w))
 ```
 
     Using TensorFlow backend.
