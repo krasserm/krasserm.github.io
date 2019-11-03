@@ -24,7 +24,7 @@ Both MLE and MAP give point estimates of parameters. If we instead had a full po
 
 ## Variational inference
 
-Unfortunately, an analytical solution for the posterior $p(\mathbf{w} \lvert \mathcal{D})$ in neural networks is untractable. We therefore have to approximate the true posterior with a variational distribution $q(\mathbf{w} \lvert \boldsymbol{\theta})$ of known functional form whose parameters we want to estimate. This can be done by minimizing the [Kullback-Leibler divergence](https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence) between $q(\mathbf{w} \lvert \boldsymbol{\theta})$ and the true posterior $p(\mathbf{w} \lvert \mathcal{D})$  w.r.t. to $\boldsymbol{\theta}$. It can be shown that the corresponding optimization objective or cost function can be written as
+Unfortunately, an analytical solution for the posterior $p(\mathbf{w} \lvert \mathcal{D})$ in neural networks is untractable. We therefore have to approximate the true posterior with a variational distribution $q(\mathbf{w} \lvert \boldsymbol{\theta})$ of known functional form whose parameters we want to estimate. This can be done by minimizing the [Kullback-Leibler divergence](https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence) between $q(\mathbf{w} \lvert \boldsymbol{\theta})$ and the true posterior $p(\mathbf{w} \lvert \mathcal{D})$  w.r.t. to $\boldsymbol{\theta}$. As shown in [Appendix](#appendix), the corresponding optimization objective or cost function is
 
 $$
 \mathcal{F}(\mathcal{D},\boldsymbol{\theta}) = 
@@ -248,3 +248,71 @@ plt.legend();
 We can clearly see that epistemic uncertainty is much higher in regions of no training data than it is in regions of existing training data. The predictive mean could have also been obtained with a single forward pass i.e. a single `model.predict` call by using only the mean of the variational posterior distribution which is equivalent to sampling from the variational posterior with $\boldsymbol{\sigma}$ set to $\mathbf{0}$. The corresponding implementation is omitted here but is trivial to add.
 
 For an example how to model both epistemic and aleatoric uncertainty I recommend reading [Regression with Probabilistic Layers in TensorFlow Probability](https://medium.com/tensorflow/regression-with-probabilistic-layers-in-tensorflow-probability-e46ff5d37baf) which uses probabilistic Keras layers from the upcoming Tensorflow Probability 0.7.0 release. Their approach to variational inference is similar to the approach described here but differs in some details. For example, they compute the complexity cost analytically instead of estimating it from Monte Carlo samples, among other differences.
+
+## Appendix
+
+### Optimization objective
+
+The KL divergence between the variational distribution $q(\mathbf{w} \lvert \boldsymbol{\theta})$ and the true posterior $p(\mathbf{w} \lvert \mathcal{D})$ is defined as
+
+$$
+\begin{align*}
+\mathrm{KL}(q(\mathbf{w} \lvert \boldsymbol{\theta}) \mid\mid p(\mathbf{w} \lvert \mathcal{D})) &=
+\int{q(\mathbf{w} \lvert \boldsymbol{\theta}) \log 
+    {q(\mathbf{w} \lvert \boldsymbol{\theta}) \over p(\mathbf{w} \lvert \mathcal{D})} d\mathbf{w}} \\\\ &=
+\mathbb{E}_{q(\mathbf{w} \lvert \boldsymbol{\theta})} \log
+    {q(\mathbf{w} \lvert \boldsymbol{\theta}) \over p(\mathbf{w} \lvert \mathcal{D})}
+\end{align*}
+$$
+
+Applying Bayes' rule to $p(\mathbf{w} \lvert \mathcal{D})$ we obtain
+
+$$
+\begin{align*}
+\mathrm{KL}(q(\mathbf{w} \lvert \boldsymbol{\theta}) \mid\mid p(\mathbf{w} \lvert \mathcal{D})) &=
+\mathbb{E}_{q(\mathbf{w} \lvert \boldsymbol{\theta})} \log
+    {q(\mathbf{w} \lvert \boldsymbol{\theta}) \over 
+     p(\mathcal{D} \lvert \mathbf{w}) p(\mathbf{w})} p(\mathcal{D}) \\\\ &=
+\mathbb{E}_{q(\mathbf{w} \lvert \boldsymbol{\theta})} \left[
+    \log q(\mathbf{w} \lvert \boldsymbol{\theta}) - 
+    \log p(\mathcal{D} \lvert \mathbf{w}) - 
+    \log p(\mathbf{w}) + 
+    \log p(\mathcal{D}) 
+\right] \\\\ &=
+\mathbb{E}_{q(\mathbf{w} \lvert \boldsymbol{\theta})} \left[
+    \log q(\mathbf{w} \lvert \boldsymbol{\theta}) - 
+    \log p(\mathcal{D} \lvert \mathbf{w}) - 
+    \log p(\mathbf{w})
+\right] + \log p(\mathcal{D}) \\\\ &=
+\mathrm{KL}(q(\mathbf{w} \lvert \boldsymbol{\theta}) \mid\mid q(\mathbf{w})) - 
+\mathbb{E}_{q(\mathbf{w} \lvert \boldsymbol{\theta})} \log p(\mathcal{D} \lvert \mathbf{w}) +
+\log p(\mathcal{D})
+\end{align*}
+$$
+
+using the fact that the *log marginal likelihood* $\log p(\mathcal{D})$ doesn't depend on $\mathbf{w}$. The first two terms on the RHS are the *variational free energy* $\mathcal{F}(\mathcal{D},\boldsymbol{\theta})$ as defined in Eq. $(1)$. We obtain 
+
+$$
+\mathrm{KL}(q(\mathbf{w} \lvert \boldsymbol{\theta}) \mid\mid p(\mathbf{w} \lvert \mathcal{D})) =
+\mathcal{F}(\mathcal{D},\boldsymbol{\theta}) + \log p(\mathcal{D})
+$$
+
+In order to minimize $\mathrm{KL}(q(\mathbf{w} \lvert \boldsymbol{\theta}) \mid\mid p(\mathbf{w} \lvert \mathcal{D}))$ w.r.t. $\boldsymbol{\theta}$ we only need to minimize $\mathcal{F}(\mathcal{D},\boldsymbol{\theta})$ as $p(\mathcal{D})$ doesn't depend on $\boldsymbol{\theta}$. The negative variational free energy is also known as *evidence lower bound* $\mathcal{L}(\mathcal{D},\boldsymbol{\theta})$ (ELBO). 
+
+$$
+\mathrm{KL}(q(\mathbf{w} \lvert \boldsymbol{\theta}) \mid\mid p(\mathbf{w} \lvert \mathcal{D})) =
+-\mathcal{L}(\mathcal{D},\boldsymbol{\theta}) + \log p(\mathcal{D})
+$$
+
+It is a lower bound on $\log p(\mathcal{D})$ because the Kullback-Leibler divergence is always non-negative.
+
+$$
+\begin{align*}
+\mathcal{L}(\mathcal{D},\boldsymbol{\theta}) &= 
+\log p(\mathcal{D}) - \mathrm{KL}(q(\mathbf{w} \lvert \boldsymbol{\theta}) \mid\mid p(\mathbf{w} \lvert \mathcal{D})) \\\\
+\mathcal{L}(\mathcal{D},\boldsymbol{\theta}) &\leq
+\log p(\mathcal{D})
+\end{align*}
+$$
+
+Therefore, the KL divergence between the variational distribution $q(\mathbf{w} \lvert \boldsymbol{\theta})$ and the true posterior $p(\mathbf{w} \lvert \mathcal{D})$ is also minimized by maximizing the evidence lower bound which is an approximation to maximizing the marginal log likelihood.
