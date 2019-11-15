@@ -1,5 +1,5 @@
 ---
-title: Variational inference for Bayesian neural networks
+title: Variational inference in Bayesian neural networks
 layout: post
 comments: True
 author: "Martin Krasser"
