@@ -78,7 +78,11 @@ p(\mathbf{x} \lvert \boldsymbol{\theta}) &=
 \end{align*}
 $$
 
-For each observation $\mathbf{x}_i$ we have one latent variable $\mathbf{t}_i$. We denote the set of all observations by $\mathbf{X}$ and the set of all latent variables by $\mathbf{T}$. If we could observe $\mathbf{T}$ directly, we could easily maximize the *complete-data likelihood* $p(\mathbf{X}, \mathbf{T} \lvert \boldsymbol{\theta})$ because we would then know the assignment of data points to components, and fitting a single Gaussian per component can be done analytically. But since we can only observe $\mathbf{X}$, we have to maximize the *marginal likelihood* or *incomplete-data likelihood* $p(\mathbf{X} \lvert \boldsymbol{\theta})$. By using the logarithm of the likelihood we have 
+For each observation $\mathbf{x}_i$ we have one latent variable $\mathbf{t}_i$, as shown in the following plate notation of the model.
+
+![gmm](/img/2019-11-21/gmm.png)
+
+We denote the set of all observations by $\mathbf{X}$ and the set of all latent variables by $\mathbf{T}$. If we could observe $\mathbf{T}$ directly, we could easily maximize the *complete-data likelihood* $p(\mathbf{X}, \mathbf{T} \lvert \boldsymbol{\theta})$ because we would then know the assignment of data points to components, and fitting a single Gaussian per component can be done analytically. But since we can only observe $\mathbf{X}$, we have to maximize the *marginal likelihood* or *incomplete-data likelihood* $p(\mathbf{X} \lvert \boldsymbol{\theta})$. By using the logarithm of the likelihood we have 
 
 $$
 \begin{align*}
