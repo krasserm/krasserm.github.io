@@ -431,6 +431,8 @@ plt.ylabel('Lower bound');
 
 There is a strong increase in the lower bound value until $C = 3$ and then the lower bound more or less doesn't increase any more. With more components there are of course more options to overfit but the simplest model that reaches a relatively high lower bound value is a GMM with 3 components. This is exactly the number of components used to generate the data.
 
+A more principled approach to determine the optimal number of components requires a Bayesian treatment of model parameters. In this case the lower bound would also take into account model complexity and we would see decreasing lower bound values for $C \gt 3$ and a maximum at $C = 3$. For details see section 10.2.4 in \[1\].
+
 ### Implementation with scikit-learn
 
 The low-level implementation above was just for illustration purposes. Scikit-learn already comes with a `GaussianMixture` class that can be readily used.
