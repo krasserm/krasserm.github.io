@@ -259,7 +259,7 @@ identical = [] # 1 if same identity, 0 otherwise
 num = len(metadata)
 
 for i in range(num - 1):
-    for j in range(1, num):
+    for j in range(i + 1, num):
         distances.append(distance(embedded[i], embedded[j]))
         identical.append(1 if metadata[i].name == metadata[j].name else 0)
         
@@ -290,7 +290,7 @@ plt.legend();
 ![png](/img/2018-02-07/output_26_0.png)
 
 
-The face verification accuracy at $$\tau$$ = 0.56 is 95.7%. This is not bad given a baseline of 89% for a classifier that always predicts *different identity* (there are 980 pos. pairs and 8821 neg. pairs) but since nn4.small2.v1 is a relatively small model it is still less than what can be achieved by state-of-the-art models (> 99%). 
+The face verification accuracy at $$\tau$$ = 0.56 is 95.7%. This is not bad given a baseline of 89% for a classifier that always predicts *different identity* (there are 450 pos. pairs and 4500 neg. pairs) but since nn4.small2.v1 is a relatively small model it is still less than what can be achieved by state-of-the-art models (> 99%). 
 
 The following two histograms show the distance distributions of positive and negative pairs and the location of the decision boundary. There is a clear separation of these distributions which explains the discriminative performance of the network. One can also spot some strong outliers in the positive pairs class but these are not further analyzed here.
 
