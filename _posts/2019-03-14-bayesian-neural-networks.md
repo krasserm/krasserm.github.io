@@ -62,7 +62,7 @@ A training iteration consists of a forward-pass and and backward-pass. During a 
 
 Since a forward pass involves a stochastic sampling step we have to apply the so-called *re-parameterization trick* for backpropagation to work. The trick is to sample from a parameter-free distribution and then transform the sampled $\boldsymbol{\epsilon}$ with a deterministic function $t(\boldsymbol{\mu}, \boldsymbol{\sigma}, \boldsymbol{\epsilon})$ for which a gradient can be defined. Here, $\boldsymbol{\epsilon}$ is drawn from a standard normal distribution i.e. $\boldsymbol{\epsilon} \sim \mathcal{N}(\mathbf{0}, \mathbf{I})$ and function $t(\boldsymbol{\mu}, \boldsymbol{\sigma}, \boldsymbol{\epsilon}) = \boldsymbol{\mu} + \boldsymbol{\sigma} \odot \boldsymbol{\epsilon}$ shifts the sample by mean $\boldsymbol{\mu}$ and scales it with $\boldsymbol{\sigma}$ where $\odot$ is element-wise multiplication.
 
-For numeric stability we will parameterize the network with $\boldsymbol{\rho}$ instead of $\boldsymbol{\sigma}$ directly and transform $\boldsymbol{\rho}$ with the softplus function to obtain $\boldsymbol{\sigma} = \log(1 + \exp(\boldsymbol{\rho}))$. This ensures that $\boldsymbol{\sigma}$ is always positive. As prior, a scale mixture of two Gaussians is used $p(\mathbf{w}) = \pi \mathcal{N}(\mathbf{w} \lvert 0,\sigma_1^2) + (1 - \pi) \mathcal{N}(\mathbf{w} \lvert 0,\sigma_2^2)$ where $\sigma_1$, $\sigma_2$ and $\pi$ are shared parameters. Their values are learned during training (which is in contrast to the paper where a fixed prior is used). 
+For numeric stability we will parameterize the network with $\boldsymbol{\rho}$ instead of $\boldsymbol{\sigma}$ directly and transform $\boldsymbol{\rho}$ with the softplus function to obtain $\boldsymbol{\sigma} = \log(1 + \exp(\boldsymbol{\rho}))$. This ensures that $\boldsymbol{\sigma}$ is always positive. As prior, a scale mixture of two Gaussians is used $p(\mathbf{w}) = \pi \mathcal{N}(\mathbf{w} \lvert 0,\sigma_1^2) + (1 - \pi) \mathcal{N}(\mathbf{w} \lvert 0,\sigma_2^2)$ where $\sigma_1$, $\sigma_2$ and $\pi$ are hyper-parameters i.e. they are not learned during training.
 
 ## Uncertainty characterization
 
@@ -100,7 +100,7 @@ plt.legend();
 ![png](/img/2019-03-14/output_1_0.png)
 
 
-The noise in training data gives rise to aleatoric uncertainty. To cover epistemic uncertainty we implement the variational inference logic in a custom `DenseVariational` Keras layer. The learnable parameters of the mixture prior, $\sigma_1$ $\sigma_2$ and $\pi$, are shared across layers. The complexity cost (`kl_loss`) is computed layer-wise and added to the total loss with the `add_loss` method. Implementations of `build` and `call` directly follow the equations defined above. 
+The noise in training data gives rise to aleatoric uncertainty. To cover epistemic uncertainty we implement the variational inference logic in a custom `DenseVariational` Keras layer. The complexity cost (`kl_loss`) is computed layer-wise and added to the total loss with the `add_loss` method. Implementations of `build` and `call` directly follow the equations defined above. 
 
 
 ```python
@@ -109,67 +109,72 @@ from keras import activations, initializers
 from keras.layers import Layer
 
 import tensorflow as tf
+import tensorflow_probability as tfp
 
-def mixture_prior_params(sigma_1, sigma_2, pi, return_sigma=False):
-    params = K.variable([sigma_1, sigma_2, pi], name='mixture_prior_params')
-    sigma = np.sqrt(pi * sigma_1 ** 2 + (1 - pi) * sigma_2 ** 2)
-    return params, sigma
-
-def log_mixture_prior_prob(w):
-    comp_1_dist = tf.distributions.Normal(0.0, prior_params[0])
-    comp_2_dist = tf.distributions.Normal(0.0, prior_params[1])
-    comp_1_weight = prior_params[2]    
-    return K.log(comp_1_weight * comp_1_dist.prob(w) + (1 - comp_1_weight) * comp_2_dist.prob(w))    
-
-# Mixture prior parameters shared across DenseVariational layer instances
-prior_params, prior_sigma = mixture_prior_params(sigma_1=1.0, sigma_2=0.1, pi=0.2)
 
 class DenseVariational(Layer):
-    def __init__(self, output_dim, kl_loss_weight, activation=None, **kwargs):
-        self.output_dim = output_dim
-        self.kl_loss_weight = kl_loss_weight
+    def __init__(self,
+                 units,
+                 kl_weight,
+                 activation=None,
+                 prior_sigma_1=1.5,
+                 prior_sigma_2=0.1,
+                 prior_pi=0.5, **kwargs):
+        self.units = units
+        self.kl_weight = kl_weight
         self.activation = activations.get(activation)
+        self.prior_sigma_1 = prior_sigma_1
+        self.prior_sigma_2 = prior_sigma_2
+        self.prior_pi_1 = prior_pi
+        self.prior_pi_2 = 1.0 - prior_pi
+        self.init_sigma = np.sqrt(self.prior_pi_1 * self.prior_sigma_1 ** 2 +
+                                  self.prior_pi_2 * self.prior_sigma_2 ** 2)
+
         super().__init__(**kwargs)
 
-    def build(self, input_shape):  
-        self._trainable_weights.append(prior_params) 
+    def compute_output_shape(self, input_shape):
+        return input_shape[0], self.units
 
-        self.kernel_mu = self.add_weight(name='kernel_mu', 
-                                         shape=(input_shape[1], self.output_dim),
-                                         initializer=initializers.normal(stddev=prior_sigma),
+    def build(self, input_shape):
+        self.kernel_mu = self.add_weight(name='kernel_mu',
+                                         shape=(input_shape[1], self.units),
+                                         initializer=initializers.normal(stddev=self.init_sigma),
                                          trainable=True)
-        self.bias_mu = self.add_weight(name='bias_mu', 
-                                       shape=(self.output_dim,),
-                                       initializer=initializers.normal(stddev=prior_sigma),
+        self.bias_mu = self.add_weight(name='bias_mu',
+                                       shape=(self.units,),
+                                       initializer=initializers.normal(stddev=self.init_sigma),
                                        trainable=True)
-        self.kernel_rho = self.add_weight(name='kernel_rho', 
-                                          shape=(input_shape[1], self.output_dim),
+        self.kernel_rho = self.add_weight(name='kernel_rho',
+                                          shape=(input_shape[1], self.units),
                                           initializer=initializers.constant(0.0),
                                           trainable=True)
-        self.bias_rho = self.add_weight(name='bias_rho', 
-                                        shape=(self.output_dim,),
+        self.bias_rho = self.add_weight(name='bias_rho',
+                                        shape=(self.units,),
                                         initializer=initializers.constant(0.0),
                                         trainable=True)
         super().build(input_shape)
 
-    def call(self, x):
+    def call(self, inputs, **kwargs):
         kernel_sigma = tf.math.softplus(self.kernel_rho)
         kernel = self.kernel_mu + kernel_sigma * tf.random.normal(self.kernel_mu.shape)
 
         bias_sigma = tf.math.softplus(self.bias_rho)
         bias = self.bias_mu + bias_sigma * tf.random.normal(self.bias_mu.shape)
-                
-        self.add_loss(self.kl_loss(kernel, self.kernel_mu, kernel_sigma) + 
-                      self.kl_loss(bias, self.bias_mu, bias_sigma))
-        
-        return self.activation(K.dot(x, kernel) + bias)
 
-    def compute_output_shape(self, input_shape):
-        return (input_shape[0], self.output_dim)
-    
+        self.add_loss(self.kl_loss(kernel, self.kernel_mu, kernel_sigma) +
+                      self.kl_loss(bias, self.bias_mu, bias_sigma))
+
+        return self.activation(K.dot(inputs, kernel) + bias)
+
     def kl_loss(self, w, mu, sigma):
-        variational_dist = tf.distributions.Normal(mu, sigma)
-        return self.kl_loss_weight * K.sum(variational_dist.log_prob(w) - log_mixture_prior_prob(w))
+        variational_dist = tfp.distributions.Normal(mu, sigma)
+        return self.kl_weight * K.sum(variational_dist.log_prob(w) - self.log_prior_prob(w))
+
+    def log_prior_prob(self, w):
+        comp_1_dist = tfp.distributions.Normal(0.0, self.prior_sigma_1)
+        comp_2_dist = tfp.distributions.Normal(0.0, self.prior_sigma_2)
+        return K.log(self.prior_pi_1 * comp_1_dist.prob(w) +
+                     self.prior_pi_2 * comp_2_dist.prob(w))
 ```
 
     Using TensorFlow backend.
@@ -177,21 +182,30 @@ class DenseVariational(Layer):
 
 Our model is a neural network with two `DenseVariational` hidden layers, each having 20 units, and one `DenseVariational` output layer with one unit. Instead of modeling a full probability distribution $p(y \lvert \mathbf{x},\mathbf{w})$ as output the network simply outputs the mean of the corresponding Gaussian distribution. In other words, we do not model aleatoric uncertainty here and assume it is known. We only model epistemic uncertainty via the `DenseVariational` layers.
 
-Since the training dataset has only 32 examples we train the network with all 32 examples per epoch so that the number of batches per epoch is 1. For other configurations, the complexity cost (`kl_loss`) must be weighted by $1/M$ as described in section 3.4 of the paper where $M$ is the number of mini-batches per epoch.
+Since the training dataset has only 32 examples we train the network with all 32 examples per epoch so that the number of batches per epoch is 1. For other configurations, the complexity cost (`kl_loss`) must be weighted by $1/M$ as described in section 3.4 of the paper where $M$ is the number of mini-batches per epoch. The hyper-parameter values for the mixture prior, `prior_params`, have been chosen to work well for this example and may need adjustments in another context.
 
 
 ```python
+import warnings
+warnings.filterwarnings('ignore')
+
 from keras.layers import Input
 from keras.models import Model
 
 batch_size = train_size
 num_batches = train_size / batch_size
-kl_loss_weight = 1.0 / num_batches
+
+kl_weight = 1.0 / num_batches
+prior_params = {
+    'prior_sigma_1': 1.5, 
+    'prior_sigma_2': 0.1, 
+    'prior_pi': 0.5 
+}
 
 x_in = Input(shape=(1,))
-x = DenseVariational(20, kl_loss_weight=kl_loss_weight, activation='relu')(x_in)
-x = DenseVariational(20, kl_loss_weight=kl_loss_weight, activation='relu')(x)
-x = DenseVariational(1, kl_loss_weight=kl_loss_weight)(x)
+x = DenseVariational(20, kl_weight, **prior_params, activation='relu')(x_in)
+x = DenseVariational(20, kl_weight, **prior_params, activation='relu')(x)
+x = DenseVariational(1, kl_weight, **prior_params)(x)
 
 model = Model(x_in, x)
 ```
@@ -203,10 +217,10 @@ The network can now be trained with a Gaussian negative log likelihood function 
 from keras import callbacks, optimizers
 
 def neg_log_likelihood(y_obs, y_pred, sigma=noise):
-    dist = tf.distributions.Normal(loc=y_pred, scale=sigma)
+    dist = tfp.distributions.Normal(loc=y_pred, scale=sigma)
     return K.sum(-dist.log_prob(y_obs))
 
-model.compile(loss=neg_log_likelihood, optimizer=optimizers.Adam(lr=0.03), metrics=['mse'])
+model.compile(loss=neg_log_likelihood, optimizer=optimizers.Adam(lr=0.08), metrics=['mse'])
 model.fit(X, y, batch_size=batch_size, epochs=1500, verbose=0);
 ```
 
@@ -238,7 +252,7 @@ plt.title('Prediction')
 plt.legend();
 ```
 
-    100%|██████████| 500/500 [00:05<00:00, 89.00it/s]
+    100%|██████████| 500/500 [00:06<00:00, 78.97it/s]
 
 
 
@@ -315,4 +329,4 @@ $$
 \end{align*}
 $$
 
-Therefore, the KL divergence between the variational distribution $q(\mathbf{w} \lvert \boldsymbol{\theta})$ and the true posterior $p(\mathbf{w} \lvert \mathcal{D})$ is also minimized by maximizing the evidence lower bound which is an approximation to maximizing the marginal log likelihood.
+Therefore, the KL divergence between the variational distribution $q(\mathbf{w} \lvert \boldsymbol{\theta})$ and the true posterior $p(\mathbf{w} \lvert \mathcal{D})$ is also minimized by maximizing the evidence lower bound.
