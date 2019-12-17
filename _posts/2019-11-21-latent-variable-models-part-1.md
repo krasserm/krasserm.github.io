@@ -8,7 +8,7 @@ header-img: "img/distributed.png"
 
 *You can find the notebook for this article [here](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/master/latent_variable_models_part_1.ipynb). It is part of the [bayesian-machine-learning](https://github.com/krasserm/bayesian-machine-learning) repo on Github.*
 
-This is part 1 of a two-part series of articles about latent variable models. Part 1 covers the expectation maximization (EM) algorithm and its application to Gaussian mixture models. Part 2 covers approximate inference and variational autoencoders.
+This is part 1 of a two-part series of articles about latent variable models. Part 1 covers the expectation maximization (EM) algorithm and its application to Gaussian mixture models. [Part 2](/2019/12/17/latent-variable-models-part-2/) covers approximate inference and variational autoencoders.
 
 ## Introduction
 
@@ -477,7 +477,7 @@ The lower bound values obtained via `gmm.lower_bound_` are normalized i.e. divid
 
 ## Conclusion
 
-Inference of latent variables and estimation of parameters in GMMs is an example of exact inference. The exact posterior can be obtained in the E-step and analytical solutions exist for parameter MLE in the M-step. But for many models of practical interest, exact inference is not possible and approximate inference methods must be used. The EM algorithm has numerous extensions for approximate inference. *Variational inference* is one of them and will be covered in part 2, together with a *variational autoencoder* as application example. 
+Inference of latent variables and estimation of parameters in GMMs is an example of exact inference. The exact posterior can be obtained in the E-step and analytical solutions exist for parameter MLE in the M-step. But for many models of practical interest, exact inference is not possible and approximate inference methods must be used. *Variational inference* is one of them and will be covered in [part 2](/2019/12/17/latent-variable-models-part-2/), together with a *variational autoencoder* as application example. 
 
 ## References
 
