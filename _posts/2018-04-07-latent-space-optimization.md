@@ -31,7 +31,7 @@ In the following, it will be shown how to conditionally generate new digits by f
 - How can application of Bayesian optimization methods be justified?
 - What are possible alternatives to this approach? 
 
-I'll leave experiments with the chemical compounds dataset and the public chemical VAE for another article. The following assumes some basic familiarity with [variational auto-encoders](/2018/04/03/variational-inference/), [Bayesian otpimization](/2018/03/21/bayesian-optimization/) and [Gaussian processes](/2018/03/19/gaussian-processes/). For more information on these topics you may want to read the linked articles.
+I'll leave experiments with the chemical compounds dataset and the public chemical VAE for another article. The following assumes some basic familiarity with [variational auto-encoders](/2019/12/17/latent-variable-models-part-2/), [Bayesian otpimization](/2018/03/21/bayesian-optimization/) and [Gaussian processes](/2018/03/19/gaussian-processes/). For more information on these topics you may want to read the linked articles.
 
 ## Architecture
 
@@ -41,13 +41,13 @@ The high-level architecture of the joint VAE-predictor model is shown in the fol
 
 ### Encoder
 
-The encoder is a CNN, identical to the one presented in the the [Variational auto-encoder](http://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/master/variational_autoencoder.ipynb) notebook.
+The encoder is a CNN, identical to the one presented in the the [Variational auto-encoder](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/master/latent_variable_models_part_2.ipynb) notebook.
 
 ![encoder](/img/2018-04-07/encoder.png) 
 
 ### Decoder
 
-The encoder is a de-CNN (de-convolutional neural network), identical to the one presented in the the [Variational auto-encoder](http://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/master/variational_autoencoder.ipynb) notebook.
+The decoder is a CNN, identical to the one presented in the the [Variational auto-encoder](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/master/latent_variable_models_part_2.ipynb) notebook.
 
 ![decoder](/img/2018-04-07/decoder.png)
 
@@ -73,7 +73,7 @@ latent_dim = 2
 batch_size = 64
 ```
 
-Code for the encoder and decoder have already been presented [elsewhere](http://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/master/variational_autoencoder.ipynb), so only code for the predictor is shown here (see [variational_autoencoder_opt_util.py](variational_autoencoder_opt_util.py) for other function definitions):
+Code for the encoder and decoder have already been presented [elsewhere](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/master/latent_variable_models_part_2.ipynb), so only code for the predictor is shown here (see [variational_autoencoder_opt_util.py](variational_autoencoder_opt_util.py) for other function definitions):
 
 
 ```python
@@ -271,9 +271,9 @@ Note that in the case of the MNIST dataset the latent space in the left plot is 
 
 > How can useful optimization objectives be designed?
 
-First of all, the optimization objective must be a function of the desired target label in addition to latent variable $\mathbf{t}$. For example, if the desired target label is 5 the optimization objective must have an optimum in that region of the latent space where images with a 5 are located. Also remember that the variational distribution i.e. the distribution of codes in latent space has been regularized to be close to the standard normal distribution during model training (see *regularization term* in `vae_loss`). This regularization term should also be considered in the optimization objective to avoid directing search too far from the origin.
+First of all, the optimization objective must be a function of the desired target label in addition to latent variable $\mathbf{t}$. For example, if the desired target label is 5 the optimization objective must have an optimum in that region of the latent space where images with a 5 are located. Also remember that the variational distributions i.e. the distributions of codes in latent space have been regularized to be close to the standard normal distribution during model training (see *regularization term* in `vae_loss`). This regularization term should also be considered in the optimization objective to avoid directing search too far from the origin.
 
-Hence the optimization objective should not only reflect the probability that a sample corresponds to an image of desired target label but also the standard normal probability distribution. In the following, we will use an optimization objective $f$ that is defined as the sum of the negative log likelihood (NLL) of these probabilities:
+Hence the optimization objective should not only reflect the probability that a sample corresponds to an image of desired target label but also the standard normal probability distribution. In the following, we will use an optimization objective $f$ that is the negative logarithm of the product of these two terms:
 
 $$
 f(\mathbf{t}, target) = - \log p(y=target \lvert \mathbf{t}) 
