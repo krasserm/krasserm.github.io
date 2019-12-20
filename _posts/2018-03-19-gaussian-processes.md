@@ -235,7 +235,7 @@ for i, (l, sigma_f, sigma_y) in enumerate(params):
 ![png](/img/2018-03-19/output_14_0.png)
 
 
-Optimal values for these parameters can be estimated by maximizing the marginal log-likelihood which is given by<sup>[1][3]</sup>
+Optimal values for these parameters can be estimated by maximizing the log marginal likelihood which is given by<sup>[1][3]</sup>
 
 $$
 \log p(\mathbf{y} \lvert \mathbf{X}) = 
@@ -245,7 +245,7 @@ $$
 -\frac{N}{2} \log(2\pi) \tag{7}
 $$
 
-In the following we will minimize the negative marginal log-likelihood w.r.t. parameters $l$ and $\sigma_f$, $\sigma_y$ is set to the known noise level of the data. If the noise level is unknown, $\sigma_y$ can be estimated as well along with the other parameters. 
+In the following we will minimize the negative log marginal likelihood w.r.t. parameters $l$ and $\sigma_f$, $\sigma_y$ is set to the known noise level of the data. If the noise level is unknown, $\sigma_y$ can be estimated as well along with the other parameters. 
 
 
 ```python
@@ -254,7 +254,7 @@ from scipy.optimize import minimize
 
 def nll_fn(X_train, Y_train, noise, naive=True):
     '''
-    Returns a function that computes the negative marginal log-
+    Returns a function that computes the negative log marginal
     likelihood for training data X_train and Y_train and given 
     noise level.
     

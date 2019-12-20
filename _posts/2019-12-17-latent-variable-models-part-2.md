@@ -36,7 +36,7 @@ p(\mathbf{t} \lvert \mathbf{x}, \boldsymbol{\theta}) = {p(\mathbf{x} \lvert \mat
 \tag{3}
 $$
 
-This means that the E-step of the EM algorithm becomes intractable. Recall from part 1 that the lower bound of the marginal log likelihood is given by 
+This means that the E-step of the EM algorithm becomes intractable. Recall from part 1 that the lower bound of the log marginal likelihood is given by 
 
 $$
 \mathcal{L}(\boldsymbol{\theta}, q) = \log p(\mathbf{X} \lvert \boldsymbol{\theta}) - \mathrm{KL}(q(\mathbf{T} \lvert \mathbf{X}) \mid\mid p(\mathbf{T} \lvert \mathbf{X}, \boldsymbol{\theta}))
