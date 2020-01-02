@@ -14,8 +14,8 @@ I'm a self-employed machine learning engineer and distributed systems specialist
 engineering. I have experience with "traditional" machine learning, deep learning and Bayesian methods for machine 
 learning. My deep learning projects mainly focus on computer vision problems but recently also on natural language
 processing. My distributed systems experience comes from the development of numerous large-scale event-driven systems 
-as well as globally distributed systems that provide causal consistency guarantees. I'm a continuous learner, passionate 
-about technology and contributor to several open source projects.
+as well as globally distributed systems that provide causal consistency guarantees. I'm a continuous learner and 
+contributor to several open source projects.
 
 [http://martin-krasser.de](http://martin-krasser.de)  
 [https://twitter.com/mrt1nz](https://twitter.com/mrt1nz)  
@@ -169,10 +169,10 @@ The following is an incomplete list of open source projects I'm currently workin
 
 - [Bayesian machine learning](https://github.com/krasserm/bayesian-machine-learning). Collection of notebooks related to 
   Bayesian machine learning. Extended when I'm writing new articles on that topic.
-- [Image captioning transformer](https://github.com/krasserm/fairseq-image-captioning). Transformer-based image captioning. 
-  An extension of the [pytorch/fairseq](https://github.com/pytorch/fairseq) sequence modeling toolkit.
 - [Super resolution](https://github.com/krasserm/super-resolution). Tensorflow 2.0 based implementation of WDSR, EDSR 
   and SRGAN for single image super-resolution.
+- [Image captioning transformer](https://github.com/krasserm/fairseq-image-captioning). Transformer-based image captioning. 
+  An extension of the [pytorch/fairseq](https://github.com/pytorch/fairseq) sequence modeling toolkit.
 - [Face recognition](https://github.com/krasserm/face-recognition). Deep face recognition with Keras, Dlib and OpenCV. 
 - [Machine learning notebooks](https://github.com/krasserm/machine-learning-notebooks). Stanford machine learning course 
   exercises re-written in Python and scikit-learn.
