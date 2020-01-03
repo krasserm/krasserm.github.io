@@ -10,11 +10,12 @@ header-includes:
 
 # Martin Krasser
 
-I'm a self-employed machine learning engineer and distributed systems specialist with a strong background in software
-engineering. I have experience with "traditional" machine learning, deep learning and Bayesian methods for machine 
-learning. My deep learning projects mainly focus on computer vision problems but recently also on natural language
+I'm a self-employed data scientist, machine learning engineer and distributed systems specialist. I support customers 
+in their machine learning projects with research, data analysis, predictive modeling, software development and operating 
+AI solutions in production environments. I have experience with "traditional" machine learning, deep learning and 
+Bayesian methods for machine learning. Main focus is on computer vision problems but recently also on natural language 
 processing. My distributed systems experience comes from the development of numerous large-scale event-driven systems 
-as well as globally distributed systems that provide causal consistency guarantees. I'm a continuous learner and 
+including globally distributed systems that provide causal consistency guarantees. I'm a continuous learner and 
 contributor to several open source projects.
 
 [http://martin-krasser.de](http://martin-krasser.de)  
@@ -44,9 +45,9 @@ probabilistic programming.
 
 See also [Stories](https://krasserm.github.io/stories/) for further information.
 
-### Since 04.2018, Machine learning engineer (freelancer)
+### Since 04.2018: Data scientist, machine learning engineer
 
-MerlinOne, [https://merlinone.com](https://merlinone.com)
+MerlinOne, [https://merlinone.com](https://merlinone.com), Freelance
 
 - Design and implementation of AI extensions for the MerlinOne digital asset management system.
 - Application of deep learning methods for large-scale [facial recognition](https://resources.merlinone.com/facial-recognition), 
@@ -55,15 +56,15 @@ MerlinOne, [https://merlinone.com](https://merlinone.com)
 - Responsible for the scientific and engineering parts of all machine learning projects.
 - Support production deployments to several customer sites (hosted and on-premise). 
  
-### Since 04.2011, Machine learning engineer, software engineer and architect
+### Since 04.2011: Data scientist, machine learning engineer, software engineer
 
 Self-employed, [http://www.martin-krasser.de](http://www.martin-krasser.de)  
 
-- Research and software development in context of industry machine learning projects.
+- Research and development for industry machine learning projects.
 - Distributed systems development and consulting services.
 - See other positions since 2011 for further details. 
   
-### 05.2017 to 04.2018, Machine learning sabbatical
+### 05.2017 to 04.2018: Machine learning sabbatical
 
 Sabbatical year 
 
@@ -72,53 +73,53 @@ Sabbatical year
 - Publication of some exercise work in [articles](https://krasserm.github.io) and [open source projects](#open-source-projects).
 - Equal focus on theoretical and engineering aspects of machine learning.
 
-### 02.2017 - 04.2017, Distributed systems engineer (freelancer)
+### 02.2017 - 04.2017: Distributed systems engineer
 
-fine.lines.software GmbH, [https://bullet.io](https://bullet.io)
+fine.lines.software GmbH, [https://bullet.io](https://bullet.io), Freelance
 
 - Design and implementation of a distributed system architecture based on event sourcing with explicit causality that 
 also includes mobile devices. 
 - Consulting activities and development of prototypes. 
 
-### 09.2014 - 08.2017, Distributed systems engineer (freelancer)
+### 09.2014 - 08.2017: Distributed systems engineer
 
-Red Bull Media House, [http://www.redbullmediahouse.com](http://www.redbullmediahouse.com)
+Red Bull Media House, [http://www.redbullmediahouse.com](http://www.redbullmediahouse.com), Freelance
 
 - Global distribution of the in-house digital asset management platform. Responsible for architecture, design and 
 implementation. 
 - Conception and development of [Eventuate](https://github.com/RBMHTechnology/eventuate), a toolkit for event sourcing 
 and event collaboration at global scale with causal consistency.
 
-### 10.2015 - 07.2017, Software engineer and architect (freelancer)
+### 10.2015 - 07.2017: Software engineer and architect
 
-agido GmbH, [http://www.agido.com](http://www.agido.com)
+agido GmbH, [http://www.agido.com](http://www.agido.com), Freelance
 
 - Architecture and design consulting for an online sports betting web application with an event sourcing and event 
 stream processing architecture. 
 - Usage of Eventuate as technical basis for the web application backend. Development of streaming data analytics 
 extensions for Eventuate.
 
-### 10.2013 – 02.2014, Software engineer and architect (freelancer)
+### 10.2013 – 02.2014: Software engineer and architect
 
-Lightbend, [http://www.lightbend.com/](http://www.lightbend.com/) (formerly Typesafe)
+Lightbend, [http://www.lightbend.com/](http://www.lightbend.com/), Freelance
 
 - Conception and development of [Akka Persistence](https://doc.akka.io/docs/akka/current/persistence.html).  
 
-### 03.2012 – 10.2013, Software engineer and architect (freelancer)
+### 03.2012 – 10.2013: Software engineer and architect
 
-Eligotech BV, [http://www.eligotech.com](http://www.eligotech.com) 
+Eligotech BV, [http://www.eligotech.com](http://www.eligotech.com), Freelance 
 
 - Development of an E-Wallet management web service for customers in the online gambling industry.
 - Conception and development of [Eventsourced](https://github.com/eligosource/eventsourced), an open source project for 
 building reliable, scalable and distributed event-sourced applications in Scala.
 
-### 02.2011 – 04.2011,  Senior software architect and engineer
+### 02.2011 – 04.2011:  Senior software architect and engineer
 
 Talend, [http://www.talend.com](http://www.talend.com)
 
 - Development of scalability and high-availability concepts and prototypes for the Talend Integration Factory.
 
-### 01.2005 – 01.2011, Lead software architect and engineer
+### 01.2005 – 01.2011: Lead software architect and engineer
 
 InterComponentWare AG, [https://icw-global.com/](https://icw-global.com/) 
 
@@ -127,7 +128,7 @@ integration platform on top of Apache Camel. Development and deployment of IPF a
 customer projects.
 - Development of LifeSensor, a web-based personal health record.
 
-### 09.2000 – 12.2004, Senior software architect and engineer
+### 09.2000 – 12.2004: Senior software architect and engineer
 
 LION bioscience AG, [http://www.lionbioscience.com](http://www.lionbioscience.com)
 
@@ -136,14 +137,14 @@ pharmaceutical company.
 - Development of an integration platform for globally distributed chemical compute services.
 - Development of an activity tracking web application for pharmaceutical research projects.
 
-### 02.1999 – 08.2000, Software developer, Research assistant
+### 02.1999 – 08.2000: Software developer, research assistant
 
 CAME, University of Salzburg, [http://uni-salzburg.at](http://uni-salzburg.at)
 
 - Development of algorithms and software for ab-initio protein structure prediction. Application of statistical mechanics 
 to evaluate generated protein structures. 
 
-### 07.1998 – 01.1999, Software developer
+### 07.1998 – 01.1999: Software developer
 
 Austrian Red Cross, [http://www.roteskreuz.at/](http://www.roteskreuz.at/) 
 

@@ -93,12 +93,12 @@ official replacement for akka-camel and part of the [Alpakka](https://github.com
 ## Machine learning
 
 I got into machine learning in 2014 after having attended Andrew Ng's machine learning course on Coursera. After having 
-applied machine learning in several private projects I decided in 2017 to take a sabattical for going much deeper into
+applied machine learning in several private projects I decided in 2017 to take a sabbatical for going much deeper into
 statistics, "traditional" machine learning and deep learning. I took several [courses](/resume/#certifications) and gained
-further experience by reading [books](/2018/01/03/machine-learning-resources/) and doing exercises. I published part of 
+further experience by [supplemantary reading](/2018/01/03/machine-learning-resources/) and doing exercises. I published part of 
 my exercise work in [articles](/) and [open source projects](/resume#open-source-projects). I also developed a special 
-interest in [Bayesian methods for machine learning](https://github.com/krasserm/bayesian-machine-learning) which I also 
-apply in context of deep learning.
+interest in [Bayesian methods for machine learning](https://github.com/krasserm/bayesian-machine-learning) and their
+application to deep learning.
  
 Even before my sabbatical year ended I was offered a machine learning position based on the [articles](/) I wrote. In this 
 position I'm extending the customer's digital asset management system with features like [facial recognition](https://resources.merlinone.com/facial-recognition), 
@@ -106,4 +106,4 @@ position I'm extending the customer's digital asset management system with featu
 [single image super-resolution](https://github.com/krasserm/super-resolution), all based on deep learning methods. I 
 especially like the good balance between scientific and engineering work in these projects. Ethical aspects like avoiding 
 racial bias in facial recognition also play an important role. The developed machine learning solutions meanwhile run 
-in production at several customer sites in a Docker-based service-oriented architecture.
+in production at several customer sites as Docker-based microservices.
