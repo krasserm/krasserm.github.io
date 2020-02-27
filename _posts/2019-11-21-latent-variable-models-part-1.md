@@ -323,7 +323,7 @@ def lower_bound(X, pi, mu, sigma, q):
         X: observed data (N, D).
         pi: prior probabilities (C,).
         mu: mixture component means (C, D).
-        pi: mixture component covariances (C, D, D).
+        sigma: mixture component covariances (C, D, D).
         q: posterior probabilities (N, C).
 
     Returns:
