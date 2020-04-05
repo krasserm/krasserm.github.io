@@ -16,11 +16,11 @@ This is part 1 of a two-part series of articles about latent variable models. Pa
 Given a probabilistic model $p(\mathbf{x} \lvert \boldsymbol{\theta})$ and $N$ observations $$\mathbf{X} = \left\{ \mathbf{x}_1, \ldots, \mathbf{x}_N \right\}$$ we often want to find a value for parameter $\boldsymbol{\theta}$ that maximizes the likelihood function $p(\mathbf{X} \lvert \boldsymbol{\theta})$, a function of parameter $\boldsymbol{\theta}$. This is known as [maximimum likelihood estimation](https://en.wikipedia.org/wiki/Maximum_likelihood_estimation) (MLE). 
 
 $$
-\boldsymbol{\theta}_{MLE} = \underset{\boldsymbol{\theta}}{\mathrm{argmax}} p(\mathbf{x} \lvert \boldsymbol{\theta})
+\boldsymbol{\theta}_{MLE} = \underset{\boldsymbol{\theta}}{\mathrm{argmax}} p(\mathbf{X} \lvert \boldsymbol{\theta})
 \tag{1}
 $$
 
-If the model is a simple probability distribution, like a single Gaussian, for example, then $$\boldsymbol{\theta}_{MLE} = \left\{ \boldsymbol{\mu}_{MLE}, \boldsymbol{\Sigma}_{MLE} \right\}$$ has an analytical solution. A common approach for more complex models is *gradient descent* using the *negative log likelihood*, $-\log p(\mathbf{x} \lvert \boldsymbol{\theta})$, as loss function. This can easily be implemented with frameworks like PyTorch or Tensorflow provided that $p(\mathbf{x} \lvert \boldsymbol{\theta})$ is differentiable w.r.t. $\boldsymbol{\theta}$. But this is not necessarily the most efficient approach.
+If the model is a simple probability distribution, like a single Gaussian, for example, then $$\boldsymbol{\theta}_{MLE} = \left\{ \boldsymbol{\mu}_{MLE}, \boldsymbol{\Sigma}_{MLE} \right\}$$ has an analytical solution. A common approach for more complex models is *gradient descent* using the *negative log likelihood*, $-\log p(\mathbf{X} \lvert \boldsymbol{\theta})$, as loss function. This can easily be implemented with frameworks like PyTorch or Tensorflow provided that $p(\mathbf{X} \lvert \boldsymbol{\theta})$ is differentiable w.r.t. $\boldsymbol{\theta}$. But this is not necessarily the most efficient approach.
 
 ## Gaussian mixture model
 
