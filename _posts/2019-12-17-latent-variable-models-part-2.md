@@ -93,7 +93,7 @@ $$
 \tag{8}
 $$
 
-We will later implement $$p(\mathbf{x}_i \lvert \mathbf{t}_i, \boldsymbol{\theta})$$ as neural network and use Tensorflow to compute $$\nabla_{\boldsymbol{\theta}} \log p(\mathbf{x}_i \lvert \mathbf{t}_{i,l}, \boldsymbol{\theta})$$. The gradient w.r.t. $\boldsymbol{\theta}$ is a bit more tricky as $$\nabla_{\boldsymbol{\phi}}$$ cannot be moved inside the expectation because $$q(\mathbf{t}_i \lvert \mathbf{x}_i, \boldsymbol{\phi})$$ depends on $\boldsymbol{\phi}$. But if we can decompose $$q(\mathbf{t}_i \lvert \mathbf{x}_i, \boldsymbol{\phi})$$ into an auxiliary distribution $p(\boldsymbol\epsilon)$ that doesn't depend on $\boldsymbol{\phi}$ and a deterministic, differentiable function $g(\boldsymbol\epsilon, \mathbf{x}, \boldsymbol{\phi})$ where $$\mathbf{t}_i = g(\boldsymbol\epsilon, \mathbf{x}_i, \boldsymbol{\phi})$$ and $\boldsymbol\epsilon \sim p(\boldsymbol\epsilon)$ then we can re-formulate the gradient w.r.t. $\boldsymbol{\phi}$ as
+We will later implement $$p(\mathbf{x}_i \lvert \mathbf{t}_i, \boldsymbol{\theta})$$ as neural network and use Tensorflow to compute $$\nabla_{\boldsymbol{\theta}} \log p(\mathbf{x}_i \lvert \mathbf{t}_{i,l}, \boldsymbol{\theta})$$. The gradient w.r.t. $\boldsymbol{\phi}$ is a bit more tricky as $$\nabla_{\boldsymbol{\phi}}$$ cannot be moved inside the expectation because $$q(\mathbf{t}_i \lvert \mathbf{x}_i, \boldsymbol{\phi})$$ depends on $\boldsymbol{\phi}$. But if we can decompose $$q(\mathbf{t}_i \lvert \mathbf{x}_i, \boldsymbol{\phi})$$ into an auxiliary distribution $p(\boldsymbol\epsilon)$ that doesn't depend on $\boldsymbol{\phi}$ and a deterministic, differentiable function $g(\boldsymbol\epsilon, \mathbf{x}, \boldsymbol{\phi})$ where $$\mathbf{t}_i = g(\boldsymbol\epsilon, \mathbf{x}_i, \boldsymbol{\phi})$$ and $\boldsymbol\epsilon \sim p(\boldsymbol\epsilon)$ then we can re-formulate the gradient w.r.t. $\boldsymbol{\phi}$ as
 
 $$
 \begin{align*}
@@ -121,7 +121,7 @@ The above approximations for the variational lower bound and its gradients have 
 
 $$
 \begin{align*}
-\mathcal{L}(\boldsymbol{\theta}, q; \mathbf{x}_M) &\approx
+\mathcal{L}(\boldsymbol{\theta}, q; \mathbf{X}) &\approx
 {N \over M} \sum_{i=1}^M \mathcal{L}(\boldsymbol{\theta}, q; \mathbf{x}_i) \\ &=
 \mathcal{L}^M(\boldsymbol{\theta}, q; \mathbf{X}^M)
 \tag{11}
