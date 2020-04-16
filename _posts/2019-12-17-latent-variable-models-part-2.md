@@ -77,7 +77,7 @@ where $\mathbf{t}_{i,l} \sim q(\mathbf{t}_i \lvert \mathbf{x}_i, \boldsymbol{\ph
 
 ### Stochastic gradients
 
-We first assume that the analytical expression of the KL divergence is differentiable w.r.t. $\boldsymbol{\phi}$ and $\boldsymbol{\theta}$ so that deterministic gradients can be computed. The gradient of the first term on the RHS of Eq. $(5)$ w.r.t. $\boldsymbol{\theta}$ is
+We first assume that the analytical expression of the KL divergence, the second term on the RHS of Eq. $(5)$, is differentiable w.r.t. $\boldsymbol{\phi}$ and $\boldsymbol{\theta}$ so that deterministic gradients can be computed. The gradient of the first term on the RHS of Eq. $(5)$ w.r.t. $\boldsymbol{\theta}$ is
 
 $$
 \nabla_{\boldsymbol{\theta}} \mathbb{E}_{q(\mathbf{t}_i \lvert \mathbf{x}_i, \boldsymbol{\phi})} \log p(\mathbf{x}_i \lvert \mathbf{t}_i, \boldsymbol{\theta}) =
@@ -85,7 +85,7 @@ $$
 \tag{7}
 $$
 
-Here, $\nabla_{\boldsymbol{\theta}}$ could be moved inside the expectation as $q(\mathbf{t}_i \lvert \mathbf{x}_i, \boldsymbol{\phi})$ doesn't depend on $\boldsymbol{\theta}$. Assuming that $p(\mathbf{x}_i \lvert \mathbf{t}_i, \boldsymbol{\theta})$ is differentiable w.r.t. $\boldsymbol{\theta}$, unbiased estimates of the gradient can be obtained by sampling from $q(\mathbf{t}_i \lvert \mathbf{x}_i, \boldsymbol{\phi})$.
+Here, $\nabla_{\boldsymbol{\theta}}$ can be moved inside the expectation as $q(\mathbf{t}_i \lvert \mathbf{x}_i, \boldsymbol{\phi})$ doesn't depend on $\boldsymbol{\theta}$. Assuming that $p(\mathbf{x}_i \lvert \mathbf{t}_i, \boldsymbol{\theta})$ is differentiable w.r.t. $\boldsymbol{\theta}$, unbiased estimates of the gradient can be obtained by sampling from $q(\mathbf{t}_i \lvert \mathbf{x}_i, \boldsymbol{\phi})$.
 
 $$
 \nabla_{\boldsymbol{\theta}} \mathbb{E}_{q(\mathbf{t}_i \lvert \mathbf{x}_i, \boldsymbol{\phi})} \log p(\mathbf{x}_i \lvert \mathbf{t}_i, \boldsymbol{\theta}) \approx 
