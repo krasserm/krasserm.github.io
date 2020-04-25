@@ -10,7 +10,7 @@ header-img: "img/distributed.png"
 
 I recently started to implement examples from previous articles with [PyMC3](https://docs.pymc.io/) and [PyMC4](https://github.com/pymc-devs/pymc4) (see [here](https://github.com/krasserm/bayesian-machine-learning/blob/master/README.md) for an overview). 
 PyMC4 is still in an early state of development with only an alpha release available at the time of writing this article.
-The following is an introduction to PyMC4 using examples from [Bayesian regression with linear basis function models](/2019/02/23/bayesian-linear-regression/). A corresponding PyMC3 implementation is available [here](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/master/bayesian_linear_regression_pymc3.ipynb).
+The following is an introduction to PyMC4 for developers with basic PyMC3 familiarity using examples from [Bayesian regression with linear basis function models](/2019/02/23/bayesian-linear-regression/). A corresponding PyMC3 implementation is available [here](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/master/bayesian_linear_regression_pymc3.ipynb).
 
 
 ```python
