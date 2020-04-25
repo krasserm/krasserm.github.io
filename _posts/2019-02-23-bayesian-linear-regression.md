@@ -247,7 +247,7 @@ def f(X, noise_variance):
 
 
 def g(X, noise_variance):
-    '''Sinus function plus noise'''
+    '''Sinusoidal function plus noise'''
     return 0.5 + np.sin(2 * np.pi * X) + noise(X.shape, noise_variance)
 
 
@@ -269,8 +269,8 @@ def gaussian_basis_function(x, mu, sigma=0.1):
     return np.exp(-0.5 * (x - mu) ** 2 / sigma ** 2)
 
 
-def polynomial_basis_function(x, degree):
-    return x ** degree
+def polynomial_basis_function(x, power):
+    return x ** power
 
 
 def expand(x, bf, bf_args=None):
