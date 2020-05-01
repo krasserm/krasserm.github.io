@@ -101,9 +101,11 @@ interest in [Bayesian methods for machine learning](https://github.com/krasserm/
 application to deep learning.
  
 Even before my sabbatical year ended I was offered a machine learning position based on the [articles](/) I wrote. In this 
-position I'm extending the customer's digital asset management system with features like [facial recognition](https://resources.merlinone.com/facial-recognition), 
-[content-based image retrieval](https://resources.merlinone.com/image-similarity), image aesthetics assessment and 
+position I'm extending the customer's digital asset management system with features like [facial recognition](https://merlinone.com/solutions/merlin-ai-facial-recognition/), 
+[content-based image retrieval](https://merlinone.com/solutions/merlin-ai-image-similarity/), 
+[image aesthetics assessment](https://merlinone.com/solutions/merlin-ai-impact/) and 
 [single image super-resolution](https://github.com/krasserm/super-resolution), all based on deep learning methods. I 
 especially like the good balance between scientific and engineering work in these projects. Ethical aspects like avoiding 
 racial bias in facial recognition also play an important role. The developed machine learning solutions meanwhile run 
-in production at several customer sites as Docker-based microservices.
+in production at several customer sites as Docker-based microservices. At the moment, I'm developing a neural search 
+engine for text-based document retrieval using technologies from latest natural language processing research.

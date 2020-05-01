@@ -10,12 +10,12 @@ header-includes:
 
 # Martin Krasser
 
-I'm a self-employed data scientist, machine learning engineer and distributed systems specialist. I support customers 
+I'm a freelance data scientist, machine learning engineer and distributed systems specialist. I support customers 
 in their machine learning projects with research, data analysis, predictive modeling, software development and operating 
-AI solutions in production environments. I have experience with "traditional" machine learning, deep learning and 
-Bayesian methods for machine learning. Main focus is on computer vision problems but recently also on natural language 
-processing. My distributed systems experience comes from the development of numerous large-scale event-driven systems 
-including globally distributed systems that provide causal consistency guarantees. I'm a continuous learner and 
+data-intensive applications in production environments. I have experience with "traditional" machine learning, deep 
+learning and Bayesian methods for machine learning. Current focus is on deep learning for computer vision and natural 
+language processing. My distributed systems experience comes from the development of numerous large-scale event-driven 
+systems including globally distributed systems that provide causal consistency guarantees. I'm a continuous learner and 
 contributor to several open source projects.
 
 [http://martin-krasser.de](http://martin-krasser.de)  
@@ -50,9 +50,11 @@ See also [Stories](https://krasserm.github.io/stories/) for further information.
 MerlinOne, [https://merlinone.com](https://merlinone.com), Freelance
 
 - Design and implementation of AI extensions for the MerlinOne digital asset management system.
-- Application of deep learning methods for large-scale [facial recognition](https://resources.merlinone.com/facial-recognition), 
-  [content-based image retrieval](https://resources.merlinone.com/image-similarity), image aesthetics assessment and 
-  [single image super-resolution](https://github.com/krasserm/super-resolution). 
+- Application of deep learning methods for large-scale [facial recognition](https://merlinone.com/solutions/merlin-ai-facial-recognition/), 
+  [content-based image retrieval](https://merlinone.com/solutions/merlin-ai-image-similarity/), 
+  [image aesthetics assessment](https://merlinone.com/solutions/merlin-ai-impact/), 
+  [single image super-resolution](https://github.com/krasserm/super-resolution)
+  and development of a text-based neural search engine. 
 - Responsible for the scientific and engineering parts of all machine learning projects.
 - Support production deployments to several customer sites (hosted and on-premise). 
  
