@@ -105,7 +105,7 @@ For the moment, we assume that the values of $\alpha$ and $\beta$ are known. Sin
 
 $$
 \log p(\mathbf{w} \lvert \mathbf{t}, \alpha, \beta) = 
-\beta E_D(\mathbf{w}) - \alpha E_W(\mathbf{w}) + \mathrm{const.} \tag{12}
+-\beta E_D(\mathbf{w}) - \alpha E_W(\mathbf{w}) + \mathrm{const.} \tag{12}
 $$
 
 where $E_D(\mathbf{w})$ is defined by $(6)$ and 
