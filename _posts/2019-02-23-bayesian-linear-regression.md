@@ -101,7 +101,7 @@ $$
 p(\mathbf{w} \lvert \mathbf{t}, \alpha, \beta) = \mathcal{N}(\mathbf{w} \lvert \mathbf{m}_N, \mathbf{S}_N) \tag{11}
 $$
 
-For the moment, we assume that the values of $\alpha$ and $\beta$ are known. Since the posterior is proportional to the product of likehood and prior, the log of the posterior distribution is proportional to the sum of the log likelihood and the log of the prior
+For the moment, we assume that the values of $\alpha$ and $\beta$ are known. Since the posterior is proportional to the product of likelihood and prior, the log of the posterior distribution is proportional to the sum of the log likelihood and the log of the prior
 
 $$
 \log p(\mathbf{w} \lvert \mathbf{t}, \alpha, \beta) = 
