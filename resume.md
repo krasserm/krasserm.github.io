@@ -10,13 +10,12 @@ header-includes:
 
 # Martin Krasser
 
-I'm a freelance data scientist, machine learning engineer and distributed systems specialist. I support customers 
-in their machine learning projects with research, data analysis, predictive modeling, software development and operating 
-data-intensive applications in production environments. I have experience with "traditional" machine learning, deep 
-learning and Bayesian methods for machine learning. Current focus is on deep learning for computer vision and natural 
-language processing. My distributed systems experience comes from the development of numerous large-scale event-driven 
-systems including globally distributed systems that provide causal consistency guarantees. I'm a continuous learner and 
-contributor to several open source projects.
+I'm a freelance machine learning engineer, data scientist, software developer and consultant. I support customers in
+all phases of their AI projects, from initial research to operating developed solutions in production environments. 
+Current focus is on deep learning for computer vision and natural language processing, mainly in context of multi-modal 
+search engines, and Bayesian methods for machine learning. My experience as distributed systems engineer comes from the 
+development of numerous large-scale event-driven systems including globally distributed systems that provide causal 
+consistency guarantees. I'm a continuous learner and contributor to several open source projects.
 
 [http://martin-krasser.de](http://martin-krasser.de)  
 [https://twitter.com/mrt1nz](https://twitter.com/mrt1nz)  
@@ -45,7 +44,7 @@ probabilistic programming.
 
 See also [Stories](https://krasserm.github.io/stories/) for further information.
 
-### Since 04.2018: Data scientist, machine learning engineer
+### Since 04.2018: Machine learning engineer, data scientist
 
 MerlinOne, [https://merlinone.com](https://merlinone.com), Freelance
 
@@ -54,13 +53,13 @@ MerlinOne, [https://merlinone.com](https://merlinone.com), Freelance
   [content-based image retrieval](https://merlinone.com/solutions/merlin-ai-image-similarity/), 
   [image aesthetics assessment](https://merlinone.com/solutions/merlin-ai-impact/), 
   [single image super-resolution](https://github.com/krasserm/super-resolution)
-  and development of a text-based neural search engine. 
+  and development of a multi-modal neural search engine. 
 - Responsible for the scientific and engineering parts of all machine learning projects.
 - Support production deployments to several customer sites (hosted and on-premise). 
  
-### Since 04.2011: Data scientist, machine learning engineer, software engineer
+### Since 04.2011: Software engineer, machine learning engineer, data scientist
 
-Self-employed, [http://www.martin-krasser.de](http://www.martin-krasser.de)  
+Freelancer, [http://www.martin-krasser.de](http://www.martin-krasser.de)  
 
 - Research and development for industry machine learning projects.
 - Distributed systems development and consulting services.
@@ -172,7 +171,7 @@ The following is an incomplete list of open source projects I'm currently workin
 
 - [Bayesian machine learning](https://github.com/krasserm/bayesian-machine-learning). Collection of notebooks related to 
   Bayesian machine learning. Extended when I'm writing new articles on that topic.
-- [Super resolution](https://github.com/krasserm/super-resolution). Tensorflow 2.0 based implementation of WDSR, EDSR 
+- [Super resolution](https://github.com/krasserm/super-resolution). Tensorflow 2.x based implementation of WDSR, EDSR 
   and SRGAN for single image super-resolution.
 - [Image captioning transformer](https://github.com/krasserm/fairseq-image-captioning). Transformer-based image captioning. 
   An extension of the [pytorch/fairseq](https://github.com/pytorch/fairseq) sequence modeling toolkit.
