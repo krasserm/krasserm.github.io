@@ -12,10 +12,11 @@ header-includes:
 
 I'm a freelance machine learning engineer, data scientist, software developer and consultant. I support customers in
 all phases of their AI projects, from initial research to operating developed solutions in production environments. 
-Current focus is on deep learning for computer vision and natural language processing, mainly in context of multi-modal 
-search engines, and Bayesian methods for machine learning. My experience as distributed systems engineer comes from the 
-development of numerous large-scale event-driven systems including globally distributed systems that provide causal 
-consistency guarantees. I'm a continuous learner and contributor to several open source projects.
+Current focus is on deep learning for computer vision and natural language processing, mainly in context of neural 
+search engines. I also have a particular interest in Bayesian methods for machine learning. My experience as distributed
+systems engineer comes from the development of numerous large-scale event-driven systems including globally distributed 
+systems that provide causal consistency guarantees. I'm a continuous learner and contributor to several open source 
+projects.
 
 [http://martin-krasser.de](http://martin-krasser.de)  
 [https://twitter.com/mrt1nz](https://twitter.com/mrt1nz)  
