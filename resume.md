@@ -10,8 +10,8 @@ header-includes:
 
 # Martin Krasser
 
-I'm a freelance machine learning engineer, data scientist, software developer and consultant. I support customers in
-all phases of their AI projects, from initial research to operating developed solutions in production environments. 
+I'm a freelance machine learning engineer, software developer and consultant. I support customers in all phases of their 
+AI projects, from initial prototyping, solution development up to operating developed solutions in production environments. 
 Current focus is on deep learning for computer vision and natural language processing, mainly in context of neural 
 search engines. I also have a particular interest in Bayesian methods for machine learning. My experience as distributed
 systems engineer comes from the development of numerous large-scale event-driven systems including globally distributed 
@@ -25,11 +25,10 @@ projects.
 ## Specialties
 
 Distributed systems, 
-data-intensive applications,
-data science,
+system integration,
 machine learning,
 deep learning,
-system integration,
+data-intensive applications,
 event sourcing and CQRS,
 event stream processing, 
 event-driven architectures,
@@ -45,7 +44,7 @@ probabilistic programming.
 
 See also [Stories](https://krasserm.github.io/stories/) for further information.
 
-### Since 04.2018: Machine learning engineer, data scientist
+### Since 04.2018: Machine learning engineer
 
 MerlinOne, [https://merlinone.com](https://merlinone.com), Freelance
 
@@ -58,9 +57,9 @@ MerlinOne, [https://merlinone.com](https://merlinone.com), Freelance
 - Responsible for the scientific and engineering parts of all machine learning projects.
 - Support production deployments to several customer sites (hosted and on-premise). 
  
-### Since 04.2011: Software engineer, machine learning engineer, data scientist
+### Since 04.2011: Freelance software engineer, machine learning engineer
 
-Freelancer, [http://www.martin-krasser.de](http://www.martin-krasser.de)  
+[http://www.martin-krasser.de](http://www.martin-krasser.de)  
 
 - Research and development for industry machine learning projects.
 - Distributed systems development and consulting services.
