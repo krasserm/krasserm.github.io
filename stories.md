@@ -62,7 +62,7 @@ related to those of operation-based CRDTs which is further described in [this bl
 
 ## System integration
 
-In 2007, I started to work on a project in which we integrated the hospital information systems of several customers
+In 2007, I started to work on a project at [ICW](https://icw-global.com/) in which we integrated the hospital information systems of several customers
 using IHE standards. Technical basis for the integration solutions was the [Apache Camel](http://camel.apache.org/) 
 integration framework for which I developed integration components that implement actor interfaces of several 
 [IHE](https://www.ihe.net/) profiles and a DSL for processing  [HL7](http://www.hl7.org/) messages and 
@@ -70,7 +70,7 @@ integration framework for which I developed integration components that implemen
 [this article](https://dzone.com/articles/introduction-open-ehealth) for an introduction). In 2009, these extensions have 
 been open sourced as [Open eHealth Integration Platform](http://oehf.github.io/ipf/) (IPF) of which I'm the founder and 
 initial lead developer. IPF has many production deployments in international customer projects today and is still actively 
-developed by [ICW](https://icw-global.com/), the sponsor of the open source project. IPF is a central component of ICW's 
+developed by ICW, the sponsor of the open source project. IPF is a central component of ICW's 
 [eHealth Suite](https://icw-global.com/icw-ehealth-suite/) and provides connectivity to a wide range of healthcare information 
 systems. Its standard compliance has been certified in several [IHE Connectathons](https://www.ihe.net/connectathon.aspx). 
 During my work on IPF I also became an Apache Camel committer. 
@@ -83,30 +83,31 @@ a generic integration layer between Akka actors and Apache Camel components, inc
 akka-camel module is still part of Akka today and has many production deployments.
 
 I also developed other routing engine alternatives that follow a pure functional programming approach. A first attempt was 
-[scalaz-camel](https://github.com/krasserm/scalaz-camel) which is now superseded by the camel-fs2 module of the 
-[Streamz](https://github.com/krasserm/streamz) project which I'm still actively developing today. It allows application 
-developers to integrate Apache Camel components into [FS2](https://github.com/functional-streams-for-scala/fs2) applications 
-with a high-level integration DSL. Streamz also implements that DSL on top of 
-[Akka Streams](https://doc.akka.io/docs/akka/current/stream/index.html) with the camel-akka module which is meanwhile the 
-official replacement for akka-camel and part of the [Alpakka](https://github.com/akka/alpakka) ecosystem.
+[scalaz-camel](https://github.com/krasserm/scalaz-camel) which is now superseded by the [Streamz](https://github.com/krasserm/streamz) 
+project which I'm still actively developing today. It allows application developers to integrate Apache Camel components 
+into [FS2](https://github.com/functional-streams-for-scala/fs2) applications with a high-level integration DSL. It also 
+implements that DSL on top of [Akka Streams](https://doc.akka.io/docs/akka/current/stream/index.html). Streamz is meanwhile 
+the official replacement for akka-camel and part of the [Alpakka](https://github.com/akka/alpakka) ecosystem.
 
 ## Machine learning
 
-I got into machine learning in 2014 after having attended Andrew Ng's machine learning course on Coursera. After having 
-applied machine learning in several private projects I decided in 2017 to take a sabbatical for going much deeper into
-statistics, "traditional" machine learning and deep learning. I completed several [courses](/resume/#certifications) and gained
-further experience by [supplemantary reading](/2018/01/03/machine-learning-resources/) and intense practicing. I published 
-part of my exercise work in [articles](/) and [open source projects](/resume#open-source-projects). I also developed a special 
-interest in [Bayesian methods for machine learning](https://github.com/krasserm/bayesian-machine-learning) and their
-application to deep learning.
- 
-Even before my sabbatical year ended I was offered a machine learning position based on [articles](/) I wrote. In this 
-position I'm extending the customer's digital asset management system with features like [facial recognition](https://merlinone.com/solutions/merlin-ai-facial-recognition/), 
-[content-based image retrieval](https://merlinone.com/solutions/merlin-ai-image-similarity/), 
-[image aesthetics assessment](https://merlinone.com/solutions/merlin-ai-impact/) and 
-[single image super-resolution](https://github.com/krasserm/super-resolution), all based on deep learning methods. I 
-especially like the good balance between scientific and engineering work in these projects. Ethical aspects like avoiding 
-racial bias in facial recognition also play an important role. The developed machine learning solutions meanwhile run 
-in production at several customer sites as Docker-based microservices. At the moment, I'm developing a multi-modal neural 
-search engine that combines textual and visual information for better semantic matching.
+I got into machine learning in 2014 by attending Andrew Ng's machine learning course on Coursera. After having applied 
+machine learning in several smaller projects I decided in 2017 to take a sabbatical year for going much deeper into
+statistics, "traditional" machine learning and deep learning. I completed several [online courses](/resume/#certifications) 
+and gained further experience by supplemantary reading and implementing real-world examples. I shared part of my exercise 
+work as [open source projects](/resume#open-source-projects) and [blog posts](/). I also developed a particular interest 
+in [Bayesian methods for machine learning](https://github.com/krasserm/bayesian-machine-learning) and their application 
+to deep learning.
 
+Even before my sabbatical year ended I was offered a machine learning position by [MerlinOne](https://merlinone.com/) 
+where I'm currently improving the information retrieval subsystem of the company's digital asset management (DAM) system. 
+Improvements include [content-based image retrieval](https://merlinone.com/solutions/merlin-ai-image-similarity/),
+[facial recognition](https://merlinone.com/solutions/merlin-ai-facial-recognition/) and better text-based semantic matching, 
+all based on deep learning methods. I also developed a model for [image aesthetics assessment](https://merlinone.com/solutions/merlin-ai-impact/). 
+It allows DAM users to rank images by aesthetic and technical quality. All these solutions are meanwhile running in 
+production at several customer sites. 
+
+I like the wide range of responsibilities I have in these projects e.g. tracking and applying latest academic research, 
+model development and customization, solution development with a focus on scalability and low latency as well as production 
+deployments using modern container management technologies. Ethical aspects like avoiding racial bias in facial recognition 
+also play an important role. 
