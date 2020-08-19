@@ -1,16 +1,20 @@
 ---
-title: 'Getting started with PyMC4'
+title: 'Getting started with PyMC4: Bayesian neural networks'
 layout: post
 comments: True
 author: "Martin Krasser"
 header-img: "img/distributed.png"
 ---
 
-*You can find the notebook for this article [here](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/master/bayesian_linear_regression_pymc4.ipynb). It is part of the [bayesian-machine-learning](https://github.com/krasserm/bayesian-machine-learning) repo on Github.*
+*You can find the notebook for this article [here](https://github.com/krasserm/bayesian-machine-learning/blob/master/bayesian_neural_networks_pymc4.ipynb). It is part of the [bayesian-machine-learning](https://github.com/krasserm/bayesian-machine-learning) repo on Github.*
 
-I recently started to implement examples from previous articles with [PyMC3](https://docs.pymc.io/) and [PyMC4](https://github.com/pymc-devs/pymc4) (see [here](https://github.com/krasserm/bayesian-machine-learning/blob/master/README.md) for an overview). 
-PyMC4 is still in an early state of development with only an alpha release available at the time of writing this article.
-The following is an introduction to PyMC4 for developers with basic PyMC3 familiarity using examples from [Bayesian regression with linear basis function models](/2019/02/23/bayesian-linear-regression/). A corresponding PyMC3 implementation is available [here](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/master/bayesian_linear_regression_pymc3.ipynb).
+This article demonstrates how to implement a simple Bayesian neural network for regression with an early [PyMC4 development snapshot](https://github.com/pymc-devs/pymc4/tree/1c5e23825271fc2ff0c701b9224573212f56a534) (from Jul 29, 2020). It can be installed with 
+
+```bash
+pip install git+https://github.com/pymc-devs/pymc4@1c5e23825271fc2ff0c701b9224573212f56a534
+```
+
+I'll update this article from time to time to cover new features or to fix breaking API changes. The latest update (Aug. 19, 2020) includes the recently added support for variational inference (VI). The following sections assume that you have a basic familiarity with [PyMC3](https://docs.pymc.io/). If this is not the case I recommend reading [Getting started with PyMC3](https://docs.pymc.io/notebooks/getting_started.html) first.
 
 
 ```python
@@ -21,6 +25,9 @@ import arviz as az
 
 import tensorflow as tf
 import tensorflow_probability as tfp
+import matplotlib.pyplot as plt
+
+%matplotlib inline
 
 print(pm.__version__)
 print(tf.__version__)
@@ -31,242 +38,207 @@ logging.getLogger('tensorflow').setLevel(logging.ERROR)
 ```
 
     4.0a2
-    2.2.0-dev20200414
-    0.10.0-dev20200414
-
+    2.4.0-dev20200818
+    0.12.0-dev20200818
 
 
 ## Introduction to PyMC4
 
-PyMC4 uses [Tensorflow Probability](https://www.tensorflow.org/probability) (TFP) as backend and PyMC4 random variables are wrappers around TFP distributions. Models must be defined as [generator](https://docs.python.org/3/glossary.html#term-generator) functions, using a `yield` keyword for each random variable. PyMC4 uses [coroutines](https://www.python.org/dev/peps/pep-0342/) to interact with the generator to get access to random variables. Depending on the context, it may sample values from random variables, compute log probabilities of observed values, ... and so on. Details are covered in the [PyMC4 design guide](https://github.com/pymc-devs/pymc4/blob/master/notebooks/pymc4_design_guide.ipynb). Model generator functions must be decorated with `@pm.model` as shown in the following trivial example:
+PyMC4 uses [Tensorflow Probability](https://www.tensorflow.org/probability) (TFP) as backend and PyMC4 random variables are wrappers around TFP distributions. Models must be defined as [generator](https://docs.python.org/3/glossary.html#term-generator) functions, using a `yield` keyword for each random variable. PyMC4 uses [coroutines](https://www.python.org/dev/peps/pep-0342/) to interact with the generator to get access to these variables. Depending on the context, PyMC4 may sample values from random variables, compute log probabilities of observed values, ... and so on. Details are covered in the [PyMC4 design guide](https://github.com/pymc-devs/pymc4/blob/master/notebooks/pymc4_design_guide.ipynb). Model generator functions must be decorated with ` @pm.model` as shown in the following trivial example:
 
 
 ```python
 @pm.model
-def model(y):
-    x = yield pm.Normal('x', loc=0, scale=10)
-    y = yield pm.Normal('y', loc=x, scale=1, observed=y)
+def model(x):
+    # prior for the mean of a normal distribution
+    loc = yield pm.Normal('loc', loc=0, scale=10)
+    
+    # likelihood of observed data
+    obs = yield pm.Normal('obs', loc=loc, scale=1, observed=x)
 ```
 
-`pm.sample()` samples from the posterior using NUTS. Samplers other than NUTS or variational inference methods are not implemented yet.
+This models normally distributed data centered at a location `loc` to be inferred. Inference can be started with `pm.sample()` which uses the [No-U-Turn Sampler](https://jmlr.org/papers/volume15/hoffman14a/hoffman14a.pdf) (NUTS). Samplers other than NUTS are currently not implemented in PyMC4.
 
 
 ```python
-y = np.random.randn(30) + 3
+# 30 data points normally distributed around 3
+x = np.random.randn(30) + 3
 
-trace = pm.sample(model(y), num_chains=3)
+# Inference
+trace = pm.sample(model(x))
 trace
 ```
 
+```
+arviz.InferenceData
+- posterior
+- sample_stats
+- observed_data
+```
 
-
-
-    Inference data with groups:
-    	> posterior
-    	> sample_stats
-    	> observed_data
-
-
-
-The returned `trace` object is an ArviZ [`InferenceData`](https://arviz-devs.github.io/arviz/notebooks/XarrayforArviZ.html) object. It contains posterior samples, observed data and sampler statistics. The posterior distribution over `x` can be displayed with:
+The returned `trace` object is an ArviZ [`InferenceData`](https://arviz-devs.github.io/arviz/notebooks/XarrayforArviZ.html) object. It contains posterior samples, observed data and sampler statistics. The posterior distribution over `loc` can be displayed with:
 
 
 ```python
-az.plot_posterior(trace, var_names=['model/x']);
+az.plot_posterior(trace, var_names=['model/loc']);
 ```
 
 
 ![png](/img/2020-04-25/output_7_0.png)
 
 
-Models can also be nested i.e. used like other PyMC4 random variables.
+A recent addition to PyMC4 is variational inference and supported methods currently are `advi` and `fullrank_advi`. After fitting the model, posterior samples can be obtained from the resulting `approximation` object (representing a mean-field approximation in this case).
+
+
+```python
+fit = pm.fit(model(x), num_steps=10000, method='advi')
+trace = fit.approximation.sample(1000)
+```
+
+
+```python
+az.plot_posterior(trace, var_names=['model/loc']);
+```
+
+
+![png](/img/2020-04-25/output_10_0.png)
+
+
+The history of the variational lower bound  (= negative loss) during training can be displayed with
+
+
+```python
+plt.plot(-fit.losses)
+plt.ylabel('Variational lower bound')
+plt.xlabel('Step');
+```
+
+
+![png](/img/2020-04-25/output_12_0.png)
+
+
+which confirms a good convergence after about 10,000 steps. Models can also be composed through nesting and used like other PyMC4 random variables.
 
 
 ```python
 @pm.model
-def MyNormal(name, loc=0, scale=10):
-    x = yield pm.Normal(name, loc=loc, scale=scale)
-    return x
+def prior(name, loc=0, scale=10):
+    loc = yield pm.Normal(name, loc=loc, scale=scale)
+    return loc
 
 @pm.model
-def model(y):
-    x = yield MyNormal('x')
-    y = yield pm.Normal('y', loc=x, scale=1, observed=y)
+def model(x):
+    loc = yield prior('loc')
+    obs = yield pm.Normal('obs', loc=loc, scale=1, observed=x)
     
-trace = pm.sample(model(y), num_chains=3)
-az.plot_posterior(trace, var_names=['model/MyNormal/x']);    
+trace = pm.sample(model(x))
+az.plot_posterior(trace, var_names=['model/prior/loc']);    
 ```
 
 
-![png](/img/2020-04-25/output_9_0.png)
+![png](/img/2020-04-25/output_14_0.png)
 
 
-## Linear basis function models
-
-I introduced regression with linear basis function models in a [previous article](/2019/02/23/bayesian-linear-regression/). To recap, a linear regression model is a linear function of the parameters but not necessarily of the input. Input $x$ can be expanded with a set of non-linear basis functions $\phi_j(x)$, where $(\phi_1(x), \dots, \phi_M(x))^T = \boldsymbol\phi(x)$, for modeling a non-linear relationship between input $x$ and a function value $y$.
-
-$$
-y(x, \mathbf{w}) = w_0 + \sum_{j=1}^{M}{w_j \phi_j(x)} = w_0 + \mathbf{w}_{1:}^T \boldsymbol\phi(x) \tag{1}
-$$
-
-For simplicity I'm using a scalar input $x$ here. Target variable $t$ is given by the deterministic function $y(x, \mathbf{w})$ and Gaussian noise $\epsilon$.
-
-$$
-t = y(x, \mathbf{w}) + \epsilon \tag{2}
-$$
-
-Here, we can choose between polynomial and Gaussian basis functions for expanding input $x$. 
-
-
-```python
-from functools import partial
-from scipy.stats import norm
-
-def polynomial_basis(x, power):
-    return x ** power
-
-def gaussian_basis(x, mu, sigma):
-    return norm(loc=mu, scale=sigma).pdf(x).astype(np.float32)
-
-def _expand(x, bf, bf_args):
-    return np.stack([bf(x, bf_arg) for bf_arg in bf_args], axis=1)
-
-def expand_polynomial(x, degree=3):
-    return _expand(x, bf=polynomial_basis, bf_args=range(1, degree + 1))
-
-def expand_gaussian(x, mus=np.linspace(0, 1, 9), sigma=0.3):
-    return _expand(x, bf=partial(gaussian_basis, sigma=sigma), bf_args=mus)
-
-# Choose between polynomial and Gaussian expansion
-# (by switching the comment on the following two lines)
-expand = expand_polynomial
-#expand = expand_gaussian
-```
-
-For example, to expand two input values `[0.5, 1.5]` into a polynomial design matrix of degree `3` we can use
-
-
-```python
-expand_polynomial(np.array([0.5, 1.5]), degree=3)
-```
-
-
-
-
-    array([[0.5  , 0.25 , 0.125],
-           [1.5  , 2.25 , 3.375]])
-
-
-
-The power of `0` is omitted here and covered by a $w_0$ in the model.
+A more elaborate example is shown below where a neural network is composed of several layers. 
 
 ## Example dataset
 
-The example dataset consists of `N` noisy samples from a sinusoidal function `f`.
+The dataset used in the following example contains `N` noisy samples from a sinusoidal function `f` in two distinct regions (`x1` and `x2`).
 
 
 ```python
-import matplotlib.pyplot as plt
-%matplotlib inline
+def f(x, noise):
+    """Generates noisy samples from a sinusoidal function at x."""
+    return np.sin(2 * np.pi * x) + np.random.randn(*x.shape) * noise
 
-from bayesian_linear_regression_util import (
-    plot_data, 
-    plot_truth
-)
+N = 40
+noise = 0.1
 
-def f(x, noise=0):
-    """Sinusoidal function with optional Gaussian noise."""
-    return 0.5 + np.sin(2 * np.pi * x) + np.random.normal(scale=noise, size=x.shape)
+x1 = np.linspace(-0.6, -0.15, N // 2, dtype=np.float32)
+x2 = np.linspace(0.15, 0.6, N // 2, dtype=np.float32)
 
-# Number of samples
-N = 10
+x = np.concatenate([x1, x2]).reshape(-1, 1)
+y = f(x, noise=noise)
 
-# Constant noise 
-noise = 0.3
+x_test = np.linspace(-1.5, 1.5, 200, dtype=np.float32).reshape(-1, 1)
+f_test = f(x_test, noise=0.0)
 
-# Noisy samples 
-x = np.linspace(0, 1, N, dtype=np.float32)
-t = f(x, noise=noise)
-
-# Noise-free ground truth 
-x_test = np.linspace(0, 1, 100).astype(np.float32)
-y_true = f(x_test)
-
-plot_data(x, t)
-plot_truth(x_test, y_true)
+plt.scatter(x, y, marker='o', c='k', label='Samples')
+plt.plot(x_test, f_test, 'k--', label='f')
+plt.legend();
 ```
 
 
-![png](/img/2020-04-25/output_16_0.png)
+![png](/img/2020-04-25/output_18_0.png)
 
 
-## Implementation with PyMC4
+## Bayesian neural network
 
 ### Model definition
 
-The model definition directly follows from Eq. $(1)$ and Eq. $(2)$ with normal priors over parameters. The size of parameter vector `w_r` ($\mathbf{w}_{1:}$ in Eq. $(1)$) is determined by the number of basis functions and set via the `batch_stack` parameter. With the above default settings, it is 3 for polynomial expansion and 9 for Gaussian expansion.
+To model the non-linear relationship between `x` and `y` in the dataset we use a ReLU neural network with two hidden layers, 5 neurons each. The weights of the neural network are random variables instead of deterministic variables. This is what makes a neural network a Bayesian neural network. Here, we assume that the weights follow a normal distribution and are independent. 
+
+The neural network defines a prior over the mean `loc` of the data likelihood `obs` which is represented by a normal distribution. For simplicity, the aleatoric uncertainty (`noise`) in the data is assumed to be known. Thanks to PyMC4's model composition support, priors can be defined layer-wise using the `layer` generator function and composed to a neural network as shown in function `model`. During inference, a posterior distribution over the neural network weights is obtained. 
 
 
 ```python
-import tensorflow as tf
+@pm.model
+def layer(name, x, n_in, n_out, prior_scale, activation=tf.identity):
+    w = yield pm.Normal(name=f'{name}_w', loc=0, scale=prior_scale, batch_stack=(n_in, n_out))
+    b = yield pm.Normal(name=f'{name}_b', loc=0, scale=prior_scale, batch_stack=(1, n_out))
+    
+    return activation(tf.tensordot(x, w, axes=[1, 0]) + b)
 
 @pm.model
-def model(Phi, t, sigma=noise):
-    """Linear model generator.
+def model(x, y, prior_scale=1.0):    
+    o1 = yield layer('l1', x, n_in=1, n_out=5, prior_scale=prior_scale, activation=tf.nn.relu)
+    o2 = yield layer('l2', o1, n_in=5, n_out=5, prior_scale=prior_scale, activation=tf.nn.relu)
+    o3 = yield layer('l3', o2, n_in=5, n_out=1, prior_scale=prior_scale)
     
-    Args:
-    - Phi: design matrix (N,M)
-    - t: noisy target values (N,)
-    - sigma: known noise of t
-    """
-
-    w_0 = yield pm.Normal(name='w_0', loc=0, scale=10)
-    w_r = yield pm.Normal(name='w_r', loc=0, scale=10, batch_stack=Phi.shape[1])
-    
-    mu = w_0 + tf.tensordot(w_r, Phi.T, axes=1)
-    
-    yield pm.Normal(name='t_obs', loc=mu, scale=sigma, observed=t)
+    yield pm.Normal(name='obs', loc=o3, scale=noise, observed=y)
 ```
+
+The `batch_stack` parameter of random variable constructors is used to define the shape of the random variable.
 
 ### Inference
 
-Tensorflow will automatically run inference on a GPU if available. With the current version of PyMC4, inference on a GPU is quite slow compared to a multi-core CPU (need to investigate that in more detail). To enforce inference on a CPU set environment variable `CUDA_VISIBLE_DEVICES` to an empty value. There is no progress bar visible yet during sampling but the following shouldn't take longer than a 1 minute.
+Tensorflow will automatically run inference on a GPU if available. With the current version of PyMC4, MCMC inference using NUTS on a GPU is quite slow compared to a multi-core CPU (need to investigate that in more detail). To enforce inference on a CPU set environment variable `CUDA_VISIBLE_DEVICES` to an empty value. There is no progress bar visible yet during sampling but the following shouldn't take longer than a few minutes on a modern multi-core CPU.
 
 
 ```python
-trace = pm.sample(model(expand(x), t), num_chains=3, burn_in=100, num_samples=1000)
+# MCMC inference with NUTS
+trace = pm.sample(model(x, y, prior_scale=3), burn_in=100, num_samples=1000)
 ```
+
+Variational inference is significantly faster but the results are less convincing than the MCMC results. I need to investigate that further to see if I'm doing something wrong or if this is an issue with the current PyMC4 development snapshot. We'll therefore use the MCMC results in the following section. If you want to see the VI results, run the following cell instead of the previous one.
 
 
 ```python
-az.plot_trace(trace);
+# Variational inference with full rank ADVI
+fit = pm.fit(model(x, y, prior_scale=0.5), num_steps=150000, method='fullrank_advi')
+
+# Draw samples from the resulting mean-field approximation
+trace = fit.approximation.sample(1000)
 ```
 
-
-![png](/img/2020-04-25/output_23_0.png)
-
+The full `trace` can be visualized with `az.plot_trace(trace)`. Here, we only display the posterior over the last layer weights (without bias).
 
 
 ```python
-az.plot_posterior(trace, var_names="model/w_0");
-az.plot_posterior(trace, var_names="model/w_r");
+az.plot_posterior(trace, var_names="model/layer/l3_w");
 ```
 
 
-![png](/img/2020-04-25/output_24_0.png)
-
-
-
-![png](/img/2020-04-25/output_24_1.png)
+![png](/img/2020-04-25/output_26_0.png)
 
 
 ### Prediction
 
-To obtain posterior predictive samples for a test set `x_test` we simply call the model generator function again with the expanded test set. This is a nice improvement over PyMC3 which required to setup a shared Theano variable for setting test set values. Target values are ignored during predictive sampling, only the shape of the target array `t` matters.
+To obtain posterior predictive samples for a test set `x_test` we simply call the `model` generator function again with the test set as argument. This is a nice improvement over PyMC3 which required to setup a shared Theano variable for setting test set values. Target values are ignored during predictive sampling, only the shape of the target array `y` matters, hence we set it to an array of zeros with the same shape as `x_test`.
 
 
 ```python
-draws_posterior = pm.sample_posterior_predictive(model(expand(x_test), t=np.zeros_like(x_test)), trace, inplace=False)
+draws_posterior = pm.sample_posterior_predictive(model(x=x_test, y=np.zeros_like(x_test)), trace, inplace=False)
 draws_posterior.posterior_predictive
 ```
 
@@ -276,13 +248,11 @@ draws_posterior.posterior_predictive
 <div><svg style="position: absolute; width: 0; height: 0; overflow: hidden">
 <defs>
 <symbol id="icon-database" viewBox="0 0 32 32">
-<title>Show/Hide data repr</title>
 <path d="M16 0c-8.837 0-16 2.239-16 5v4c0 2.761 7.163 5 16 5s16-2.239 16-5v-4c0-2.761-7.163-5-16-5z"></path>
 <path d="M16 17c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
 <path d="M16 26c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
 </symbol>
 <symbol id="icon-file-text2" viewBox="0 0 32 32">
-<title>Show/Hide attributes</title>
 <path d="M28.681 7.159c-0.694-0.947-1.662-2.053-2.724-3.116s-2.169-2.030-3.116-2.724c-1.612-1.182-2.393-1.319-2.841-1.319h-15.5c-1.378 0-2.5 1.121-2.5 2.5v27c0 1.378 1.122 2.5 2.5 2.5h23c1.378 0 2.5-1.122 2.5-2.5v-19.5c0-0.448-0.137-1.23-1.319-2.841zM24.543 5.457c0.959 0.959 1.712 1.825 2.268 2.543h-4.811v-4.811c0.718 0.556 1.584 1.309 2.543 2.268zM28 29.5c0 0.271-0.229 0.5-0.5 0.5h-23c-0.271 0-0.5-0.229-0.5-0.5v-27c0-0.271 0.229-0.5 0.5-0.5 0 0 15.499-0 15.5 0v7c0 0.552 0.448 1 1 1h7v19.5z"></path>
 <path d="M23 26h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
 <path d="M23 22h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
@@ -305,9 +275,27 @@ draws_posterior.posterior_predictive
   --xr-background-color-row-odd: var(--jp-layout-color2, #eeeeee);
 }
 
+html[theme=dark],
+body.vscode-dark {
+  --xr-font-color0: rgba(255, 255, 255, 1);
+  --xr-font-color2: rgba(255, 255, 255, 0.54);
+  --xr-font-color3: rgba(255, 255, 255, 0.38);
+  --xr-border-color: #1F1F1F;
+  --xr-disabled-color: #515151;
+  --xr-background-color: #111111;
+  --xr-background-color-row-even: #111111;
+  --xr-background-color-row-odd: #313131;
+}
+
 .xr-wrap {
+  display: block;
   min-width: 300px;
   max-width: 700px;
+}
+
+.xr-text-repr-fallback {
+  /* fallback to plain text repr when CSS is not injected (untrusted notebook) */
+  display: none;
 }
 
 .xr-header {
@@ -607,80 +595,101 @@ dl.xr-attrs {
   stroke: currentColor;
   fill: currentColor;
 }
-</style><div class='xr-wrap'><div class='xr-header'><div class='xr-obj-type'>xarray.Dataset</div></div><ul class='xr-sections'><li class='xr-section-item'><input id='section-c38941c4-9742-4114-a3e5-3c1cd16a59c6' class='xr-section-summary-in' type='checkbox' disabled ><label for='section-c38941c4-9742-4114-a3e5-3c1cd16a59c6' class='xr-section-summary'  title='Expand/collapse section'>Dimensions:</label><div class='xr-section-inline-details'><ul class='xr-dim-list'><li><span class='xr-has-index'>chain</span>: 3</li><li><span class='xr-has-index'>draw</span>: 1000</li><li><span class='xr-has-index'>model/t_obs_dim_0</span>: 100</li></ul></div><div class='xr-section-details'></div></li><li class='xr-section-item'><input id='section-1a205c05-77e1-4350-97a1-bd32522ecf16' class='xr-section-summary-in' type='checkbox'  checked><label for='section-1a205c05-77e1-4350-97a1-bd32522ecf16' class='xr-section-summary' >Coordinates: <span>(3)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>chain</span></div><div class='xr-var-dims'>(chain)</div><div class='xr-var-dtype'>int64</div><div class='xr-var-preview xr-preview'>0 1 2</div><input id='attrs-6fbcf313-3e62-4786-9671-e5e464ff8406' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-6fbcf313-3e62-4786-9671-e5e464ff8406' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-c0df3e38-ae3b-44e0-8e28-97b27bc16883' class='xr-var-data-in' type='checkbox'><label for='data-c0df3e38-ae3b-44e0-8e28-97b27bc16883' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><pre class='xr-var-data'>array([0, 1, 2])</pre></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>draw</span></div><div class='xr-var-dims'>(draw)</div><div class='xr-var-dtype'>int64</div><div class='xr-var-preview xr-preview'>0 1 2 3 4 5 ... 995 996 997 998 999</div><input id='attrs-5a36de0a-53dd-46ea-9dff-114085398a38' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-5a36de0a-53dd-46ea-9dff-114085398a38' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-f1f93bc5-8924-486a-ae1e-f0253e8f9000' class='xr-var-data-in' type='checkbox'><label for='data-f1f93bc5-8924-486a-ae1e-f0253e8f9000' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><pre class='xr-var-data'>array([  0,   1,   2, ..., 997, 998, 999])</pre></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>model/t_obs_dim_0</span></div><div class='xr-var-dims'>(model/t_obs_dim_0)</div><div class='xr-var-dtype'>int64</div><div class='xr-var-preview xr-preview'>0 1 2 3 4 5 6 ... 94 95 96 97 98 99</div><input id='attrs-aeb6d2f8-ad75-4af9-b646-da48527bff00' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-aeb6d2f8-ad75-4af9-b646-da48527bff00' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-3eed21f9-db8a-42d0-bee2-e8a05a17322c' class='xr-var-data-in' type='checkbox'><label for='data-3eed21f9-db8a-42d0-bee2-e8a05a17322c' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><pre class='xr-var-data'>array([ 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17,
-       18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
-       36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53,
-       54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71,
-       72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89,
-       90, 91, 92, 93, 94, 95, 96, 97, 98, 99])</pre></li></ul></div></li><li class='xr-section-item'><input id='section-ef6888d7-f8b3-4631-99bf-11a3076d35c3' class='xr-section-summary-in' type='checkbox'  checked><label for='section-ef6888d7-f8b3-4631-99bf-11a3076d35c3' class='xr-section-summary' >Data variables: <span>(1)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span>model/t_obs</span></div><div class='xr-var-dims'>(chain, draw, model/t_obs_dim_0)</div><div class='xr-var-dtype'>float32</div><div class='xr-var-preview xr-preview'>0.62803966 ... -0.10609433</div><input id='attrs-5f35cb15-08b1-454e-aaeb-66b92898badb' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-5f35cb15-08b1-454e-aaeb-66b92898badb' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-1ba80739-e72e-405c-9109-1fdf91a36892' class='xr-var-data-in' type='checkbox'><label for='data-1ba80739-e72e-405c-9109-1fdf91a36892' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><pre class='xr-var-data'>array([[[ 6.2803966e-01,  3.0982676e-01,  1.3288246e+00, ...,
-          2.0092756e-02, -4.6279129e-01, -3.5547027e-01],
-        [ 1.2540956e+00,  1.3001926e+00,  4.7648013e-01, ...,
-         -1.4047767e-01, -6.6063479e-02,  2.2666046e-01],
-        [ 8.7482959e-01,  7.1901262e-01,  1.2609010e+00, ...,
-          3.6891103e-01,  2.3930666e-01,  1.9714403e-01],
-        ...,
-        [ 6.5140450e-01,  9.2145377e-01,  2.7004269e-01, ...,
-          6.3866097e-04,  3.6582848e-01,  4.0039763e-01],
-        [ 4.4500881e-01,  2.6833433e-01,  5.4804039e-01, ...,
-          7.7021873e-01,  2.5889888e-02,  6.1815977e-03],
-        [ 7.7372921e-01,  7.9454470e-01,  6.1503142e-01, ...,
-          1.0394448e-01, -4.7731856e-01, -6.0296464e-01]],
+</style><pre class='xr-text-repr-fallback'>&lt;xarray.Dataset&gt;
+Dimensions:          (chain: 10, draw: 1000, model/obs_dim_0: 200, model/obs_dim_1: 1)
+Coordinates:
+  * chain            (chain) int64 0 1 2 3 4 5 6 7 8 9
+  * draw             (draw) int64 0 1 2 3 4 5 6 ... 993 994 995 996 997 998 999
+  * model/obs_dim_0  (model/obs_dim_0) int64 0 1 2 3 4 5 ... 195 196 197 198 199
+  * model/obs_dim_1  (model/obs_dim_1) int64 0
+Data variables:
+    model/obs        (chain, draw, model/obs_dim_0, model/obs_dim_1) float32 ...
+Attributes:
+    created_at:     2020-08-19T12:12:02.008383
+    arviz_version:  0.9.0</pre><div class='xr-wrap' hidden><div class='xr-header'><div class='xr-obj-type'>xarray.Dataset</div></div><ul class='xr-sections'><li class='xr-section-item'><input id='section-7c46b00d-646f-4410-a108-48f232b7be69' class='xr-section-summary-in' type='checkbox' disabled ><label for='section-7c46b00d-646f-4410-a108-48f232b7be69' class='xr-section-summary'  title='Expand/collapse section'>Dimensions:</label><div class='xr-section-inline-details'><ul class='xr-dim-list'><li><span class='xr-has-index'>chain</span>: 10</li><li><span class='xr-has-index'>draw</span>: 1000</li><li><span class='xr-has-index'>model/obs_dim_0</span>: 200</li><li><span class='xr-has-index'>model/obs_dim_1</span>: 1</li></ul></div><div class='xr-section-details'></div></li><li class='xr-section-item'><input id='section-37f56e16-8169-4329-bd39-033864999c34' class='xr-section-summary-in' type='checkbox'  checked><label for='section-37f56e16-8169-4329-bd39-033864999c34' class='xr-section-summary' >Coordinates: <span>(4)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>chain</span></div><div class='xr-var-dims'>(chain)</div><div class='xr-var-dtype'>int64</div><div class='xr-var-preview xr-preview'>0 1 2 3 4 5 6 7 8 9</div><input id='attrs-0eeccbe3-e46d-4840-a0f6-49500acb6a1f' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-0eeccbe3-e46d-4840-a0f6-49500acb6a1f' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-01b13910-659b-4a75-a610-37543426aaa9' class='xr-var-data-in' type='checkbox'><label for='data-01b13910-659b-4a75-a610-37543426aaa9' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>draw</span></div><div class='xr-var-dims'>(draw)</div><div class='xr-var-dtype'>int64</div><div class='xr-var-preview xr-preview'>0 1 2 3 4 5 ... 995 996 997 998 999</div><input id='attrs-8da08f97-5716-4582-baf1-6ebd580ec713' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-8da08f97-5716-4582-baf1-6ebd580ec713' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-5bf128e0-710d-49f1-9c30-550311cd180d' class='xr-var-data-in' type='checkbox'><label for='data-5bf128e0-710d-49f1-9c30-550311cd180d' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([  0,   1,   2, ..., 997, 998, 999])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>model/obs_dim_0</span></div><div class='xr-var-dims'>(model/obs_dim_0)</div><div class='xr-var-dtype'>int64</div><div class='xr-var-preview xr-preview'>0 1 2 3 4 5 ... 195 196 197 198 199</div><input id='attrs-7aa54c95-4fbc-46de-bcfa-0d9c9e543201' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-7aa54c95-4fbc-46de-bcfa-0d9c9e543201' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-3aee3527-352b-43e7-a92e-d2d5e4c9244d' class='xr-var-data-in' type='checkbox'><label for='data-3aee3527-352b-43e7-a92e-d2d5e4c9244d' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([  0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,
+        14,  15,  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,
+        28,  29,  30,  31,  32,  33,  34,  35,  36,  37,  38,  39,  40,  41,
+        42,  43,  44,  45,  46,  47,  48,  49,  50,  51,  52,  53,  54,  55,
+        56,  57,  58,  59,  60,  61,  62,  63,  64,  65,  66,  67,  68,  69,
+        70,  71,  72,  73,  74,  75,  76,  77,  78,  79,  80,  81,  82,  83,
+        84,  85,  86,  87,  88,  89,  90,  91,  92,  93,  94,  95,  96,  97,
+        98,  99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111,
+       112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125,
+       126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139,
+       140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153,
+       154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167,
+       168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181,
+       182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195,
+       196, 197, 198, 199])</pre></div></li><li class='xr-var-item'><div class='xr-var-name'><span class='xr-has-index'>model/obs_dim_1</span></div><div class='xr-var-dims'>(model/obs_dim_1)</div><div class='xr-var-dtype'>int64</div><div class='xr-var-preview xr-preview'>0</div><input id='attrs-d2809ce2-13fe-4ce1-8b73-d1e6d65795d8' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-d2809ce2-13fe-4ce1-8b73-d1e6d65795d8' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-89ba0ed4-75da-441b-86f4-443a8fea6f33' class='xr-var-data-in' type='checkbox'><label for='data-89ba0ed4-75da-441b-86f4-443a8fea6f33' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([0])</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-252da4c5-4190-4df9-9eb6-0e8f7930fdf9' class='xr-section-summary-in' type='checkbox'  checked><label for='section-252da4c5-4190-4df9-9eb6-0e8f7930fdf9' class='xr-section-summary' >Data variables: <span>(1)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><ul class='xr-var-list'><li class='xr-var-item'><div class='xr-var-name'><span>model/obs</span></div><div class='xr-var-dims'>(chain, draw, model/obs_dim_0, model/obs_dim_1)</div><div class='xr-var-dtype'>float32</div><div class='xr-var-preview xr-preview'>26.57001 26.04135 ... -14.317561</div><input id='attrs-bc8ca1ce-a73b-45e5-8938-8eff592dd95b' class='xr-var-attrs-in' type='checkbox' disabled><label for='attrs-bc8ca1ce-a73b-45e5-8938-8eff592dd95b' title='Show/Hide attributes'><svg class='icon xr-icon-file-text2'><use xlink:href='#icon-file-text2'></use></svg></label><input id='data-aa3156b7-f141-4a52-bce8-aab0fab7d89b' class='xr-var-data-in' type='checkbox'><label for='data-aa3156b7-f141-4a52-bce8-aab0fab7d89b' title='Show/Hide data repr'><svg class='icon xr-icon-database'><use xlink:href='#icon-database'></use></svg></label><div class='xr-var-attrs'><dl class='xr-attrs'></dl></div><div class='xr-var-data'><pre>array([[[[ 2.65700092e+01],
+         [ 2.60413494e+01],
+         [ 2.57281590e+01],
+         ...,
+         [-4.75241995e+00],
+         [-4.78487253e+00],
+         [-4.75552654e+00]],
 
-       [[ 1.0802209e-02,  5.3853476e-01,  4.2005211e-01, ...,
-          3.4785268e-01,  5.5825341e-01,  3.6537340e-01],
-        [ 1.0661882e+00,  6.1011136e-01,  1.2609197e+00, ...,
-          2.7852780e-01,  6.0179305e-01,  8.8738966e-01],
-        [ 7.4540353e-01,  1.2344036e+00,  1.2811742e+00, ...,
-          7.6069474e-01,  5.6832170e-01,  1.1162102e+00],
-        ...,
-        [-9.9507570e-03,  3.3239186e-01,  4.7235852e-01, ...,
-         -3.1367943e-01, -1.1621615e-01,  8.4965013e-02],
-        [ 6.0881937e-01,  5.4845160e-01,  3.3895850e-01, ...,
-         -1.8985049e-01,  5.1551007e-02, -2.9580078e-01],
-        [ 4.2067486e-01,  1.0590549e+00,  8.4452099e-01, ...,
-         -4.9186319e-01, -1.4563501e-01, -1.7367038e-01]],
+        [[ 3.16064491e+01],
+         [ 3.10987301e+01],
+         [ 3.04416885e+01],
+         ...,
+         [-5.26556778e+00],
+         [-5.20179415e+00],
+         [-5.47270155e+00]],
 
-       [[-2.7087212e-01,  2.2036786e-01,  2.1426165e-01, ...,
-          1.7241767e-01,  3.1225359e-01,  6.8863893e-01],
-        [ 7.2146583e-01,  6.2246352e-01,  6.6259170e-01, ...,
-          3.3384523e-01, -2.5926927e-01, -3.3233041e-01],
-        [ 4.1656739e-01,  7.5270784e-01,  5.5890125e-01, ...,
-          1.1958110e-01, -1.2425715e-01, -2.5198370e-01],
-        ...,
-        [ 5.0131804e-01, -7.0139110e-02,  1.1371263e+00, ...,
-          1.8864080e-01, -1.3917631e-01,  4.4616908e-01],
-        [ 1.9719602e-01,  6.5913051e-01,  8.3163023e-01, ...,
-          5.0224549e-01,  4.1368300e-01,  5.7770413e-01],
-        [ 5.0372481e-01,  3.2341504e-01,  6.1320949e-01, ...,
-         -6.8751842e-02, -7.4040598e-01, -1.0609433e-01]]], dtype=float32)</pre></li></ul></div></li><li class='xr-section-item'><input id='section-26cc2edd-e860-436f-a4b2-2527df12879c' class='xr-section-summary-in' type='checkbox'  checked><label for='section-26cc2edd-e860-436f-a4b2-2527df12879c' class='xr-section-summary' >Attributes: <span>(2)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><dl class='xr-attrs'><dt><span>created_at :</span></dt><dd>2020-04-22T05:50:53.606431</dd><dt><span>arviz_version :</span></dt><dd>0.7.0</dd></dl></div></li></ul></div></div>
+        [[ 4.52943230e+01],
+         [ 4.45980377e+01],
+         [ 4.39933929e+01],
+         ...,
+...
+         ...,
+         [-5.59512615e+00],
+         [-5.61213923e+00],
+         [-5.73862267e+00]],
+
+        [[ 2.81977844e+00],
+         [ 2.81224990e+00],
+         [ 3.02726460e+00],
+         ...,
+         [-5.47826385e+00],
+         [-5.42433500e+00],
+         [-5.45992947e+00]],
+
+        [[ 3.89422917e+00],
+         [ 3.80268312e+00],
+         [ 3.86203289e+00],
+         ...,
+         [-1.39646444e+01],
+         [-1.41936607e+01],
+         [-1.43175611e+01]]]], dtype=float32)</pre></div></li></ul></div></li><li class='xr-section-item'><input id='section-06fb4778-5e93-4a49-b46d-359b4e3e7aa4' class='xr-section-summary-in' type='checkbox'  checked><label for='section-06fb4778-5e93-4a49-b46d-359b4e3e7aa4' class='xr-section-summary' >Attributes: <span>(2)</span></label><div class='xr-section-inline-details'></div><div class='xr-section-details'><dl class='xr-attrs'><dt><span>created_at :</span></dt><dd>2020-08-19T12:12:02.008383</dd><dt><span>arviz_version :</span></dt><dd>0.9.0</dd></dl></div></li></ul></div></div>
 
 
 
-The predictive mean and standard deviation is obtained by averaging over chains (axis `0`) and predictive samples (axis `1`) for each of the 100 data points in `x_test` (axis `2`).
+The predictive mean and standard deviation can be obtained by averaging over chains (axis `0`) and predictive samples (axis `1`) for each of the 200 data points in `x_test` (axis `2`).
 
 
 ```python
-predictive_samples = draws_posterior.posterior_predictive.data_vars['model/t_obs'].values
+predictive_samples = draws_posterior.posterior_predictive.data_vars['model/obs'].values
 
-m = np.mean(predictive_samples, axis=(0, 1))
-s = np.std(predictive_samples, axis=(0, 1))
+m = np.mean(predictive_samples, axis=(0, 1)).flatten()
+s = np.std(predictive_samples, axis=(0, 1)).flatten()
 ```
 
-These statistics can be used to plot model predictions and their uncertainties (together with the ground truth and the noisy training dataset).
+These statistics can be used to plot model predictions and their variances (together with function `f` and the noisy training data). One can clearly see a higher predictive variance (= higher uncertainty) in regions outside the training data.
 
 
 ```python
-plt.fill_between(x_test, m + s, m - s, alpha = 0.5, label='Predictive std. dev.')
-plt.plot(x_test, m, label='Predictive mean');
+plt.plot(x_test, m, label='Expected value');
+plt.fill_between(x_test.flatten(), m + 2 * s, m - 2 * s, alpha = 0.3, label='Uncertainty')
 
-plot_data(x, t)
-plot_truth(x_test, y_true, label=None)
+plt.scatter(x, y, marker='o', c='k')
+plt.plot(x_test, f_test, 'k--')
 
+plt.ylim(-1.5, 2.5)
 plt.legend();
 ```
 
 
-![png](/img/2020-04-25/output_30_0.png)
+![png](/img/2020-04-25/output_32_0.png)
 
 
-Try running the example again with Gaussian expansion i.e. setting `expand = expand_gaussian` and see how it compares to polynomial expansion. Also try running with a different number of basis functions by overriding the default arguments of `expand_polynomial` and `expand_gaussian`. You can find more PyMC4 examples in the [notebooks](https://github.com/pymc-devs/pymc4/tree/master/notebooks) diretory of the PyMC4 project.
+If you think something can be improved in this article (and I'm sure it can) or if I missed other important aspects of PyMC4 please let me know.
