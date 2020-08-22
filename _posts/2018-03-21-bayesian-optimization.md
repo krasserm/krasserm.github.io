@@ -25,15 +25,15 @@ A popular surrogate model for Bayesian optimization are [Gaussian processes](htt
 
 Proposing sampling points in the search space is done by acquisition functions. They trade off exploitation and exploration. Exploitation means sampling where the surrogate model predicts a high objective and exploration means sampling at locations where the prediction uncertainty is high. Both correspond to high acquisition function values and the goal is to maximize the acquisition function to determine the next sampling point. 
 
-More formally, the objective function $f$ will be sampled at $$\mathbf{x}_t = \operatorname{argmax}_{\mathbf{x}} u(\mathbf{x} \lvert \mathcal{D}_{1:t-1})$$ where $u$ is the acquisition function and $$\mathcal{D}_{1:t-1} = \{(\mathbf{x}_1, y_1),...,(\mathbf{x}_{t-1}, y_{t-1})\}$$ are the $t-1$ samples drawn from $f$ so far. Popular acquisition functions are *maximum probability of improvement* (MPI), *expected improvement* (EI) and *upper confidence bound* (UCB)<sup>[1]</sup>. In the following, we will use the expected improvement (EI) which is most widely used and described further below. 
+More formally, the objective function $f$ will be sampled at $\mathbf{x}\_t = \operatorname{argmax}\_{\mathbf{x}} u(\mathbf{x} \lvert \mathcal{D}\_{1:t-1})$ where $u$ is the acquisition function and $\mathcal{D}\_{1:t-1} = \{(\mathbf{x}\_1, y_1),...,(\mathbf{x}\_{t-1}, y\_{t-1})\}$ are the $t-1$ samples drawn from $f$ so far. Popular acquisition functions are *maximum probability of improvement* (MPI), *expected improvement* (EI) and *upper confidence bound* (UCB)<sup>[1]</sup>. In the following, we will use the expected improvement (EI) which is most widely used and described further below. 
 
 ### Optimization algorithm
 
 The Bayesian optimization procedure is as follows. For $t = 1,2,...$ repeat:
 
-- Find the next sampling point $$\mathbf{x}_{t}$$ by optimizing the acquisition function over the GP: $$\mathbf{x}_t = \operatorname{argmax}_{\mathbf{x}} u(\mathbf{x} \lvert \mathcal{D}_{1:t-1})$$
+- Find the next sampling point $\mathbf{x}\_{t}$ by optimizing the acquisition function over the GP: $\mathbf{x}\_t = \operatorname{argmax}\_{\mathbf{x}} u(\mathbf{x} \lvert \mathcal{D}\_{1:t-1})$
 - Obtain a possibly noisy sample $y_t = f(\mathbf{x}_t) + \epsilon_t$ from the objective function $f$.
-- Add the sample to previous samples $$\mathcal{D}_{1:t} = \{\mathcal{D}_{1:t-1}, (\mathbf{x}_t,y_t)\}$$ and update the GP.
+- Add the sample to previous samples $\mathcal{D}\_{1:t} = \{\mathcal{D}\_{1:t-1}, (\mathbf{x}\_t,y\_t)\}$ and update the GP.
 
 ### Expected improvement
 
@@ -41,7 +41,7 @@ Expected improvement is defined as
 
 $$\operatorname{EI}(\mathbf{x}) = \mathbb{E}\max(f(\mathbf{x}) - f(\mathbf{x}^+), 0)\tag{1}$$
 
-where $f(\mathbf{x}^+)$ is the value of the best sample so far and $\mathbf{x}^+$ is the location of that sample i.e. $$\mathbf{x}^+ = \operatorname{argmax}_{\mathbf{x}_i \in \mathbf{x}_{1:t}} f(\mathbf{x}_i)$$. The expected improvement can be evaluated analytically under the GP model<sup>[3]</sup>:
+where $f(\mathbf{x}^+)$ is the value of the best sample so far and $\mathbf{x}^+$ is the location of that sample i.e. $\mathbf{x}^+ = \operatorname{argmax}\_{\mathbf{x}\_i \in \mathbf{x}\_{1:t}} f(\mathbf{x}\_i)$. The expected improvement can be evaluated analytically under the GP model<sup>[3]</sup>:
 
 $$
 \operatorname{EI}(\mathbf{x}) =

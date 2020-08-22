@@ -36,7 +36,7 @@ where the mean of this distribution is the regression function $y(\mathbf{x}, \m
 
 ## Likelihood function
 
-For fitting the model and for inference of model parameters we use a training set of $N$ independent and identically distributed (i.i.d.) observations $$\mathbf{x}_1,\ldots,\mathbf{x}_N$$ and their corresponding targets $t_1,\ldots,t_N$. After combining column vectors $$\mathbf{x}_i$$ into matrix $\mathbf{X}$, where $$\mathbf{X}_{i,:} = \mathbf{x}_i^T$$, and scalar targets $t_i$ into column vector $$\mathbf{t}$$ the joint conditional probability of targets $\mathbf{t}$ given $\mathbf{X}$ can be formulated as
+For fitting the model and for inference of model parameters we use a training set of $N$ independent and identically distributed (i.i.d.) observations $\mathbf{x}\_1,\ldots,\mathbf{x}\_N$ and their corresponding targets $t\_1,\ldots,t\_N$. After combining column vectors $\mathbf{x}\_i$ into matrix $\mathbf{X}$, where $\mathbf{X}\_{i,:} = \mathbf{x}\_i^T$, and scalar targets $t_i$ into column vector $\mathbf{t}$ the joint conditional probability of targets $\mathbf{t}$ given $\mathbf{X}$ can be formulated as
 
 $$
 p(\mathbf{t} \lvert \mathbf{X}, \mathbf{w}, \beta) = 

@@ -13,14 +13,14 @@ This is part 1 of a two-part series of articles about latent variable models. Pa
 
 ## Introduction
 
-Given a probabilistic model $p(\mathbf{x} \lvert \boldsymbol{\theta})$ and $N$ observations $$\mathbf{X} = \left\{ \mathbf{x}_1, \ldots, \mathbf{x}_N \right\}$$ we often want to find a value for parameter $\boldsymbol{\theta}$ that maximizes the likelihood function $p(\mathbf{X} \lvert \boldsymbol{\theta})$, a function of parameter $\boldsymbol{\theta}$. This is known as [maximimum likelihood estimation](https://en.wikipedia.org/wiki/Maximum_likelihood_estimation) (MLE). 
+Given a probabilistic model $p(\mathbf{x} \lvert \boldsymbol{\theta})$ and $N$ observations $\mathbf{X} = \\{ \mathbf{x}_1, \ldots, \mathbf{x}_N \\}$ we often want to find a value for parameter $\boldsymbol{\theta}$ that maximizes the likelihood function $p(\mathbf{X} \lvert \boldsymbol{\theta})$, a function of parameter $\boldsymbol{\theta}$. This is known as [maximimum likelihood estimation](https://en.wikipedia.org/wiki/Maximum_likelihood_estimation) (MLE). 
 
 $$
 \boldsymbol{\theta}_{MLE} = \underset{\boldsymbol{\theta}}{\mathrm{argmax}} p(\mathbf{X} \lvert \boldsymbol{\theta})
 \tag{1}
 $$
 
-If the model is a simple probability distribution, like a single Gaussian, for example, then $$\boldsymbol{\theta}_{MLE} = \left\{ \boldsymbol{\mu}_{MLE}, \boldsymbol{\Sigma}_{MLE} \right\}$$ has an analytical solution. A common approach for more complex models is *gradient descent* using the *negative log likelihood*, $-\log p(\mathbf{X} \lvert \boldsymbol{\theta})$, as loss function. This can easily be implemented with frameworks like PyTorch or Tensorflow provided that $p(\mathbf{X} \lvert \boldsymbol{\theta})$ is differentiable w.r.t. $\boldsymbol{\theta}$. But this is not necessarily the most efficient approach.
+If the model is a simple probability distribution, like a single Gaussian, for example, then $\boldsymbol{\theta}\_{MLE} = \\{ \boldsymbol{\mu}\_{MLE}, \boldsymbol{\Sigma}\_{MLE} \\}$ has an analytical solution. A common approach for more complex models is *gradient descent* using the *negative log likelihood*, $-\log p(\mathbf{X} \lvert \boldsymbol{\theta})$, as loss function. This can easily be implemented with frameworks like PyTorch or Tensorflow provided that $p(\mathbf{X} \lvert \boldsymbol{\theta})$ is differentiable w.r.t. $\boldsymbol{\theta}$. But this is not necessarily the most efficient approach.
 
 ## Gaussian mixture model
 
@@ -61,7 +61,7 @@ p(\mathbf{x} \lvert \boldsymbol{\theta}) = \sum_{c=1}^{C} \pi_c \mathcal{N}(\mat
 \tag{2}
 $$
 
-$\pi_c$, $$\boldsymbol{\mu}_{c}$$ and $$\boldsymbol{\Sigma}_{c}$$ are the weight, mean vector and covariance matrix of mixture component $c$, respectively. The weights are non-negative and sum up to $1$ i.e. $\sum_{c=1}^{C} \pi_c = 1$. Parameter vector $$\boldsymbol{\theta} = \left\{ \pi_1, \boldsymbol{\mu}_{1}, \boldsymbol{\Sigma}_{1}, \ldots, \pi_C, \boldsymbol{\mu}_{C}, \boldsymbol{\Sigma}_{C} \right\}$$ denotes the set of all model parameters. If we introduce a discrete latent variable $\mathbf{t}$ that determines the assignment of observations to mixture components we can define a joint distribution over observed and latent variables $p(\mathbf{x}, \mathbf{t} \lvert \boldsymbol{\theta})$ in terms of a conditional distribution $p(\mathbf{x} \lvert \mathbf{t}, \boldsymbol{\theta})$ and a prior distribution $p(\mathbf{t} \lvert \boldsymbol{\theta})$
+$\pi_c$, $\boldsymbol{\mu}\_{c}$ and $\boldsymbol{\Sigma}\_{c}$ are the weight, mean vector and covariance matrix of mixture component $c$, respectively. The weights are non-negative and sum up to $1$ i.e. $\sum_{c=1}^{C} \pi_c = 1$. Parameter vector $\boldsymbol{\theta} = \\{ \pi_1, \boldsymbol{\mu}\_{1}, \boldsymbol{\Sigma}\_{1}, \ldots, \pi_C, \boldsymbol{\mu}\_{C}, \boldsymbol{\Sigma}\_{C} \\}$ denotes the set of all model parameters. If we introduce a discrete latent variable $\mathbf{t}$ that determines the assignment of observations to mixture components we can define a joint distribution over observed and latent variables $p(\mathbf{x}, \mathbf{t} \lvert \boldsymbol{\theta})$ in terms of a conditional distribution $p(\mathbf{x} \lvert \mathbf{t}, \boldsymbol{\theta})$ and a prior distribution $p(\mathbf{t} \lvert \boldsymbol{\theta})$
 
 $$
 p(\mathbf{x}, \mathbf{t} \lvert \boldsymbol{\theta}) = p(\mathbf{x} \lvert \mathbf{t}, \boldsymbol{\theta}) p(\mathbf{t} \lvert \boldsymbol{\theta})
@@ -215,7 +215,7 @@ If the true posterior is known Eq. $(15)$ becomes Eq. $(7)$ except for the const
 
 ## Expectation maximization algorithm for GMMs
 
-The parameters for a GMM with 3 components are $$\boldsymbol{\theta} = \left\{ \pi_1, \boldsymbol{\mu}_{1}, \boldsymbol{\Sigma}_{1}, \pi_2, \boldsymbol{\mu}_{2}, \boldsymbol{\Sigma}_{2}, \pi_3, \boldsymbol{\mu}_{3}, \boldsymbol{\Sigma}_{3} \right\}$$. The prior probability for component $c$ is $p(t_c = 1 \lvert \boldsymbol{\theta}) = \pi_c$ and the conditional distribution of $\mathbf{x}$ given the latent variable value for this component is $p(\mathbf{x} \lvert t_c = 1, \boldsymbol{\theta}) = \mathcal{N}(\mathbf{x} \lvert \boldsymbol{\mu}_c, \boldsymbol{\Sigma}_c)$.
+The parameters for a GMM with 3 components are $\boldsymbol{\theta} = \\{ \pi\_1, \boldsymbol{\mu}\_{1}, \boldsymbol{\Sigma}\_{1}, \pi\_2, \boldsymbol{\mu}\_{2}, \boldsymbol{\Sigma}\_{2}, \pi\_3, \boldsymbol{\mu}\_{3}, \boldsymbol{\Sigma}\_{3} \\}$. The prior probability for component $c$ is $p(t_c = 1 \lvert \boldsymbol{\theta}) = \pi_c$ and the conditional distribution of $\mathbf{x}$ given the latent variable value for this component is $p(\mathbf{x} \lvert t_c = 1, \boldsymbol{\theta}) = \mathcal{N}(\mathbf{x} \lvert \boldsymbol{\mu}_c, \boldsymbol{\Sigma}_c)$.
 
 ### Implementation with numpy and scipy
 
@@ -254,7 +254,7 @@ def e_step(X, pi, mu, sigma):
     return q / np.sum(q, axis=-1, keepdims=True) 
 ```
 
-In the M-step, we take the derivatives of $\mathcal{L}(\boldsymbol{\theta}, q)$ w.r.t. to $\pi_c$, $$\boldsymbol{\mu}_{c}$$ and $$\boldsymbol{\Sigma}_{c}$$ and set the resulting expressions to $0$ i.e. do MLE of parameters and also apply constraints to ensure that $\sum_{c=1}^C \pi_c = 1$ and $\boldsymbol{\Sigma}_{c})^T$ is positive semi-definite. The details are omitted here and only the results are presented.
+In the M-step, we take the derivatives of $\mathcal{L}(\boldsymbol{\theta}, q)$ w.r.t. to $\pi_c$, $\boldsymbol{\mu}\_{c}$ and $\boldsymbol{\Sigma}\_{c}$ and set the resulting expressions to $0$ i.e. do MLE of parameters and also apply constraints to ensure that $\sum_{c=1}^C \pi_c = 1$ and $\boldsymbol{\Sigma}_{c})^T$ is positive semi-definite. The details are omitted here and only the results are presented.
 
 $$
 \begin{align*}

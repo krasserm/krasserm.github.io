@@ -27,9 +27,9 @@ A Gaussian process is a [random process](https://en.wikipedia.org/wiki/Stochasti
 
 $$p(\mathbf{f} \lvert \mathbf{X}) = \mathcal{N}(\mathbf{f} \lvert \boldsymbol\mu, \mathbf{K})\tag{1}\label{eq1}$$
 
-In Equation $(1)$, $$\mathbf{f} = (f(\mathbf{x}_1),...,f(\mathbf{x}_N))$$, $$\boldsymbol\mu = (m(\mathbf{x}_1),...,m(\mathbf{x}_N))$$ and $$K_{ij} = \kappa(\mathbf{x}_i,\mathbf{x}_j)$$. $m$ is the mean function and it is common to use $m(\mathbf{x}) = 0$ as GPs are flexible enough to model the mean arbitrarily well. $\kappa$ is a positive definite *kernel function* or *covariance function*. Thus, a Gaussian process is a distribution over functions whose shape (smoothness, ...) is defined by $\mathbf{K}$. If points $\mathbf{x}_i$ and $\mathbf{x}_j$ are considered to be similar by the kernel the function values at these points, $f(\mathbf{x}_i)$ and $f(\mathbf{x}_j)$, can be expected to be similar too. 
+In Equation $(1)$, $\mathbf{f} = (f(\mathbf{x}\_1),...,f(\mathbf{x}\_N))$, $\boldsymbol\mu = (m(\mathbf{x}\_1),...,m(\mathbf{x}\_N))$ and $K\_{ij} = \kappa(\mathbf{x}\_i,\mathbf{x}\_j)$. $m$ is the mean function and it is common to use $m(\mathbf{x}) = 0$ as GPs are flexible enough to model the mean arbitrarily well. $\kappa$ is a positive definite *kernel function* or *covariance function*. Thus, a Gaussian process is a distribution over functions whose shape (smoothness, ...) is defined by $\mathbf{K}$. If points $\mathbf{x}_i$ and $\mathbf{x}_j$ are considered to be similar by the kernel the function values at these points, $f(\mathbf{x}_i)$ and $f(\mathbf{x}_j)$, can be expected to be similar too. 
 
-A GP prior $p(\mathbf{f} \lvert \mathbf{X})$ can be converted into a GP posterior $p(\mathbf{f} \lvert \mathbf{X},\mathbf{y})$ after having observed some data $\mathbf{y}$. The posterior can then be used to make predictions $$\mathbf{f}_*$$ given new input $$\mathbf{X}_*$$:
+A GP prior $p(\mathbf{f} \lvert \mathbf{X})$ can be converted into a GP posterior $p(\mathbf{f} \lvert \mathbf{X},\mathbf{y})$ after having observed some data $\mathbf{y}$. The posterior can then be used to make predictions $\mathbf{f}\_\*$ given new input $\mathbf{X}\_\*$:
 
 $$
 \begin{align*}
@@ -39,7 +39,7 @@ p(\mathbf{f}_* \lvert \mathbf{X}_*,\mathbf{X},\mathbf{y})
 \end{align*}
 $$
 
-Equation $(2)$ is the posterior predictive distribution which is also a Gaussian with mean $$\boldsymbol{\mu}_*$$ and $$\boldsymbol{\Sigma}_*$$. By definition of the GP, the joint distribution of observed data $\mathbf{y}$ and predictions $$\mathbf{f}_*$$  is
+Equation $(2)$ is the posterior predictive distribution which is also a Gaussian with mean $\boldsymbol{\mu}\_\*$ and $\boldsymbol{\Sigma}\_\*$. By definition of the GP, the joint distribution of observed data $\mathbf{y}$ and predictions $\mathbf{f}\_\*$  is
 
 $$
 \begin{pmatrix}\mathbf{y} \\ \mathbf{f}_*\end{pmatrix} \sim \mathcal{N}
@@ -48,7 +48,7 @@ $$
 \right)\tag{3}\label{eq3}
 $$
 
-With $N$ training data and $$N_*$$ new input data, $$\mathbf{K}_y = \kappa(\mathbf{X},\mathbf{X}) + \sigma_y^2\mathbf{I} = \mathbf{K} + \sigma_y^2\mathbf{I}$$ is $$N \times N$$, $$\mathbf{K}_* = \kappa(\mathbf{X},\mathbf{X}_*)$$ is $$N \times N_*$$ and $$\mathbf{K}_{**} = \kappa(\mathbf{X}_*,\mathbf{X}_*)$$ is $$N_* \times N_*$$. $\sigma_y^2$ is the noise term in the diagonal of $\mathbf{K_y}$. It is set to zero if training targets are noise-free and to a value greater than zero if observations are noisy. The mean is set to $\boldsymbol{0}$ for notational simplicity. The sufficient statistics of the posterior predictive distribution, $$\boldsymbol{\mu}_*$$ and $$\boldsymbol{\Sigma}_*$$, can be computed with<sup>[1][3]</sup>
+With $N$ training data and $N\_\*$ new input data, $\mathbf{K}\_y = \kappa(\mathbf{X},\mathbf{X}) + \sigma_y^2\mathbf{I} = \mathbf{K} + \sigma\_y^2\mathbf{I}$ is $N \times N$, $\mathbf{K}\_\* = \kappa(\mathbf{X},\mathbf{X}\_\*)$ is $N \times N\_\*$ and $\mathbf{K}\_{\*\*} = \kappa(\mathbf{X}\_\*,\mathbf{X}\_\*)$ is $N\_\* \times N\_\*$. $\sigma_y^2$ is the noise term in the diagonal of $\mathbf{K_y}$. It is set to zero if training targets are noise-free and to a value greater than zero if observations are noisy. The mean is set to $\boldsymbol{0}$ for notational simplicity. The sufficient statistics of the posterior predictive distribution, $\boldsymbol{\mu}\_\*$ and $\boldsymbol{\Sigma}\_\*$, can be computed with<sup>[1][3]</sup>
 
 $$
 \begin{align*}

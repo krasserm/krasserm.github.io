@@ -15,7 +15,7 @@ Consider a natural image of size $100 \times 100$ with a single channel. This im
 
 Modeling natural images with latent variable models whose continuous latent variables represent locations on the manifold can be a useful approach that is also discussed here. As in part 1, a model with one latent variable $\mathbf{t}_i$ per observation $\mathbf{x}_i$ is used but now the latent variables are continuous rather than discrete variables. Therefore, summations over latent variable states are now replaced by integrals and these are often intractable for more complex models. 
 
-Observations i.e. images $$\mathbf{X} = \left\{ \mathbf{x}_1, \ldots, \mathbf{x}_N \right\}$$ are again described with a probabilistic model $p(\mathbf{x} \lvert \boldsymbol{\theta})$. Goal is to maximize the data likelihood $p(\mathbf{X} \lvert \boldsymbol{\theta})$ w.r.t. $\boldsymbol{\theta}$ and to obtain approximate posterior distributions over continuous latent variables. The joint distribution over an observed variable $\mathbf{x}$ and a latent variable $\mathbf{t}$ is defined as the product of the conditional distribution over $\mathbf{x}$ given $\mathbf{t}$ and the prior distribution over $\mathbf{t}$.
+Observations i.e. images $\mathbf{X} = \\{ \mathbf{x}_1, \ldots, \mathbf{x}_N \\}$ are again described with a probabilistic model $p(\mathbf{x} \lvert \boldsymbol{\theta})$. Goal is to maximize the data likelihood $p(\mathbf{X} \lvert \boldsymbol{\theta})$ w.r.t. $\boldsymbol{\theta}$ and to obtain approximate posterior distributions over continuous latent variables. The joint distribution over an observed variable $\mathbf{x}$ and a latent variable $\mathbf{t}$ is defined as the product of the conditional distribution over $\mathbf{x}$ given $\mathbf{t}$ and the prior distribution over $\mathbf{t}$.
 
 $$
 p(\mathbf{x}, \mathbf{t} \lvert \boldsymbol{\theta}) = p(\mathbf{x} \lvert \mathbf{t}, \boldsymbol{\theta}) p(\mathbf{t} \lvert \boldsymbol{\theta})
@@ -93,7 +93,7 @@ $$
 \tag{8}
 $$
 
-We will later implement $$p(\mathbf{x}_i \lvert \mathbf{t}_i, \boldsymbol{\theta})$$ as neural network and use Tensorflow to compute $$\nabla_{\boldsymbol{\theta}} \log p(\mathbf{x}_i \lvert \mathbf{t}_{i,l}, \boldsymbol{\theta})$$. The gradient w.r.t. $\boldsymbol{\phi}$ is a bit more tricky as $$\nabla_{\boldsymbol{\phi}}$$ cannot be moved inside the expectation because $$q(\mathbf{t}_i \lvert \mathbf{x}_i, \boldsymbol{\phi})$$ depends on $\boldsymbol{\phi}$. But if we can decompose $$q(\mathbf{t}_i \lvert \mathbf{x}_i, \boldsymbol{\phi})$$ into an auxiliary distribution $p(\boldsymbol\epsilon)$ that doesn't depend on $\boldsymbol{\phi}$ and a deterministic, differentiable function $g(\boldsymbol\epsilon, \mathbf{x}, \boldsymbol{\phi})$ where $$\mathbf{t}_i = g(\boldsymbol\epsilon, \mathbf{x}_i, \boldsymbol{\phi})$$ and $\boldsymbol\epsilon \sim p(\boldsymbol\epsilon)$ then we can re-formulate the gradient w.r.t. $\boldsymbol{\phi}$ as
+We will later implement $p(\mathbf{x}\_i \lvert \mathbf{t}\_i, \boldsymbol{\theta})$ as neural network and use Tensorflow to compute $\nabla_{\boldsymbol{\theta}} \log p(\mathbf{x}\_i \lvert \mathbf{t}\_{i,l}, \boldsymbol{\theta})$. The gradient w.r.t. $\boldsymbol{\phi}$ is a bit more tricky as $\nabla_{\boldsymbol{\phi}}$ cannot be moved inside the expectation because $q(\mathbf{t}_i \lvert \mathbf{x}_i, \boldsymbol{\phi})$ depends on $\boldsymbol{\phi}$. But if we can decompose $q(\mathbf{t}_i \lvert \mathbf{x}_i, \boldsymbol{\phi})$ into an auxiliary distribution $p(\boldsymbol\epsilon)$ that doesn't depend on $\boldsymbol{\phi}$ and a deterministic, differentiable function $g(\boldsymbol\epsilon, \mathbf{x}, \boldsymbol{\phi})$ where $\mathbf{t}_i = g(\boldsymbol\epsilon, \mathbf{x}_i, \boldsymbol{\phi})$ and $\boldsymbol\epsilon \sim p(\boldsymbol\epsilon)$ then we can re-formulate the gradient w.r.t. $\boldsymbol{\phi}$ as
 
 $$
 \begin{align*}
@@ -117,7 +117,7 @@ where $\mathbf{t}_{i,l} = g(\boldsymbol\epsilon_l, \mathbf{x}_i, \boldsymbol{\ph
 
 ### Mini-batches
 
-The above approximations for the variational lower bound and its gradients have been formulated for a single training example $\mathbf{x}_i$ but this can be easily extended to mini-batches $$\mathbf{X}^M = \left\{ \mathbf{x}_1, \ldots, \mathbf{x}_M \right\}$$ with $M$ random samples from a dataset $\mathbf{X}$ of $N$ i.i.d. observations. The lower bound of the full dataset $\mathcal{L}(\boldsymbol{\theta}, q; \mathbf{X})$ can then be approximated as
+The above approximations for the variational lower bound and its gradients have been formulated for a single training example $\mathbf{x}_i$ but this can be easily extended to mini-batches $\mathbf{X}^M = \\{ \mathbf{x}_1, \ldots, \mathbf{x}_M \\}$ with $M$ random samples from a dataset $\mathbf{X}$ of $N$ i.i.d. observations. The lower bound of the full dataset $\mathcal{L}(\boldsymbol{\theta}, q; \mathbf{X})$ can then be approximated as
 
 $$
 \begin{align*}
@@ -146,7 +146,7 @@ For implementing a variational autoencoder, we make the following choices:
 
 - The conditional distribution $p(\mathbf{x}_i \lvert \mathbf{t}_i, \boldsymbol{\theta})$ is a multivariate Bernoulli distribution $\text{Ber}(\mathbf{x}_i \lvert \mathbf{k}(\mathbf{t}_i, \boldsymbol{\theta}))$ where parameter $\mathbf{k}$ is a function of $\mathbf{t}_i$ and $\boldsymbol{\theta}$. This distribution models the binary training data i.e. monochrome (= binarized) MNIST images in our example. Function $\mathbf{k}$ computes for each pixel its expected value. It is also implemented as neural network and learned during optimization of the lower bound w.r.t. $\boldsymbol{\theta}$. Taking the (negative) logarithm of $\text{Ber}(\mathbf{x}_i \lvert \mathbf{k}(\mathbf{t}_i, \boldsymbol{\theta}))$ gives a sum over pixel-wise binary cross entropies as shown in Eq. $(12)$
 
-- Prior $$p(\mathbf{t}_i \lvert \boldsymbol{\theta})$$ is a multivariate Gaussian distribution $$\mathcal{N}(\mathbf{t}_i \lvert \mathbf{0}, \mathbf{I})$$ with zero mean and unit covariance matrix. With the chosen functional forms of the prior and the variational distribution $q$, $$\mathrm{KL}(q(\mathbf{t}_i \lvert \mathbf{x}_i, \boldsymbol{\phi}) \mid\mid p(\mathbf{t}_i \lvert \boldsymbol{\theta}))$$ can be integrated analytically to $$-{1 \over 2} \sum_{d=1}^D (1 + \log \sigma_{i,d}^2 - \mu_{i,d}^2 - \sigma_{i,d}^2)$$ where $D$ is the dimensionality of the latent space and $$\mu_{i,d}$$ and $$\sigma_{i,d}$$ is the $d$-th element of $$\boldsymbol\mu(\mathbf{x}_i, \boldsymbol{\phi})$$ and $$\boldsymbol\sigma(\mathbf{x}_i, \boldsymbol{\phi})$$, respectively.
+- Prior $p(\mathbf{t}\_i \lvert \boldsymbol{\theta})$ is a multivariate Gaussian distribution $\mathcal{N}(\mathbf{t}\_i \lvert \mathbf{0}, \mathbf{I})$ with zero mean and unit covariance matrix. With the chosen functional forms of the prior and the variational distribution $q$, $\mathrm{KL}(q(\mathbf{t}\_i \lvert \mathbf{x}\_i, \boldsymbol{\phi}) \mid\mid p(\mathbf{t}\_i \lvert \boldsymbol{\theta}))$ can be integrated analytically to $-{1 \over 2} \sum_{d=1}^D (1 + \log \sigma_{i,d}^2 - \mu_{i,d}^2 - \sigma_{i,d}^2)$ where $D$ is the dimensionality of the latent space and $\mu_{i,d}$ and $\sigma_{i,d}$ is the $d$-th element of $\boldsymbol\mu(\mathbf{x}_i, \boldsymbol{\phi})$ and $\boldsymbol\sigma(\mathbf{x}_i, \boldsymbol{\phi})$, respectively.
 
 Using these choices and setting $L = 1$, the variational lower bound for a single image $\mathbf{x}_i$ can be approximated as
 
@@ -158,7 +158,7 @@ $$
 \end{align*}
 $$
 
-where $x_{i,c}$ is the value of pixel $c$ in image $$\mathbf{x}_i$$ and $$k_{i,c}$$ its expected value. The negative value of the lower bound is used as loss during training. The following figure outlines the architecture of the variational autoencoder. 
+where $x_{i,c}$ is the value of pixel $c$ in image $\mathbf{x}\_i$ and $k\_{i,c}$ its expected value. The negative value of the lower bound is used as loss during training. The following figure outlines the architecture of the variational autoencoder. 
 
 ![VAE](/img/2019-12-17/auto-encoder.jpg)
 
