@@ -12,7 +12,9 @@ linkedin_username: krasserm
 
 # Build settings
 markdown: kramdown
-highlighter: rouge
+kramdown:
+  math_engine: mathjax
+  syntax_highlighter: rouge
 permalink: pretty
 paginate: 12
 exclude: ["less","node_modules","Gruntfile.js","package.json","README.md"]
