@@ -298,7 +298,7 @@ $$
     \log p(\mathcal{D} \lvert \mathbf{w}) - 
     \log p(\mathbf{w})
 \right] + \log p(\mathcal{D}) \\\\ &=
-\mathrm{KL}(q(\mathbf{w} \lvert \boldsymbol{\theta}) \mid\mid q(\mathbf{w})) - 
+\mathrm{KL}(q(\mathbf{w} \lvert \boldsymbol{\theta}) \mid\mid p(\mathbf{w})) - 
 \mathbb{E}_{q(\mathbf{w} \lvert \boldsymbol{\theta})} \log p(\mathcal{D} \lvert \mathbf{w}) +
 \log p(\mathcal{D})
 \end{align*}
