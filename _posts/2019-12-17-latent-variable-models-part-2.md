@@ -313,15 +313,15 @@ def variational_lower_bound(model, x):
     x_rc = model.decode(t)
     
     # Expected negative reconstruction error
-    rc_error = -tf.reduce_sum(binary_crossentropy(x, x_rc), axis=[1, 2])
+    neg_rc_error = -tf.reduce_sum(binary_crossentropy(x, x_rc), axis=[1, 2])
 
-    # Regularization term (KL divergence)
-    kl_div = 0.5 * tf.reduce_sum(1 + q_log_var \
-                             - tf.square(q_mean) \
-                             - tf.exp(q_log_var), axis=-1)
+    # Regularization term (negative KL divergence)
+    neg_kl_div = 0.5 * tf.reduce_sum(1 + q_log_var \
+                                 - tf.square(q_mean) \
+                                 - tf.exp(q_log_var), axis=-1)
     
     # Average over mini-batch (of size M)
-    return tf.reduce_mean(rc_error + kl_div)
+    return tf.reduce_mean(neg_rc_error + neg_kl_div)
 ```
 
 The training procedure uses the negative value of the variational lower bound as loss to compute stochastic gradient estimates. These are used by the `optimizer` to update model parameters $\boldsymbol\theta$ and $\boldsymbol\phi$. The normalized variational lower bound of the test set is computed at the end of each epoch and printed.
