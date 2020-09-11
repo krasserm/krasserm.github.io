@@ -24,7 +24,7 @@ Both MLE and MAP give point estimates of parameters. If we instead had a full po
 
 ## Variational inference
 
-Unfortunately, an analytical solution for the posterior $p(\mathbf{w} \lvert \mathcal{D})$ in neural networks is untractable. We therefore have to approximate the true posterior with a variational distribution $q(\mathbf{w} \lvert \boldsymbol{\theta})$ of known functional form whose parameters we want to estimate. This can be done by minimizing the [Kullback-Leibler divergence](https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence) between $q(\mathbf{w} \lvert \boldsymbol{\theta})$ and the true posterior $p(\mathbf{w} \lvert \mathcal{D})$  w.r.t. to $\boldsymbol{\theta}$. As shown in [Appendix](#appendix), the corresponding optimization objective or cost function is
+Unfortunately, an analytical solution for the posterior $p(\mathbf{w} \lvert \mathcal{D})$ in neural networks is untractable. We therefore have to approximate the true posterior with a variational distribution $q(\mathbf{w} \lvert \boldsymbol{\theta})$ of known functional form whose parameters we want to estimate. This can be done by minimizing the [Kullback-Leibler divergence](https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence) between $q(\mathbf{w} \lvert \boldsymbol{\theta})$ and the true posterior $p(\mathbf{w} \lvert \mathcal{D})$. As shown in [Appendix](#appendix), the corresponding optimization objective or cost function is
 
 $$
 \mathcal{F}(\mathcal{D},\boldsymbol{\theta}) = 
@@ -311,7 +311,7 @@ $$
 \mathcal{F}(\mathcal{D},\boldsymbol{\theta}) + \log p(\mathcal{D})
 $$
 
-In order to minimize $\mathrm{KL}(q(\mathbf{w} \lvert \boldsymbol{\theta}) \mid\mid p(\mathbf{w} \lvert \mathcal{D}))$ w.r.t. $\boldsymbol{\theta}$ we only need to minimize $\mathcal{F}(\mathcal{D},\boldsymbol{\theta})$ as $p(\mathcal{D})$ doesn't depend on $\boldsymbol{\theta}$. The negative variational free energy is also known as *evidence lower bound* $\mathcal{L}(\mathcal{D},\boldsymbol{\theta})$ (ELBO). 
+In order to minimize $\mathrm{KL}(q(\mathbf{w} \lvert \boldsymbol{\theta}) \mid\mid p(\mathbf{w} \lvert \mathcal{D}))$ we only need to minimize $\mathcal{F}(\mathcal{D},\boldsymbol{\theta})$ w.r.t. $\boldsymbol{\theta}$ as $p(\mathcal{D})$ doesn't depend on $\boldsymbol{\theta}$. The negative variational free energy is also known as *evidence lower bound* $\mathcal{L}(\mathcal{D},\boldsymbol{\theta})$ (ELBO). 
 
 $$
 \mathrm{KL}(q(\mathbf{w} \lvert \boldsymbol{\theta}) \mid\mid p(\mathbf{w} \lvert \mathcal{D})) =
