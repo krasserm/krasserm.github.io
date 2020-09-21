@@ -6,8 +6,8 @@ author: "Martin Krasser"
 header-img: "img/distributed.png"
 ---
 
-*This article is an export of the [Bayesian optimization](http://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/master/bayesian_optimization.ipynb?flush_cache=false) notebook which is part of the [bayesian-machine-learning](https://github.com/krasserm/bayesian-machine-learning) repo on Github.*
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/krasserm/bayesian-machine-learning/blob/master/bayesian_optimization.ipynb) 
+*This article is an export of the [Bayesian optimization](http://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/master/bayesian-optimization/bayesian_optimization.ipynb?flush_cache=false) notebook which is part of the [bayesian-machine-learning](https://github.com/krasserm/bayesian-machine-learning) repo on Github.*
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/krasserm/bayesian-machine-learning/blob/master/bayesian-optimization/bayesian_optimization.ipynb) 
 
 ## Introduction 
 

@@ -6,7 +6,7 @@ author: "Martin Krasser"
 header-img: "img/distributed.png"
 ---
 
-*This article is an export of the notebook [Conditional generation via Bayesian optimization in latent space](http://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/master/variational_autoencoder_opt.ipynb) which is part of the [bayesian-machine-learning](https://github.com/krasserm/bayesian-machine-learning) repo on Github.*
+*This article is an export of the notebook [Conditional generation via Bayesian optimization in latent space](http://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/master/autoencoder-applications/variational_autoencoder_opt.ipynb) which is part of the [bayesian-machine-learning](https://github.com/krasserm/bayesian-machine-learning) repo on Github.*
 
 ## Introduction
 
@@ -41,13 +41,13 @@ The high-level architecture of the joint VAE-predictor model is shown in the fol
 
 ### Encoder
 
-The encoder is a CNN, identical to the one presented in the the [variational autoencoder](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/master/variational_autoencoder.ipynb?flush_cache=true) notebook.
+The encoder is a CNN, identical to the one presented in the the [variational autoencoder](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/master/autoencoder-applications/variational_autoencoder.ipynb) notebook.
 
 ![encoder](/img/2018-04-07/encoder.png) 
 
 ### Decoder
 
-The decoder is a CNN, identical to the one presented in the the [variational autoencoder](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/master/variational_autoencoder.ipynb?flush_cache=true) notebook.
+The decoder is a CNN, identical to the one presented in the the [variational autoencoder](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/master/autoencoder-applications/variational_autoencoder.ipynb) notebook.
 
 ![decoder](/img/2018-04-07/decoder.png)
 
@@ -73,7 +73,7 @@ latent_dim = 2
 batch_size = 64
 ```
 
-Code for the encoder and decoder have already been presented [elsewhere](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/master/variational_autoencoder.ipynb?flush_cache=true), so only code for the predictor is shown here (see [variational_autoencoder_opt_util.py](variational_autoencoder_opt_util.py) for other function definitions):
+Code for the encoder and decoder have already been presented [elsewhere](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/master/autoencoder-applications/variational_autoencoder.ipynb), so only code for the predictor is shown here (see [variational_autoencoder_opt_util.py](variational_autoencoder_opt_util.py) for other function definitions):
 
 
 ```python
