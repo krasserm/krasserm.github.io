@@ -1,5 +1,6 @@
 ---
-title: 'Latent variable models - part 1: Gaussian mixture models and the EM algorithm'
+title: 'Latent variable models - part 1'
+subtitle: Gaussian mixture models and the EM algorithm
 layout: post
 comments: True
 author: "Martin Krasser"

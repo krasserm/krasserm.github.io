@@ -1,5 +1,6 @@
 ---
-title: 'Latent variable models - part 2: Stochastic variational inference and variational autoencoders'
+title: 'Latent variable models - part 2'
+subtitle: Stochastic variational inference and variational autoencoders
 layout: post
 comments: True
 author: "Martin Krasser"

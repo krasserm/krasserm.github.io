@@ -1,5 +1,6 @@
 ---
-title: 'Getting started with PyMC4: Bayesian neural networks'
+title: Getting started with PyMC4
+subtitle: Bayesian neural networks
 layout: post
 comments: True
 author: "Martin Krasser"
