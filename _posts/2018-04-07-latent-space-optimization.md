@@ -12,26 +12,26 @@ header-img: "img/distributed.png"
 
 I recently read [Automatic Chemical Design Using a Data-Driven Continuous Representation of Molecules](https://arxiv.org/abs/1610.02415) by Gómez-Bombarelli et. al.<sup>[1]</sup> and it motivated me to experiment with the approaches described in the paper. 
 
-Here's a brief summary of the paper. It describes how they use a variational auto-encoder<sup>[2]</sup> for generating new chemical compounds with properties that are of interest for drug discovery. For training, they used a large database of chemical compounds whose properties of interest are known. The variational auto-encoder can encode compounds into 196-dimensional latent space representations.
+Here's a brief summary of the paper. It describes how they use a variational autoencoder<sup>[2]</sup> for generating new chemical compounds with properties that are of interest for drug discovery. For training, they used a large database of chemical compounds whose properties of interest are known. The variational auto-encoder can encode compounds into 196-dimensional latent space representations.
 
 By sampling from the continuous latent space new compounds can be generated e.g. by sampling near a known compound to generate slight variations of it or by interpolating between more distant compounds. By simply auto-encoding chemical compounds, however, they were not able organize latent space w.r.t. properties of interest.
 
-To additionally organize latent space w.r.t. these properties they jointly trained the variational auto-encoder with a predictor that predicts these properties from latent space representations. Joint training with a predictor resulted in a latent space that reveals a gradient of these properties. This gradient can then be used to drive search for new chemical compounds into regions of desired properties. The following figure, copied from the paper<sup>[1]</sup>, summarizes the approach.
+To additionally organize latent space w.r.t. these properties they jointly trained the variational autoencoder with a predictor that predicts these properties from latent space representations. Joint training with a predictor resulted in a latent space that reveals a gradient of these properties. This gradient can then be used to drive search for new chemical compounds into regions of desired properties. The following figure, copied from the paper<sup>[1]</sup>, summarizes the approach.
 
 ![vae-chem](/img/2018-04-07/vae-chem.png)
 
 For representing compounds in structure space, they use [SMILES](https://en.wikipedia.org/wiki/Simplified_molecular-input_line-entry_system) strings which can be converted to and from structural representations using standard computational chemistry software. For the encoder network, they experimented with both, 1D-CNNs and RNNs, for the decoder network they used a RNN. Architecure details are described in the paper. The predictor is a small dense neural network. For optimization in latent space i.e. for navigating into regions of desired properties they use a Bayesian optimization approach with Gaussian processes as surrogate model. 
 
-The authors open-sourced their [chemical variational auto-encoder](https://github.com/aspuru-guzik-group/chemical_vae) but didn't publish code related to Bayesian optimization, at least not at the time of writing this article. So I decided to start some experiments but on a toy dataset that is not related to chemistry at all: the [MNIST handwritten digits dataset](https://en.wikipedia.org/wiki/MNIST_database). All methods described in the paper can be applied in this context too and results are easier to visualize and probably easier to grasp for people not familiar with chemistry. The only property associated with the MNIST dataset is the label or value of the digits. 
+The authors open-sourced their [chemical variational autoencoder](https://github.com/aspuru-guzik-group/chemical_vae) but didn't publish code related to Bayesian optimization, at least not at the time of writing this article. So I decided to start some experiments but on a toy dataset that is not related to chemistry at all: the [MNIST handwritten digits dataset](https://en.wikipedia.org/wiki/MNIST_database). All methods described in the paper can be applied in this context too and results are easier to visualize and probably easier to grasp for people not familiar with chemistry. The only property associated with the MNIST dataset is the label or value of the digits. 
 
 In the following, it will be shown how to conditionally generate new digits by following a gradient in latent space. In other words, it will be shown how to navigate into regions of latent space that decode into digit images of desired target label. I'm also going to adress the following questions:
 
-- How does joint training with a predictor change the latent space of a variational auto-encoder?
+- How does joint training with a predictor change the latent space of a variational autoencoder?
 - How can useful optimization objectives be designed?
 - How can application of Bayesian optimization methods be justified?
 - What are possible alternatives to this approach? 
 
-I'll leave experiments with the chemical compounds dataset and the public chemical VAE for another article. The following assumes some basic familiarity with [variational auto-encoders](/2018/04/03/variational-inference/), [Bayesian otpimization](/2018/03/21/bayesian-optimization/) and [Gaussian processes](/2018/03/19/gaussian-processes/). For more information on these topics you may want to read the linked articles.
+I'll leave experiments with the chemical compounds dataset and the public chemical VAE for another article. The following assumes some basic familiarity with [variational autoencoders](/2018/04/03/variational-inference/), [Bayesian otpimization](/2018/03/21/bayesian-optimization/) and [Gaussian processes](/2018/03/19/gaussian-processes/). For more information on these topics you may want to read the linked articles.
 
 ## Architecture
 
@@ -41,13 +41,13 @@ The high-level architecture of the joint VAE-predictor model is shown in the fol
 
 ### Encoder
 
-The encoder is a CNN, identical to the one presented in the the [variational auto-encoder](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/master/variational_autoencoder.ipynb?flush_cache=true) notebook.
+The encoder is a CNN, identical to the one presented in the the [variational autoencoder](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/master/variational_autoencoder.ipynb?flush_cache=true) notebook.
 
 ![encoder](/img/2018-04-07/encoder.png) 
 
 ### Decoder
 
-The decoder is a CNN, identical to the one presented in the the [variational auto-encoder](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/master/variational_autoencoder.ipynb?flush_cache=true) notebook.
+The decoder is a CNN, identical to the one presented in the the [variational autoencoder](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/master/variational_autoencoder.ipynb?flush_cache=true) notebook.
 
 ![decoder](/img/2018-04-07/decoder.png)
 
@@ -147,7 +147,7 @@ from keras.models import load_model
 def vae_loss(x, t_decoded):
     '''
     Negative variational lower bound used as loss function for 
-    training the variational auto-encoder on the MNIST dataset.
+    training the variational autoencoder on the MNIST dataset.
     '''
     # Reconstruction loss
     rc_loss = K.sum(K.binary_crossentropy(
@@ -185,7 +185,7 @@ else:
 
 This sections addresses the question 
 
-> How does joint training with a predictor change the latent space of a variational auto-encoder? 
+> How does joint training with a predictor change the latent space of a variational autoencoder? 
 
 To answer, three models have been trained:
 
@@ -494,7 +494,7 @@ This looks pretty good! Also note how for targets 3 and 5 the negative log-likel
 
 > What are possible alternatives to this approach?
 
-The approach presented here is one possible approach for conditionally generating images i.e. images with desired target values. In the case of MNIST images, this is actually a very expensive approach. A conditional variational auto-encoder<sup>[3]</sup> (CVAE) would be a much better choice here. Anyway, the goal was to demonstrate the approach taken in the paper<sup>[1]</sup> and it worked reasonably well on the MNIST dataset too.
+The approach presented here is one possible approach for conditionally generating images i.e. images with desired target values. In the case of MNIST images, this is actually a very expensive approach. A conditional variational autoencoder<sup>[3]</sup> (CVAE) would be a much better choice here. Anyway, the goal was to demonstrate the approach taken in the paper<sup>[1]</sup> and it worked reasonably well on the MNIST dataset too.
 
 Another interesting approach is described in \[4\]. The proposed approach identifies regions in latent space with desired properties without training the corresponding models with these properties in advance. This should help to prevent expensive model retraining and allows post-hoc learning of so-called *latent constraints*, value functions that identify regions in latent space that generate outputs with desired properties. Definitely one of my next papers to read.
 

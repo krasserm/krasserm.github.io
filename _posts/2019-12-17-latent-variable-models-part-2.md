@@ -136,7 +136,7 @@ If $M$ is sufficiently large, for example $M = 100$, then $L$ can be even set to
 
 From the perspective of a generative model, $q(\mathbf{t}_i \lvert \mathbf{x}_i, \boldsymbol{\phi})$ is a probabilistic *encoder* because it generates a *latent code* $\mathbf{t}_i$ for input image $\mathbf{x}_i$ and $p(\mathbf{x}_i \lvert \mathbf{t}_i, \boldsymbol{\theta})$ is a probabilistic *decoder* because it generates or reconstructs an image $\mathbf{x}_i$ from latent code $\mathbf{t}_i$. Optimizing the variational lower bound w.r.t. parameters $\boldsymbol{\theta}$ and $\boldsymbol{\phi}$ can therefore be regarded as training a probabilistic autoencoder or *variational autoencoder* (VAE)<sup>[1]</sup>.
 
-In this context, the first term on the RHS of Eq. $(5)$ can be interpreted as expected negative *reconstruction error*. The second term is a *regularization term* that encourages the variational distribution to be close to the prior over latent variables. If the regularization term is omitted, the variational distribution would collapse to a delta function and the variational auto-encoder would degenerate to a "usual" deterministic autoencoder. 
+In this context, the first term on the RHS of Eq. $(5)$ can be interpreted as expected negative *reconstruction error*. The second term is a *regularization term* that encourages the variational distribution to be close to the prior over latent variables. If the regularization term is omitted, the variational distribution would collapse to a delta function and the variational autoencoder would degenerate to a "usual" deterministic autoencoder. 
 
 ### Implementation
 

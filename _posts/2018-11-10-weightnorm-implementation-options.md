@@ -1,5 +1,5 @@
 ---
-title: Weight normalization implementation options for Keras and Tensorflow
+title: Weight normalization options for Keras and Tensorflow
 layout: post
 comments: True
 author: "Martin Krasser"

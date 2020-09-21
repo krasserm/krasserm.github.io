@@ -1,6 +1,7 @@
 ---
 title: Resources for getting started with ML and DL
 layout: post
+hidden: True
 comments: True
 author: "Martin Krasser"
 header-img: "img/distributed.png"
@@ -77,7 +78,7 @@ examples are in MATLAB but there is also a (limited) [Python port](https://githu
 machine learning basics. Part 2 covers deep neural network basics, convolutional neural networks (CNNs) and recurrent 
 neural networks (RNNs). The content is comparable to that of the 
 [Deep Learning specialization](https://www.coursera.org/specializations/deep-learning) but is presented in a more academic 
-way. Part 3 covers more advanced topics such as auto-encoders, representation learning, graphical model and deep generative 
+way. Part 3 covers more advanced topics such as autoencoders, representation learning, graphical model and deep generative 
 models. Be prepared to use [Machine learning - a probabilistic perspective](https://mitpress.mit.edu/books/machine-learning-0)
 as a companion ;-) The *Deep learning* book is not for practitioners but a great theoretical overview of the field.    
 
@@ -85,7 +86,7 @@ as a companion ;-) The *Deep learning* book is not for practitioners but a great
 you've already taken a first machine learning and deep learning course, this book is for you. It is packed with useful 
 code examples and guidelines for real-world machine learning projects. Part 1 focuses on the implementation of classical
 machine learning models with scikit-learn. Part 2 focuses on deep learning with Tensorflow. In addition to CNNs and RNNs 
-this part also has chapters on auto-encoders and reinforcement learning. Both, theory and code examples are presented 
+this part also has chapters on autoencoders and reinforcement learning. Both, theory and code examples are presented 
 in a clear and concise way.  
    
 - [Deep learning with Python](https://www.manning.com/books/deep-learning-with-python). Another excellent deep learning 
