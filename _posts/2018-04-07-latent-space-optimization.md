@@ -73,7 +73,7 @@ latent_dim = 2
 batch_size = 64
 ```
 
-Code for the encoder and decoder have already been presented [elsewhere](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/dev/autoencoder-applications/variational_autoencoder.ipynb), so only code for the predictor is shown here (see [variational_autoencoder_opt_util.py](variational_autoencoder_opt_util.py) for other function definitions):
+Code for the encoder and decoder have already been presented [elsewhere](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/dev/autoencoder-applications/variational_autoencoder.ipynb), so only code for the predictor is shown here (see [variational_autoencoder_opt_util.py](https://github.com/krasserm/bayesian-machine-learning/blob/dev/autoencoder-applications/variational_autoencoder_opt_util.py) for other function definitions):
 
 
 ```python
