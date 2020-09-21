@@ -6,8 +6,8 @@ author: "Martin Krasser"
 header-img: "img/distributed.png"
 ---
 
-*This article is an export of the [Gaussian processes](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/master/gaussian-processes/gaussian_processes.ipynb) notebook which is part of the [bayesian-machine-learning](https://github.com/krasserm/bayesian-machine-learning) repo on Github.*
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/krasserm/bayesian-machine-learning/blob/master/gaussian-processes/gaussian_processes.ipynb)
+*This article is an export of the [Gaussian processes](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/dev/gaussian-processes/gaussian_processes.ipynb) notebook which is part of the [bayesian-machine-learning](https://github.com/krasserm/bayesian-machine-learning) repo on Github.*
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/krasserm/bayesian-machine-learning/blob/dev/gaussian-processes/gaussian_processes.ipynb)
 
 ## Introduction
 
@@ -120,7 +120,7 @@ plot_gp(mu, cov, X, samples=samples)
 ![png](/img/2018-03-19/output_6_0.png)
 
 
-The `plot_gp` function is defined [here](https://github.com/krasserm/bayesian-machine-learning/blob/master/gaussian-processes/gaussian_processes_util.py#L7).
+The `plot_gp` function is defined [here](https://github.com/krasserm/bayesian-machine-learning/blob/dev/gaussian-processes/gaussian_processes_util.py#L7).
 
 ### Prediction from noise-free training data
 
