@@ -1,5 +1,5 @@
 ---
-title: 'Latent variable models - part 1'
+title: 'Latent variable models, part 1'
 subtitle: Gaussian mixture models and the EM algorithm
 layout: post
 comments: True

@@ -1,5 +1,5 @@
 ---
-title: 'Latent variable models - part 2'
+title: 'Latent variable models, part 2'
 subtitle: Stochastic variational inference and variational autoencoders
 layout: post
 comments: True
