@@ -75,17 +75,16 @@ The length parameter $l$ controls the smoothness of the function and $\sigma_f$ 
 import numpy as np
 
 def kernel(X1, X2, l=1.0, sigma_f=1.0):
-    '''
-    Isotropic squared exponential kernel. Computes 
-    a covariance matrix from points in X1 and X2.
+    """
+    Isotropic squared exponential kernel.
         
     Args:
         X1: Array of m points (m x d).
         X2: Array of n points (n x d).
 
     Returns:
-        Covariance matrix (m x n).
-    '''
+        (m x n) matrix.
+    """
     sqdist = np.sum(X1**2, 1).reshape(-1, 1) + np.sum(X2**2, 1) - 2 * np.dot(X1, X2.T)
     return sigma_f**2 * np.exp(-0.5 / l**2 * sqdist)
 ```
@@ -131,7 +130,7 @@ To compute the sufficient statistics i.e. mean and covariance of the posterior p
 from numpy.linalg import inv
 
 def posterior_predictive(X_s, X_train, Y_train, l=1.0, sigma_f=1.0, sigma_y=1e-8):
-    '''  
+    """  
     Computes the suffifient statistics of the GP posterior predictive distribution 
     from m training data X_train and Y_train and n new inputs X_s.
     
@@ -145,7 +144,7 @@ def posterior_predictive(X_s, X_train, Y_train, l=1.0, sigma_f=1.0, sigma_y=1e-8
     
     Returns:
         Posterior mean vector (n x d) and covariance matrix (n x n).
-    '''
+    """
     K = kernel(X_train, X_train, l, sigma_f) + sigma_y**2 * np.eye(len(X_train))
     K_s = kernel(X_train, X_s, l, sigma_f)
     K_ss = kernel(X_s, X_s, l, sigma_f) + 1e-8 * np.eye(len(X_s))
@@ -253,21 +252,24 @@ from numpy.linalg import cholesky, det, lstsq
 from scipy.optimize import minimize
 
 def nll_fn(X_train, Y_train, noise, naive=True):
-    '''
+    """
     Returns a function that computes the negative log marginal
-    likelihood for training data X_train and Y_train and given 
+    likelihood for training data X_train and Y_train and given
     noise level.
-    
+
     Args:
         X_train: training locations (m x d).
         Y_train: training targets (m x 1).
         noise: known noise level of Y_train.
-        naive: if True use a naive implementation of Eq. (7), if 
-               False use a numerically more stable implementation. 
-        
+        naive: if True use a naive implementation of Eq. (7), if
+               False use a numerically more stable implementation.
+
     Returns:
         Minimization objective.
-    '''
+    """
+    
+    Y_train = Y_train.ravel()
+    
     def nll_naive(theta):
         # Naive implementation of Eq. (7). Works well for the examples 
         # in this article but is numerically less stable compared to 
@@ -275,20 +277,24 @@ def nll_fn(X_train, Y_train, noise, naive=True):
         K = kernel(X_train, X_train, l=theta[0], sigma_f=theta[1]) + \
             noise**2 * np.eye(len(X_train))
         return 0.5 * np.log(det(K)) + \
-               0.5 * Y_train.T.dot(inv(K).dot(Y_train)) + \
+               0.5 * Y_train.dot(inv(K).dot(Y_train)) + \
                0.5 * len(X_train) * np.log(2*np.pi)
-
+        
     def nll_stable(theta):
         # Numerically more stable implementation of Eq. (7) as described
         # in http://www.gaussianprocess.org/gpml/chapters/RW2.pdf, Section
         # 2.2, Algorithm 2.1.
+        
+        def ls(a, b):
+            return lstsq(a, b, rcond=-1)[0]
+        
         K = kernel(X_train, X_train, l=theta[0], sigma_f=theta[1]) + \
             noise**2 * np.eye(len(X_train))
         L = cholesky(K)
         return np.sum(np.log(np.diagonal(L))) + \
-               0.5 * Y_train.T.dot(lstsq(L.T, lstsq(L, Y_train)[0])[0]) + \
+               0.5 * Y_train.dot(ls(L.T, ls(L, Y_train))) + \
                0.5 * len(X_train) * np.log(2*np.pi)
-    
+
     if naive:
         return nll_naive
     else:
