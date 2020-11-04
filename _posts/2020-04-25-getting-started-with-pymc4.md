@@ -11,6 +11,8 @@ header-img: "img/distributed.png"
 - *[notebook](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/dev/bayesian-neural-networks/bayesian_neural_networks_pymc4.ipynb)*
 - *[respository](https://github.com/krasserm/bayesian-machine-learning)*
 
+**Update:** [PyMC4 based on TensorFlow Probability will not be developed further](https://pymc-devs.medium.com/the-future-of-pymc3-or-theano-is-dead-long-live-theano-d8005f8a0e9b). PyMC3 on Theano with the new JAX backend is the future. 
+
 This article demonstrates how to implement a simple Bayesian neural network for regression with an early [PyMC4 development snapshot](https://github.com/pymc-devs/pymc4/tree/1c5e23825271fc2ff0c701b9224573212f56a534) (from Jul 29, 2020). It can be installed with 
 
 ```bash
