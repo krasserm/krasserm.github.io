@@ -7,7 +7,9 @@ author: "Martin Krasser"
 header-img: "img/distributed.png"
 ---
 
-*You can find the notebook for this article [here](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/dev/bayesian-neural-networks/bayesian_neural_networks_pymc4.ipynb). It is part of the [bayesian-machine-learning](https://github.com/krasserm/bayesian-machine-learning) repo on Github.*
+*Sources:* 
+- *[notebook](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/dev/bayesian-neural-networks/bayesian_neural_networks_pymc4.ipynb)*
+- *[respository](https://github.com/krasserm/bayesian-machine-learning)*
 
 This article demonstrates how to implement a simple Bayesian neural network for regression with an early [PyMC4 development snapshot](https://github.com/pymc-devs/pymc4/tree/1c5e23825271fc2ff0c701b9224573212f56a534) (from Jul 29, 2020). It can be installed with 
 

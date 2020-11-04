@@ -16,7 +16,7 @@ kramdown:
   math_engine: mathjax
   syntax_highlighter: rouge
 permalink: pretty
-paginate: 6
+paginate: 5
 exclude: ["less","node_modules","Gruntfile.js","package.json","README.md"]
 
 plugins:

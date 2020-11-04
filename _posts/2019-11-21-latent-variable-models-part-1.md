@@ -7,8 +7,11 @@ author: "Martin Krasser"
 header-img: "img/distributed.png"
 ---
 
-*You can find the notebook for this article [here](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/dev/latent-variable-models/latent_variable_models_part_1.ipynb). It is part of the [bayesian-machine-learning](https://github.com/krasserm/bayesian-machine-learning) repo on Github.*
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/krasserm/bayesian-machine-learning/blob/dev/latent-variable-models/latent_variable_models_part_1.ipynb)
+
+*Sources:* 
+- *[notebook](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/dev/latent-variable-models/latent_variable_models_part_1.ipynb)*
+- *[respository](https://github.com/krasserm/bayesian-machine-learning)*
 
 This is part 1 of a two-part series of articles about latent variable models. Part 1 covers the expectation maximization (EM) algorithm and its application to Gaussian mixture models. [Part 2](/2019/12/17/latent-variable-models-part-2/) covers approximate inference and variational autoencoders.
 
