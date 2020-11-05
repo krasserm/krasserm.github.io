@@ -8,8 +8,8 @@ header-img: "img/distributed.png"
 ---
 
 *Sources:* 
-- *[notebook](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/dev/bayesian-neural-networks/bayesian_neural_networks_pymc4.ipynb)*
-- *[respository](https://github.com/krasserm/bayesian-machine-learning)*
+- *[Notebook](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/dev/bayesian-neural-networks/bayesian_neural_networks_pymc4.ipynb)*
+- *[Repository](https://github.com/krasserm/bayesian-machine-learning)*
 
 **Update:** [PyMC4 based on TensorFlow Probability will not be developed further](https://pymc-devs.medium.com/the-future-of-pymc3-or-theano-is-dead-long-live-theano-d8005f8a0e9b). PyMC3 on Theano with the new JAX backend is the future. 
 

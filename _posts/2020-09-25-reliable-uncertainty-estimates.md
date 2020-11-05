@@ -8,8 +8,8 @@ header-img: "img/distributed.png"
 ---
 
 *Sources:* 
-- *[notebook](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/dev/noise-contrastive-priors/ncp.ipynb)*
-- *[respository](https://github.com/krasserm/bayesian-machine-learning)*
+- *[Notebook](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/dev/noise-contrastive-priors/ncp.ipynb)*
+- *[Repository](https://github.com/krasserm/bayesian-machine-learning)*
 
 I previously wrote about [Bayesian neural networks](/2019/03/14/bayesian-neural-networks/) and explained how uncertainty estimates can be obtained for network predictions. Uncertainty in predictions that comes from uncertainty in network weights is called *epistemic uncertainty* or model uncertainty. A simple regression example demonstrated how epistemic uncertainty increases in regions outside the training data distribution:
 

@@ -7,8 +7,8 @@ header-img: "img/distributed.png"
 ---
 
 *Sources:* 
-- *[notebook](https://nbviewer.jupyter.org/github/krasserm/super-resolution/blob/master/article.ipynb)*
-- *[respository](https://github.com/krasserm/super-resolution)*
+- *[Notebook](https://nbviewer.jupyter.org/github/krasserm/super-resolution/blob/master/article.ipynb)*
+- *[Repository](https://github.com/krasserm/super-resolution)*
 
 This article is an introduction to single image super-resolution. It covers some important developments in recent years and shows their implementation in Tensorflow 2.0. The primary focus is on specialized residual network architectures and generative adversarial networks (GANs) for fine-tuning super-resolution models. 
 

@@ -7,8 +7,8 @@ header-img: "img/distributed.png"
 ---
 
 *Sources:* 
-- *[notebook](http://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/dev/autoencoder-applications/variational_autoencoder_opt.ipynb)*
-- *[respository](https://github.com/krasserm/bayesian-machine-learning)*
+- *[Notebook](http://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/dev/autoencoder-applications/variational_autoencoder_opt.ipynb)*
+- *[Repository](https://github.com/krasserm/bayesian-machine-learning)*
 
 ## Introduction
 

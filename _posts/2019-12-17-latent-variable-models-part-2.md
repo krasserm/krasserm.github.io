@@ -10,8 +10,8 @@ header-img: "img/distributed.png"
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/krasserm/bayesian-machine-learning/blob/dev/latent-variable-models/latent_variable_models_part_2.ipynb)
 
 *Sources:* 
-- *[notebook](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/dev/latent-variable-models/latent_variable_models_part_2.ipynb)*
-- *[respository](https://github.com/krasserm/bayesian-machine-learning)*
+- *[Notebook](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/dev/latent-variable-models/latent_variable_models_part_2.ipynb)*
+- *[Repository](https://github.com/krasserm/bayesian-machine-learning)*
 
 [Part 1](/2019/11/21/latent-variable-models-part-1/) of this article series introduced a latent variable model with discrete latent variables, the Gaussian mixture model (GMM), and an algorithm to fit this model to data, the EM algorithm. Part 2 covers a latent variable model with continuous latent variables for modeling more complex data, like natural images for example, and a Bayesian inference technique that can be used in conjunction with stochastic optimization algorithms.
 

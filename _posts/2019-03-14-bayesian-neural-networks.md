@@ -7,8 +7,8 @@ header-img: "img/distributed.png"
 ---
 
 *Sources:* 
-- *[notebook](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/dev/bayesian-neural-networks/bayesian_neural_networks.ipynb)*
-- *[respository](https://github.com/krasserm/bayesian-machine-learning)*
+- *[Notebook](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/dev/bayesian-neural-networks/bayesian_neural_networks.ipynb)*
+- *[Repository](https://github.com/krasserm/bayesian-machine-learning)*
 
 This article demonstrates how to implement and train a Bayesian neural network with Keras following the approach described in [Weight Uncertainty in Neural Networks](https://arxiv.org/abs/1505.05424) (*Bayes by Backprop*). The implementation is kept simple for illustration purposes and uses Keras 2.2.4 and Tensorflow 1.12.0. For more advanced implementations of Bayesian methods for neural networks consider using [Tensorflow Probability](https://www.tensorflow.org/probability), for example.
 
