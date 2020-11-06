@@ -10,7 +10,7 @@ header-img: "img/distributed.png"
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/krasserm/bayesian-machine-learning/blob/dev/gaussian-processes/gaussian_processes_classification.ipynb)
 
 *Sources:* 
-- *[Notebook](https://github.com/krasserm/bayesian-machine-learning/blob/dev/gaussian-processes/gaussian_processes_classification.ipynb)*
+- *[Notebook](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/dev/gaussian-processes/gaussian_processes_classification.ipynb)*
 - *[Repository](https://github.com/krasserm/bayesian-machine-learning)*
 
 *Series:*
