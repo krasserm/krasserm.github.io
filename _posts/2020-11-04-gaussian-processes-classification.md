@@ -10,7 +10,7 @@ header-img: "img/distributed.png"
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/krasserm/bayesian-machine-learning/blob/dev/gaussian-processes/gaussian_processes_classification.ipynb)
 
 *Sources:* 
-- *[Notebook](https://github.com/krasserm/bayesian-machine-learning/blob/dev/gaussian-processes/gaussian_processes_classification.ipynb)*
+- *[Notebook](https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/dev/gaussian-processes/gaussian_processes_classification.ipynb)*
 - *[Repository](https://github.com/krasserm/bayesian-machine-learning)*
 
 *Series:*
@@ -28,7 +28,7 @@ p(\mathbf{f} \mid \mathbf{X}) = \mathcal{N}(\mathbf{f} \mid \boldsymbol\mu, \mat
 \tag{1}
 $$
 
-A GP is a prior over functions whose shape (smoothness, ...) is defined by $\mathbf{K} = \kappa(\mathbf{X}, \mathbf{X})$ where $\kappa$ is a parameteric kernel function. It is common to set $\boldsymbol\mu = \mathbf{0}$. Given observed function values $\mathbf{y}$ at points $\mathbf{X}$ we want to predict a new function value $f\_\*$ at point $\mathbf{x}\_\*$. By definition of a GP, the joint distribution of observed values $\mathbf{y}$ and prediction $f\_\*$ is also a Gaussian:
+A GP is a prior over functions whose shape (smoothness, ...) is defined by $\mathbf{K} = \kappa(\mathbf{X}, \mathbf{X})$ where $\kappa$ is a parameteric kernel function. It is common to set $\boldsymbol\mu = \mathbf{0}$. Given observed noisy function values $\mathbf{y}$ at points $\mathbf{X}$ we want to predict a noise-free function value $f\_\*$ at point $\mathbf{x}\_\*$. The joint distribution of observed values $\mathbf{y}$ and prediction $f\_\*$ is also a Gaussian:
 
 $$
 p(\mathbf{y}, f_* \mid \mathbf{X},\mathbf{x}_*) = 
@@ -39,7 +39,7 @@ p(\mathbf{y}, f_* \mid \mathbf{X},\mathbf{x}_*) =
 \tag{2}
 $$
 
-where $\mathbf{K}_y = \mathbf{K} + \sigma_y^2\mathbf{I}$, $\mathbf{k}\_\* = \kappa(\mathbf{X},\mathbf{x}\_\*)$ and $k\_{**} = \kappa(\mathbf{x}\_\*,\mathbf{x}\_\*)$. $\sigma_y^2$ models noise in the observed function values $\mathbf{y}$. Turning the joint distribution $(2)$ into a conditional distribution, using standard rules for conditioning Gaussians, we obtain a predictive distribution
+where $\mathbf{K}_y = \mathbf{K} + \sigma_y^2\mathbf{I}$, $\mathbf{k}\_\* = \kappa(\mathbf{X},\mathbf{x}\_\*)$ and $k\_{**} = \kappa(\mathbf{x}\_\*,\mathbf{x}\_\*)$. $\sigma_y^2$ models noise in the observed function values $\mathbf{y}$. Turning the joint distribution $(2)$ into a conditional distribution we obtain a predictive distribution
 
 $$
 p(f_* \mid \mathbf{x}_*, \mathbf{X}, \mathbf{y}) = \mathcal{N}(f_* \mid \boldsymbol\mu_*, \boldsymbol\Sigma_*)
