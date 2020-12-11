@@ -271,7 +271,8 @@ In the following we will minimize the negative log marginal likelihood w.r.t. pa
 
 
 ```python
-from numpy.linalg import cholesky, det, lstsq
+from numpy.linalg import cholesky, det
+from scipy.linalg import solve_triangular
 from scipy.optimize import minimize
 
 def nll_fn(X_train, Y_train, noise, naive=True):
@@ -308,14 +309,15 @@ def nll_fn(X_train, Y_train, noise, naive=True):
         # in http://www.gaussianprocess.org/gpml/chapters/RW2.pdf, Section
         # 2.2, Algorithm 2.1.
         
-        def ls(a, b):
-            return lstsq(a, b, rcond=-1)[0]
-        
         K = kernel(X_train, X_train, l=theta[0], sigma_f=theta[1]) + \
             noise**2 * np.eye(len(X_train))
         L = cholesky(K)
+        
+        S1 = solve_triangular(L, Y_train, lower=True)
+        S2 = solve_triangular(L.T, S1, lower=False)
+        
         return np.sum(np.log(np.diagonal(L))) + \
-               0.5 * Y_train.dot(ls(L.T, ls(L, Y_train))) + \
+               0.5 * Y_train.dot(S2) + \
                0.5 * len(X_train) * np.log(2*np.pi)
 
     if naive:
