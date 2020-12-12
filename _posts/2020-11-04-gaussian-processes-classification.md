@@ -16,6 +16,7 @@ header-img: "img/distributed.png"
 *Series:*
 - *[Gaussian processes](/2018/03/19/gaussian-processes/)*
 - *Gaussian processes for classification (this article)*
+- *[Sparse Gaussian processes](/2020/12/12/gaussian-processes-sparse/)*
 
 This article gives an introduction to Gaussian processes for classification and provides a minimal implementation with NumPy. Gaussian processes for regression are covered in a [previous article](/2018/03/19/gaussian-processes/) and a brief recap is given in the next section.
 

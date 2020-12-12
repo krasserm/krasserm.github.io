@@ -2,6 +2,7 @@
 title: Getting started with PyMC4
 subtitle: Bayesian neural networks
 layout: post
+hidden: True
 comments: True
 author: "Martin Krasser"
 header-img: "img/distributed.png"
