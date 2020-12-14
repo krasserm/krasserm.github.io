@@ -2,7 +2,7 @@
 title: Sparse Gaussian processes
 layout: post
 hidden: False
-comments: False
+comments: True
 author: "Martin Krasser"
 header-img: "img/distributed.png"
 ---
