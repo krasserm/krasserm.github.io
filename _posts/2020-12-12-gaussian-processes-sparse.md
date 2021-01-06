@@ -44,7 +44,7 @@ $$
 p(\mathbf{f}_* \mid \mathbf{y}) = \int p(\mathbf{f}_* \mid \mathbf{f}) p(\mathbf{f} \mid \mathbf{y}) d\mathbf{f} \tag{4}
 $$
 
-where the conditioning on inputs $\mathbf{X}$ and $\mathbf{X}\_\*$ has been made implicit. The second term inside the integral is the posterior over the training latent variables $\mathbf{f}$ conditioned on observations $\mathbf{y}$, the first term is the posterior over predictions $\mathbf{f}\_\*$ conditioned on latent training variables $\mathbf{f}$ (see also equation $(3)$ in [this article](/2018/03/19/gaussian-processes/). Both terms are intractable to compute for larger training datasets for reasons explained above.
+where the conditioning on inputs $\mathbf{X}$ and $\mathbf{X}\_\*$ has been made implicit. The second term inside the integral is the posterior over the training latent variables $\mathbf{f}$ conditioned on observations $\mathbf{y}$, the first term is the posterior over predictions $\mathbf{f}\_\*$ conditioned on latent training variables $\mathbf{f}$ (see also equation $(3)$ in [this article](/2018/03/19/gaussian-processes/)). Both terms are intractable to compute for larger training datasets for reasons explained above.
 
 ### Sparse Gaussian processes
 
