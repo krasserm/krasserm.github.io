@@ -109,7 +109,7 @@ There are many other kernels that can be used for Gaussian processes. See \[3\]Â
 
 ### Prior
 
-Let's first define a prior over functions with mean zero and a covariance matrix computed with kernel parameters $l=1$ and $\sigma_f=1$. To draw random functions from that GP we draw random samples from the corresponding multivariate normal. The following example draws three random samples and plots it together with the zero mean and the 95% confidence interval (computed from the diagonal of the covariance matrix).
+Let's first define a prior over functions with mean zero and a covariance matrix computed with kernel parameters $l=1$ and $\sigma_f=1$. To draw random functions from that GP we draw random samples from the corresponding multivariate normal. The following example draws three random samples and plots it together with the zero mean and the *uncertainty region* (the 95% highest density interval computed from the diagonal of the covariance matrix).
 
 
 ```python
@@ -127,7 +127,7 @@ cov = kernel(X, X)
 # Draw three samples from the prior
 samples = np.random.multivariate_normal(mu.ravel(), cov, 3)
 
-# Plot GP mean, confidence interval and samples 
+# Plot GP mean, uncertainty region and samples 
 plot_gp(mu, cov, X, samples=samples)
 ```
 
@@ -177,7 +177,7 @@ def posterior(X_s, X_train, Y_train, l=1.0, sigma_f=1.0, sigma_y=1e-8):
     return mu_s, cov_s
 ```
 
-and apply them to noise-free training data `X_train` and `Y_train`. The following example draws three samples from the posterior and plots them along with the mean, confidence interval and training data. In a noise-free model, variance at the training points is zero and all random functions drawn from the posterior go through the trainig points. 
+and apply them to noise-free training data `X_train` and `Y_train`. The following example draws three samples from the posterior and plots them along with the mean, uncertainty region and training data. In a noise-free model, variance at the training points is zero and all random functions drawn from the posterior go through the trainig points. 
 
 
 ```python
@@ -225,7 +225,7 @@ plot_gp(mu_s, cov_s, X, X_train=X_train, Y_train=Y_train, samples=samples)
 
 ### Effect of kernel parameters and noise parameter
 
-The following example shows the effect of kernel parameters $l$ and $\sigma_f$ as well as the noise parameter $\sigma_y$. Higher $l$ values lead to smoother functions and therefore to coarser approximations of the training data. Lower $l$ values make functions more wiggly with wide confidence intervals between training data points. $\sigma_f$ controls the vertical variation of functions drawn from the GP. This can be seen by the wide confidence intervals outside the training data region in the right figure of the second row. $\sigma_y$ represents the amount of noise in the training data. Higher $\sigma_y$ values make more coarse approximations which avoids overfitting to noisy data.
+The following example shows the effect of kernel parameters $l$ and $\sigma_f$ as well as the noise parameter $\sigma_y$. Higher $l$ values lead to smoother functions and therefore to coarser approximations of the training data. Lower $l$ values make functions more wiggly with wide uncertainty regions between training data points. $\sigma_f$ controls the vertical variation of functions drawn from the GP. This can be seen by the wide uncertainty regions outside the training data region in the right figure of the second row. $\sigma_y$ represents the amount of noise in the training data. Higher $\sigma_y$ values make more coarse approximations which avoids overfitting to noisy data.
 
 
 ```python
@@ -349,7 +349,7 @@ plot_gp(mu_s, cov_s, X, X_train=X_train, Y_train=Y_train)
     
 
 
-With optimized kernel parameters, training data are reasonably covered by the 95% confidence interval and the mean of the posterior is a good approximation.
+With optimized kernel parameters, training data are reasonably covered by the 95% highest density interval and the mean of the posterior is a good approximation.
 
 ### Higher dimensions
 
