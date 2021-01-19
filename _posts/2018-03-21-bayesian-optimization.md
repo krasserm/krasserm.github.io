@@ -141,7 +141,7 @@ def expected_improvement(X, X_sample, Y_sample, gpr, xi=0.01):
     
     # Needed for noise-based model,
     # otherwise use np.max(Y_sample).
-    # See also section 2.4 in [...]
+    # See also section 2.4 in [1]
     mu_sample_opt = np.max(mu_sample)
 
     with np.errstate(divide='warn'):
