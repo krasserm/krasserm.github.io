@@ -207,6 +207,7 @@ The following is an incomplete list of open source projects I'm currently workin
 
 ## Certifications
 
+- 05.2021, [Full Stack Deep Learning](https://verified.cv/en/verify/53544649159797)
 - Advanced Machine Learning Specialization.
     - 03.2018 [Bayesian Methods for Machine Learning](https://www.coursera.org/account/accomplishments/certificate/JCLCTLAFA6FL).
 - 02.2018, [Deep Learning Specialization](https://www.coursera.org/account/accomplishments/specialization/certificate/N7D4G6K9RUJ5).
