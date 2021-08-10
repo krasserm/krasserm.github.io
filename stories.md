@@ -91,23 +91,28 @@ the official replacement for akka-camel and part of the [Alpakka](https://github
 
 ## Machine learning
 
-I got into machine learning in 2014 by attending Andrew Ng's machine learning course on Coursera. After having applied 
-machine learning in several smaller projects I decided in 2017 to take a sabbatical year for going much deeper into
-statistics, "traditional" machine learning and deep learning. I completed several [online courses](/resume/#certifications) 
-and gained further experience by supplemantary reading and implementing real-world examples. I shared part of my exercise 
-work as [open source projects](/resume#open-source-projects) and [blog posts](/). I also developed a particular interest 
-in [Bayesian methods for machine learning](https://github.com/krasserm/bayesian-machine-learning) and their application 
-to deep learning.
+I got into machine learning in 2014 with Andrew Ng's machine learning course on Coursera. After having applied
+machine learning in several smaller projects I decided for a sabbatical year in 2017 for diving deeper into mathematics, 
+statistics, "traditional" machine learning and deep learning. I attended several [online courses](/resume/#certifications)
+and gained further experience by reading numerous books and papers. Of special interest were also
+[Bayesian methods for machine learning](https://github.com/krasserm/bayesian-machine-learning) including Bayesian deep learning.
+I implemented what I learned mainly with scikit-learn, Tensorflow, PyTorch and PyMC3 and published part of my exercise
+work as [open source projects](/resume#open-source-projects) and [blog posts](/). 
 
-Even before my sabbatical year ended I was offered a machine learning position by [MerlinOne](https://merlinone.com/) 
-where I'm currently improving the information retrieval subsystem of the company's digital asset management (DAM) system. 
-Improvements include [content-based image retrieval](https://merlinone.com/solutions/merlin-ai-image-similarity/),
-[facial recognition](https://merlinone.com/solutions/merlin-ai-facial-recognition/) and better text-based semantic matching, 
-all based on deep learning methods. I also developed a model for [image aesthetics assessment](https://merlinone.com/solutions/merlin-ai-impact/). 
-It allows DAM users to rank images by aesthetic and technical quality. All these solutions are meanwhile running in 
-production at several customer sites. 
+Even before my sabbatical year ended, [MerlinOne](https://merlinone.com/) offered me a position as machine learning engineer 
+where I'm currently extending the company's digital asset management (DAM) system with a multimodal neural search engine.
+The search engine supports text-text, [text-image](https://merlinone.com/nomad/) and [image-image](https://merlinone.com/solutions/merlin-ai-visual-similarity/)
+search modes, optionally using information from [identified faces](https://merlinone.com/solutions/merlin-ai-facial-recognition/) 
+in images. A meta-search engine combines the results from neural search engine components and existing, more traditional 
+search engines. It supports low search latencies and scalability to very large datasets. I also developed an 
+[image aesthetics assessment](https://merlinone.com/solutions/merlin-ai-impact/) service for scoring the aesthetic and 
+technical quality of images. 
 
-I like the wide range of responsibilities I have in these projects e.g. tracking and applying latest academic research, 
-model development and customization, solution development with a focus on scalability and low latency as well as production 
-deployments using modern container management technologies. Ethical aspects like avoiding racial bias in facial recognition 
-also play an important role. 
+All developed solutions have production deployments at several customers sites today and use models with specialized 
+neural network architectures. These are trained and fine-tuned on public and high-quality in-house datasets in order to
+meet customer-specific requirements.
+
+I like the wide range of responsibilities I have in these projects e.g. tracking and applying the latest academic research,
+model development and training, solution development with a focus on scalability and low latency as well as production
+deployments using modern container management technologies. Ethical aspects like avoiding racial bias e.g. in facial 
+recognition also play an important role.

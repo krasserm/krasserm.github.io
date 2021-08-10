@@ -10,29 +10,30 @@ header-includes:
 
 # Martin Krasser
 
-I'm a freelance machine learning engineer, software developer and consultant. I support customers in all phases of their 
-AI projects, from initial prototyping, solution development up to operating developed solutions in production environments. 
-Current focus is on deep learning for computer vision and natural language processing, mainly in context of neural 
-search engines. I also have a particular interest in Bayesian methods for machine learning. My experience as distributed
-systems engineer comes from the development of numerous large-scale event-driven systems including globally distributed 
-systems that provide causal consistency guarantees. I'm a continuous learner and contributor to several open source 
-projects.
+I'm a freelance machine learning engineer and software developer. I support customers in all phases of their machine 
+learning projects, from initial research, prototyping, iterative solution development up to serving and maintaining machine 
+learning solutions in production environments. Current focus is on deep learning for computer vision and natural language 
+processing, mainly in context of multimodal neural search engines. I also have a special interest in Bayesian methods 
+for machine learning. My experience as distributed systems engineer comes from the development of numerous large-scale
+event-driven systems, including globally distributed systems that provide causal consistency guarantees. I'm a continuous 
+learner and contributor to several open source projects.
 
-[http://martin-krasser.de](http://martin-krasser.de)  
+[https://martin-krasser.com](https://martin-krasser.com)  
 [https://twitter.com/mrt1nz](https://twitter.com/mrt1nz)  
 [https://github.com/krasserm](https://github.com/krasserm)  
 
 ## Specialties
 
 Distributed systems, 
-system integration,
-machine learning,
 deep learning,
+machine learning,
+machine learning operations (MLOps),
 data-intensive applications,
 event sourcing and CQRS,
-event stream processing, 
+event stream processing,
 event-driven architectures,
 message-driven architectures,
+system integration,
 resilience, 
 scalability, 
 high availability,
@@ -48,31 +49,32 @@ See also [Stories](https://krasserm.github.io/stories/) for further information.
 
 MerlinOne, [https://merlinone.com](https://merlinone.com), Freelance
 
-- Design and implementation of AI extensions for the MerlinOne digital asset management system.
-- Application of deep learning methods for large-scale [facial recognition](https://merlinone.com/solutions/merlin-ai-facial-recognition/), 
-  [content-based image retrieval](https://merlinone.com/solutions/merlin-ai-image-similarity/), 
-  [image aesthetics assessment](https://merlinone.com/solutions/merlin-ai-impact/), 
-  [single image super-resolution](https://github.com/krasserm/super-resolution)
-  and development of a multi-modal neural search engine. 
-- Responsible for the scientific and engineering parts of all machine learning projects.
-- Support production deployments to several customer sites (hosted and on-premise). 
+- Development of a multimodal neural search engine for the MerlinOne digital asset management system.
+  - Support for text-text, [text-image](https://merlinone.com/nomad/) and [image-image](https://merlinone.com/solutions/merlin-ai-visual-similarity/) 
+    search modes, optionally using [personal information](https://merlinone.com/solutions/merlin-ai-facial-recognition/).
+  - Training and fine-tuning of neural models on public and high-quality in-house datasets.
+  - Low search latency and scalability to very large datasets.
+- [Image aesthetics assessment](https://merlinone.com/solutions/merlin-ai-impact/) with criteria learned from custom in-house datasets.
+- [Single image super-resolution](https://github.com/krasserm/super-resolution) to improve quality of low-resolution images.
+- Production deployments to several customer sites (hosted and on-premise).
+- Responsible for scientific and engineering work in all machine learning projects.
  
-### Since 04.2011: Freelance software engineer, machine learning engineer
+### Since 04.2011: Freelance software engineer, machine learning engineer 
 
-[http://www.martin-krasser.de](http://www.martin-krasser.de)  
+[https://martin-krasser.com](https://martin-krasser.com)  
 
-- Research and development for industry machine learning projects.
-- Distributed systems development and consulting services.
+- Research and development for industry machine learning and deep learning projects.
+- Software development services with a focus on backend software and distributed systems.
 - See other positions since 2011 for further details. 
   
 ### 05.2017 to 04.2018: Machine learning sabbatical
 
 Sabbatical year 
 
-- Deep dive into statistics, "traditional" machine learning and deep learning.
-- [Certifications](#certifications) received in statistics and machine learning MOOCs.
+- Deep dive into mathematics, statistics, "traditional" machine learning and deep learning.
+- [Certifications](#certifications) received in online courses. Self-study of numerous books and papers. 
 - Publication of some exercise work in [articles](https://krasserm.github.io) and [open source projects](#open-source-projects).
-- Equal focus on theoretical and engineering aspects of machine learning.
+- Equal focus on theoretical and engineering aspects in machine learning and deep learning.
 
 ### 02.2017 - 04.2017: Distributed systems engineer
 
@@ -154,7 +156,7 @@ Austrian Red Cross, [http://www.roteskreuz.at/](http://www.roteskreuz.at/)
 ## Tools experience (excerpt)
 
 - Programming languages: Scala, Java, Python, C/C++, Haskell.
-- Machine learning: scikit-learn, Tensorflow/Keras, PyTorch, PyMC3, Spark MLlib, R. 
+- Machine learning: scikit-learn, Tensorflow/Keras, PyTorch, JAX, PyMC3, Spark MLlib, ... 
 - Databases: MySQL, PostgreSQL, Oracle, Cassandra, HBase, DynamoDB, MongoDB, LMDB, LevelDB, ...
 - Stream processing: Spark Streaming, Akka Streams, Kafka Streams.
 - Cloud computing: Amazon Web Services and Google Cloud Platform.
@@ -218,9 +220,9 @@ The following is an incomplete list of open source projects I'm currently workin
     - 12.2017, [Neural Networks and Deep Learning](https://www.coursera.org/account/accomplishments/certificate/9H2KQFF4UZJF).
 - 11.2017, [Bayesian Statistics](https://www.coursera.org/account/accomplishments/certificate/Y6BXN4STWKTA).
 - 11.2017, [Inferential statistics](https://www.coursera.org/account/accomplishments/certificate/CC2MMS6X7H86).
-- 04.2014, [Machine Learning](http://martin-krasser.de/certificates/coursera/machinelearning/certificate-2014-machine-learning.pdf).
-- 01.2014, [Principles of Reactive Programming](http://martin-krasser.de/certificates/coursera/reactive/certificate-2014-reactive.pdf).
-- 05.2012, [Functional Programming Principles in Scala](http://martin-krasser.de/certificates/coursera/fpscala/certificate-2012-fpscala.pdf).
+- 04.2014, [Machine Learning](https://martin-krasser.com/certificates/coursera/machinelearning/certificate-2014-machine-learning.pdf).
+- 01.2014, [Principles of Reactive Programming](https://martin-krasser.com/certificates/coursera/reactive/certificate-2014-reactive.pdf).
+- 05.2012, [Functional Programming Principles in Scala](https://martin-krasser.com/certificates/coursera/fpscala/certificate-2012-fpscala.pdf).
 
 ## Articles
 
