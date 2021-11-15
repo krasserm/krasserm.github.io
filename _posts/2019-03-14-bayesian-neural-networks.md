@@ -3,7 +3,7 @@ title: Variational inference in Bayesian neural networks
 layout: post
 comments: True
 author: "Martin Krasser"
-header-img: "img/distributed.png"
+header-img: "img/strawberry.png"
 ---
 
 *Sources:* 

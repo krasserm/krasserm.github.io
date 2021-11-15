@@ -3,7 +3,7 @@ title: Bayesian optimization
 layout: post
 comments: True
 author: "Martin Krasser"
-header-img: "img/distributed.png"
+header-img: "img/strawberry.png"
 ---
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/krasserm/bayesian-machine-learning/blob/dev/bayesian-optimization/bayesian_optimization.ipynb) 
