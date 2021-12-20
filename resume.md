@@ -172,9 +172,11 @@ The following is an incomplete list of open source projects I'm currently workin
 ### Machine learning
 
 - [Bayesian machine learning](https://github.com/krasserm/bayesian-machine-learning). Collection of notebooks related to 
-  Bayesian machine learning. Extended when I'm writing new articles on that topic.
+  Bayesian machine learning.
 - [Super resolution](https://github.com/krasserm/super-resolution). Tensorflow 2.x based implementation of WDSR, EDSR 
   and SRGAN for single image super-resolution.
+- [Perceiver IO](https://github.com/krasserm/perceiver-io). A PyTorch implementation of DeepMind's Perceiver IO with
+  PyTorch Lightning scripts for distributed training.
 - [Image captioning transformer](https://github.com/krasserm/fairseq-image-captioning). Transformer-based image captioning. 
   An extension of the [pytorch/fairseq](https://github.com/pytorch/fairseq) sequence modeling toolkit.
 - [Face recognition](https://github.com/krasserm/face-recognition). Deep face recognition with Keras, Dlib and OpenCV. 
