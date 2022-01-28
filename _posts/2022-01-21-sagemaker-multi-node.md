@@ -16,7 +16,7 @@ header-img: "img/distributed.png"
 - [Extensions required by SageMaker](#extensions-required-by-sagemaker)
     - [Dependencies](#dependencies)
     - [Training script extensions](#training-script-extensions)
-    - [Distributed coordination script](#distributed-coordination-script)
+    - [Computing cluster configuration](#computing-cluster-configuration)
     - [Docker image](#docker-image)
 - [Training](#training)
     - [Without SageMaker](#without-sagemaker)
@@ -26,15 +26,15 @@ header-img: "img/distributed.png"
 ## Introduction
 
 Most of my deep learning projects are PyTorch projects, with [PyTorch Lightning](https://www.pytorchlightning.ai/)
-for distributed data-parallel training. I wondered what is the absolute minimum to support multi-node, multi-GPU
-training on [AWS SageMaker](https://aws.amazon.com/de/sagemaker/) for these projects. With absolute minimum I
-primarily mean minimal dependencies to AWS but also simplicity of code and configuration.
+for distributed training. I wondered what is the absolute minimum to support multi-node, multi-GPU training on 
+[AWS SageMaker](https://aws.amazon.com/de/sagemaker/) for these projects. With absolute minimum I primarily mean 
+minimal dependencies to AWS but also simplicity of code and configuration.
 
-This article attempts to answer this question. It starts from a simple PyTorch Lightning application (training
-[ResNet-18](https://arxiv.org/abs/1512.03385) on [CIFAR-10](https://www.cs.toronto.edu/~kriz/cifar.html)) and then
-describes the necessary steps for running it on SageMaker. First, training is tested in a local environment with
-[SageMaker local mode](https://sagemaker.readthedocs.io/en/stable/overview.html#local-mode) and then moved to the
-cloud.
+This article attempts to answer this question for distributed data-parallel training. It starts from a toy PyTorch 
+Lightning application (training [ResNet-18](https://arxiv.org/abs/1512.03385) on [CIFAR-10](https://www.cs.toronto.edu/~kriz/cifar.html)) 
+and then describes the necessary steps for running it on SageMaker. First, training is tested in a local environment 
+with [SageMaker local mode](https://sagemaker.readthedocs.io/en/stable/overview.html#local-mode) and then moved to the
+cloud. 
 
 Cloud-based training is described using [on-demand instances](https://aws.amazon.com/sagemaker/pricing/#On-Demand_Pricing).
 Fault-tolerant training on [spot instances](https://aws.amazon.com/ec2/spot) will be covered in a follow-up article.
@@ -200,8 +200,8 @@ For running the example application on SageMaker, several extensions are needed:
 
 - The [SageMaker Python SDK](https://sagemaker.readthedocs.io/) and the [SageMaker training toolkit](https://github.com/aws/sagemaker-training-toolkit)
   as additional dependencies in `environment.yml`.
-- Training script extensions to configure SageMaker-specific input and output paths and the number of nodes.
-- A distributed coordination script that coordinates the launch of the training script on multiple nodes.
+- Training script extensions to configure SageMaker-specific input and output paths.
+- A training script wrapper to configure a multi-node computing cluster.
 - A `Dockerfile` for creating a Docker image of the example application.
 
 ### Dependencies
@@ -298,26 +298,24 @@ The trainer must also be configured with the correct number of nodes SageMaker i
 number of host names in the `SM_HOSTS` environment variable. A complete [reference on environment variables](https://github.com/aws/sagemaker-training-toolkit/blob/master/ENVIRONMENT_VARIABLES.md)
 used by SageMaker is part of the training toolkit documentation.
 
-### Distributed coordination script
+### Computing cluster configuration
 
 Without further configuration, the `app/train.py` script is able to run multi-GPU training on a single node (using a
-distributed data-parallel strategy). For coordinating the launch of this script on multiple nodes, a separate coordination
-layer is needed. Pytorch Lightning supports several options for distributed coordination. Here we use the `elastic_launch`
-utility of [torch.distributed.elastic](https://pytorch.org/docs/stable/distributed.elastic.html) in a separate coordination
-script named `train_distributed.py`:
+distributed data-parallel strategy). For running distributed training on multiple nodes, PyTorch Lightning supports 
+[several options](https://pytorch-lightning.readthedocs.io/en/latest/clouds/cluster.html). Here, we use the simplest 
+one: setting `torch.distributed` specific [environment variables](https://pytorch.org/docs/stable/distributed.html#environment-variable-initialization).
+These are set from SageMaker specific environment variables (`SM_*`) in a [training script wrapper](https://github.com/krasserm/sagemaker-tutorial/blob/wip-part-1/app/train_multi_node.py):
 
 ```python
 #
-# File: app/train_distributed.py
+# File: app/train_multi_node.py
 #
 
 import json
 import os
-import sys
 import socket
 
-from torch.distributed.run import parse_args, config_from_args
-from torch.distributed.launcher.api import elastic_launch
+from app import train
 
 
 def main():
@@ -327,40 +325,33 @@ def main():
     # List of nodes that participate in multi-node training.
     hosts = json.loads(os.environ["SM_HOSTS"])
 
+    # Name and rank of current node
+    host_c = os.environ['SM_CURRENT_HOST']
+    rank_c = hosts.index(host_c)
+
     # Name and IP address of master node.
     host_0 = hosts[0]
     host_0_ip = socket.gethostbyname(host_0)
 
-    # job_id is used to identify the group of nodes.
-    job_id = os.environ["TRAINING_JOB_NAME"]
+    # Set torch.distributed specific environment variables.
+    os.environ["MASTER_ADDR"] = host_0_ip
+    os.environ["MASTER_PORT"] = "29400"
+    os.environ["WORLD_SIZE"] = str(len(hosts))
+    os.environ["NODE_RANK"] = str(rank_c)
 
-    n_gpus = os.environ["SM_NUM_GPUS"]
-    n_procs = 1 if n_gpus == "0" else "gpu"
-
-    args = ["--rdzv_backend=c10d",
-            f"--rdzv_id={job_id}",
-            f"--rdzv_endpoint={host_0_ip}:29400",
-            f"--nnodes={len(hosts)}",
-            f"--nproc_per_node={n_procs}",
-            "app/train.py"] + sys.argv[1:]
-
-    args = parse_args(args)
-    config, ts, ts_args = config_from_args(args)
-    elastic_launch(config=config, entrypoint=ts)(*ts_args)
+    # Call training script on current node
+    train.main()
 
 
 if __name__ == "__main__":
     main()
 ```
 
-SageMaker runs `app/train_distributed.py` on each node with SageMaker-specific environment variables (`SM_*` and
-`TRAINING_JOB_NAME`). These are used to configure `elastic_launch` for multi-node training. Execution of the actual
-training code is delegated to `app/train.py` with user-defined arguments in `sys.argv[1:]`.
-
-`elastic_launch` ensures that multiple nodes join a group (via a distributed synchronization primitive called
-[rendezvous](https://pytorch.org/docs/stable/elastic/rendezvous.html)) and agree on the global ranks of their
-worker processes. Each worker process passes group- and worker-specific settings (group size, global rank, ...) to
-`app/train.py` via environment variables.
+The actual training script (`app/train.py`) is imported and executed via `train.main()`. Also part of the source code is 
+[another training script wrapper](https://github.com/krasserm/sagemaker-tutorial/blob/wip-part-1/app/train_multi_node_torchrun.py)
+(`app/train_multi_node_torchrun.py`) that uses [torchrun](https://pytorch.org/docs/stable/distributed.elastic.html) for 
+running the training script on multiple nodes. The elasticity provided by this option is not needed in this specific
+example though.
 
 ### Docker image
 
@@ -409,8 +400,12 @@ RUN conda env create -f $CODEPATH/environment.yml
 # Copy application files.
 COPY app $CODEPATH/app/
 
-# Expose training script to SageMaker.
-ENV SAGEMAKER_PROGRAM app/train_distributed.py
+
+# Expose training script to SageMaker and support overriding
+# at build-time. This can either be app/train_multi_node.py
+# (default) or app/train_multi_node_torchrun.py.
+ARG SAGEMAKER_PROGRAM=app/train_multi_node.py
+ENV SAGEMAKER_PROGRAM=${SAGEMAKER_PROGRAM}
 
 # Make all local GPUs visible
 ENV NVIDIA_VISIBLE_DEVICES="all"
@@ -421,10 +416,12 @@ WORKDIR $CODEPATH
 ENTRYPOINT ["app/train.sh"]
 ```
 
-With the `SAGEMAKER_PROGRAM` environment variable, the SageMaker training toolkit is configured to run the coordination
-script `app/train_distributed.py` on each node. The coordination script, as well as the training toolkit itself, need an
-activated `sagemaker-tutorial` conda environment for running. Activation of the conda environment is done in the container's
-entrypoint `app/train.sh`:
+With the `SAGEMAKER_PROGRAM` environment variable, the SageMaker training toolkit is configured to run `app/train_multi_node.py` 
+on each node. This can be [overridden at build time](https://github.com/krasserm/sagemaker-tutorial/blob/wip-part-1/README.md#training)
+to use `app/train_multi_node_torchrun.py` instead. 
+
+The training script , as well as the training toolkit itself, need an activated `sagemaker-tutorial` conda environment 
+for running. Activation of the conda environment is done in the container's entrypoint `app/train.sh`:
 
 ```bash
 #!/bin/bash --login
@@ -436,11 +433,11 @@ entrypoint `app/train.sh`:
 conda activate sagemaker-tutorial
 export PYTHONPATH=.
 
-$1
+$@
 ```
 
 For training, SageMaker runs Docker containers with `train` as command. This command is the first argument to the
-`app/train.sh` entrypoint and can therefore the referenced and executed as `$1`, after having activated the conda
+`app/train.sh` entrypoint and can therefore the referenced and executed as `$@`, after having activated the conda
 environment.
 
 The `train` executable is implemented by the SageMaker training toolkit (which is completely independent of the
@@ -451,7 +448,7 @@ variable.
 
 ### Without SageMaker
 
-Before running `app/train.py` on SageMaker (via `app/train_distributed.py`), it is useful to run it directly within
+Before running `app/train.py` on SageMaker (via `app/train_multi_node.py`), it is useful to run it directly within
 the `sagemaker-tutorial` conda environment to check if everything works as expected. Assuming there are one or more
 GPUs available, single-node (multi-)GPU training for 5 epochs can be started e.g. with:
 
