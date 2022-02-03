@@ -457,7 +457,7 @@ python app/train.py \
   --data=CIFAR10DataModule \
   --data.data_dir=.cache \
   --optimizer=Adam \
-  --optimizer.lr=0.001 \
+  --optimizer.lr=1e-3 \
   --trainer.accelerator=gpu \
   --trainer.devices=-1 \
   --trainer.max_epochs=5 \
@@ -499,7 +499,7 @@ estimator = Estimator(image_uri="sagemaker-tutorial",
                         "data": "CIFAR10DataModule",
                         "data.batch_size": 32,
                         "optimizer": "Adam",
-                        "optimizer.lr": 0.001,
+                        "optimizer.lr": 1e-3,
                         "trainer.accelerator": "gpu",
                         "trainer.devices": -1,
                         "trainer.max_epochs": 5,
@@ -557,7 +557,7 @@ estimator = Estimator(image_uri="<account-id>.dkr.ecr.<region>.amazonaws.com/sag
                         "data": "CIFAR10DataModule",
                         "data.batch_size": 32,
                         "optimizer": "Adam",
-                        "optimizer.lr": 0.001,
+                        "optimizer.lr": 1e-3,
                         "trainer.accelerator": "gpu",
                         "trainer.devices": -1,
                         "trainer.max_epochs": 5,
