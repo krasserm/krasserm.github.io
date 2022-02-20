@@ -279,16 +279,22 @@ def main():
     cli.trainer.fit(cli.model, cli.datamodule)
 
     if cli.trainer.is_global_zero and cli.sm_model_dir:
-        # Copy the best checkpoint to SageMaker model directory
-        source = cli.trainer.checkpoint_callback.best_model_path
-        target = os.path.join(cli.sm_model_dir, "checkpoint.pt")
-        shutil.copyfile(source, target)
+        # Load best checkpoint.
+        ckpt_path = cli.trainer.checkpoint_callback.best_model_path
+        ckpt = ResNet18.load_from_checkpoint(ckpt_path)
+
+        # Write best model to SageMaker model directory.
+        model_path = os.path.join(cli.sm_model_dir, "model.pt")
+        torch.save(ckpt.model.state_dict(), model_path)
+
+        # Checkpoint not needed (yet), delete it.
+        os.remove(ckpt_path)
 ```
 
 Here, the training script configures the data module to read training data from `SM_CHANNEL_TRAINING`. The trainer is
 configured to write checkpoints to a subdirectory of `SM_OUTPUT_DATA_DIR` and the Tensorboard logger to write logs to
-another subdirectory of `SM_OUTPUT_DATA_DIR`. After training completes, the best model checkpoint is written to
-`SM_MODEL_DIR`.
+another subdirectory of `SM_OUTPUT_DATA_DIR`. After training completes, the best model is written to `SM_MODEL_DIR` and
+the corresponding checkpoint is deleted.
 
 Writing Tensorboard data to `SM_OUTPUT_DATA_DIR` has one disadvantage though: the logs aren't accessible until the end
 of training. This can be fixed by configuring the logger to write to an S3 bucket directly so that training progress can 
