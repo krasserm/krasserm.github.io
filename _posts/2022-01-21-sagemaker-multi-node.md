@@ -36,11 +36,11 @@ and then describes the necessary steps for running it on SageMaker. First, train
 with [SageMaker local mode](https://sagemaker.readthedocs.io/en/stable/overview.html#local-mode) and then moved to the
 cloud. 
 
-Cloud-based training is described using [on-demand instances](https://aws.amazon.com/sagemaker/pricing/#On-Demand_Pricing).
-Fault-tolerant training on [spot instances](https://aws.amazon.com/ec2/spot) will be covered in a follow-up article.
-You'll also see how training on SageMaker can be tracked with Tensorboard and how CPU/GPU usage can be monitored
-with [AWS CloudWatch](https://aws.amazon.com/cloudwatch/). Source code and instructions for running the examples
-are [available on Github](https://github.com/krasserm/sagemaker-tutorial/tree/wip-part-1).
+Cloud-based training is described using [on-demand instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-on-demand-instances.html).
+Fault-tolerant training on [spot instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-spot-instances.html) 
+is covered in a [follow-up article](/2022/02/26/sagemaker-fault-tolerance/). You'll also see how training on SageMaker 
+can be tracked with Tensorboard and how CPU/GPU usage can be monitored with [AWS CloudWatch](https://aws.amazon.com/cloudwatch/). 
+Source code and instructions for running the examples are [available on Github](https://github.com/krasserm/sagemaker-tutorial/tree/wip-part-1).
 
 ## SageMaker basics
 
