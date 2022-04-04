@@ -1,5 +1,6 @@
 ---
-title: 'Multi-node, multi-GPU training with PyTorch Lightning on SageMaker'
+title: 'Getting started with AWS SageMaker, part 1'
+subtitle: 'Distributed model training with PyTorch Lightning'
 layout: post
 comments: True
 author: "Martin Krasser"

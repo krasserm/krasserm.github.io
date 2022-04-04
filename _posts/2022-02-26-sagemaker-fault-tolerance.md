@@ -1,5 +1,6 @@
 ---
-title: 'Fault-tolerant spot instance training with PyTorch Lightning on SageMaker'
+title: 'Getting started with AWS SageMaker, part 2'
+subtitle: 'Fault-tolerant model training on spot instances'
 layout: post
 comments: True
 author: "Martin Krasser"
