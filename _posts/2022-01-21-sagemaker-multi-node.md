@@ -1,5 +1,5 @@
 ---
-title: 'Getting started with AWS SageMaker, part 1'
+title: 'Using AWS SageMaker with minimal dependencies, part 1'
 subtitle: 'Distributed model training with PyTorch Lightning'
 layout: post
 comments: True
@@ -27,12 +27,17 @@ header-img: "img/distributed.png"
 ## Introduction
 
 Most of my deep learning projects are PyTorch projects, with [PyTorch Lightning](https://www.pytorchlightning.ai/)
-for distributed training. I wondered what is the absolute minimum to support multi-node, multi-GPU training on 
-[AWS SageMaker](https://aws.amazon.com/de/sagemaker/) for these projects. With absolute minimum I primarily mean 
-minimal dependencies to AWS but also simplicity of code and configuration.
+for distributed training. I wondered which extensions are needed to support multi-node, multi-GPU training on 
+[AWS SageMaker](https://aws.amazon.com/de/sagemaker/) but with minimal changes to the codebase and with minimal 
+dependencies to SageMaker's [feature set](https://docs.aws.amazon.com/sagemaker/latest/dg/whatis.html#whatis-features).
 
-This article attempts to answer this question for distributed data-parallel training. It starts from a toy PyTorch 
-Lightning application (training [ResNet-18](https://arxiv.org/abs/1512.03385) on [CIFAR-10](https://www.cs.toronto.edu/~kriz/cifar.html)) 
+For example, how do I train models without using [SageMaker Studio](https://docs.aws.amazon.com/sagemaker/latest/dg/studio.html)
+or [Notebook instances](https://docs.aws.amazon.com/sagemaker/latest/dg/nbi.html)? How do I start a training run on 
+SageMaker from a Python script on my local computer? How can I use my own Docker image for model training and not one 
+of the prebuilt Docker images provided by SageMaker? Also, how does PyTorch Lightning fit into the SageMaker ecosystem?
+
+This article answers these questions for distributed data-parallel training. It starts from a toy PyTorch Lightning 
+application (training [ResNet-18](https://arxiv.org/abs/1512.03385) on [CIFAR-10](https://www.cs.toronto.edu/~kriz/cifar.html)) 
 and then describes the necessary steps for running it on SageMaker. First, training is tested in a local environment 
 with [SageMaker local mode](https://sagemaker.readthedocs.io/en/stable/overview.html#local-mode) and then moved to the
 cloud. 
@@ -62,7 +67,7 @@ for running SageMaker in local mode.
 
 This section briefly introduces code and configuration of the example application (training ResNet-18 on CIFAR-10). The
 [next section](#extensions-required-by-sagemaker) describes the extensions required to run this application on SageMaker.
-These extensions are general enough to be applicable to any other Pytorch Lightning (or plain PyTorch) application.
+These extensions are general enough to be applicable to any other PyTorch Lightning (or plain PyTorch) application.
 
 ### Conda environment
 
@@ -139,14 +144,14 @@ class CIFAR10DataModule(cifar10_datamodule.CIFAR10DataModule):
         ...        
 ```
 
-It is registered at the [Pytorch Lightning CLI registry](https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_cli.html#multiple-models-and-or-datasets)
+It is registered at the [PyTorch Lightning CLI registry](https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_cli.html#multiple-models-and-or-datasets)
 so that the data module can be specified and configured dynamically on the command line with
 `--data=CIFAR10DataModule --data.data_dir=.cache ... `, for example.
 
 ### Training script
 
 The [training script](https://github.com/krasserm/sagemaker-tutorial/blob/wip-part-1/app/train.py) uses the 
-[Pytorch Lightning CLI](https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_cli.html) to configure 
+[PyTorch Lightning CLI](https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_cli.html) to configure 
 and instantiate the model, data module and [trainer](https://pytorch-lightning.readthedocs.io/en/stable/common/trainer.html)
 from command line arguments. For training and validation, the trainer API is used directly.
 

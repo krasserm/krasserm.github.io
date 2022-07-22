@@ -1,5 +1,5 @@
 ---
-title: 'Getting started with AWS SageMaker, part 2'
+title: 'Using AWS SageMaker with minimal dependencies, part 2'
 subtitle: 'Fault-tolerant model training on spot instances'
 layout: post
 comments: True
