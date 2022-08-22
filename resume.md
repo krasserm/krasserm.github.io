@@ -50,9 +50,10 @@ See also [Stories](https://krasserm.github.io/stories/) for further information.
 MerlinOne, [https://merlinone.com](https://merlinone.com), Freelance
 
 - Development of a multimodal neural search engine for the MerlinOne digital asset management system.
-  - Support for text-text, [text-image](https://merlinone.com/nomad/) and [image-image](https://merlinone.com/solutions/merlin-ai-visual-similarity/) 
-    search modes, optionally using [personal information](https://merlinone.com/solutions/merlin-ai-facial-recognition/).
-  - Training and fine-tuning of neural models on public and high-quality in-house datasets.
+  - Support for text-text, [text-image](https://merlinone.com/nomad/), [text-video](https://merlinone.com/nomad-for-video/) 
+    and [image-image](https://merlinone.com/solutions/merlin-ai-visual-similarity/) search modes, optionally using 
+    [personal information](https://merlinone.com/solutions/merlin-ai-facial-recognition/).
+  - Multimodal training and fine-tuning of neural networks on high-quality in-house datasets.
   - Low search latency and scalability to very large datasets.
 - [Image aesthetics assessment](https://merlinone.com/solutions/merlin-ai-impact/) with criteria learned from custom in-house datasets.
 - [Single image super-resolution](https://github.com/krasserm/super-resolution) to improve quality of low-resolution images.
@@ -155,8 +156,8 @@ Austrian Red Cross, [http://www.roteskreuz.at/](http://www.roteskreuz.at/)
 
 ## Tools experience (excerpt)
 
-- Programming languages: Scala, Java, Python, C/C++, Haskell.
-- Machine learning: scikit-learn, Tensorflow/Keras, PyTorch, PyTorch Lightning, JAX, PyMC3, Spark MLlib, AWS SageMaker, ... 
+- Programming languages: Python, Scala, Java, C/C++, Haskell.
+- Machine learning: PyTorch, Lightning, Tensorflow/Keras, scikit-learn, JAX, PyMC3, Spark MLlib, AWS SageMaker, ... 
 - Databases: MySQL, PostgreSQL, Oracle, Cassandra, HBase, DynamoDB, MongoDB, LMDB, LevelDB, ...
 - Stream processing: Spark Streaming, Akka Streams, Kafka Streams.
 - Cloud computing: Amazon Web Services and Google Cloud Platform.
@@ -167,16 +168,17 @@ Austrian Red Cross, [http://www.roteskreuz.at/](http://www.roteskreuz.at/)
 ## Open source projects
 
 The following is an incomplete list of open source projects I'm currently working on or worked on in the past. See also
-[Stories](https://krasserm.github.io/stories/) for some details and my [Github account](https://github.com/krasserm) for a complete list.
+[Stories](https://krasserm.github.io/stories/) for some details and my [GitHub account](https://github.com/krasserm) 
+for a complete list.
 
 ### Machine learning
 
 - [Bayesian machine learning](https://github.com/krasserm/bayesian-machine-learning). Collection of notebooks related to 
   Bayesian machine learning.
-- [Super resolution](https://github.com/krasserm/super-resolution). Tensorflow 2.x based implementation of WDSR, EDSR 
-  and SRGAN for single image super-resolution.
 - [Perceiver IO](https://github.com/krasserm/perceiver-io). A PyTorch implementation of DeepMind's Perceiver IO with
   PyTorch Lightning scripts for distributed training.
+- [Super resolution](https://github.com/krasserm/super-resolution). Tensorflow 2.x based implementation of WDSR, EDSR 
+  and SRGAN for single image super-resolution.
 - [Image captioning transformer](https://github.com/krasserm/fairseq-image-captioning). Transformer-based image captioning. 
   An extension of the [pytorch/fairseq](https://github.com/pytorch/fairseq) sequence modeling toolkit.
 - [Face recognition](https://github.com/krasserm/face-recognition). Deep face recognition with Keras, Dlib and OpenCV. 
@@ -199,7 +201,7 @@ The following is an incomplete list of open source projects I'm currently workin
   at the moment.
 - [Eventsourced](https://github.com/eligosource/eventsourced). A library for building reliable, scalable and distributed 
   event-sourced applications in Scala. Founder and lead developer during my work at Eligotech. Evolved into Akka Persistence 
-  and is not maintained any more.
+  and is not maintained anymore.
 
 ### System integration
 

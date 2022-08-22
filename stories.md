@@ -101,12 +101,12 @@ work as [open source projects](/resume#open-source-projects) and [blog posts](/)
 
 Even before my sabbatical year ended, [MerlinOne](https://merlinone.com/) offered me a position as machine learning engineer 
 where I'm currently extending the company's digital asset management (DAM) system with a multimodal neural search engine.
-The search engine supports text-text, [text-image](https://merlinone.com/nomad/) and [image-image](https://merlinone.com/solutions/merlin-ai-visual-similarity/)
-search modes, optionally using information from [identified faces](https://merlinone.com/solutions/merlin-ai-facial-recognition/) 
-in images. A meta-search engine combines the results from neural search engine components and existing, more traditional 
-search engines. It supports low search latencies and scalability to very large datasets. I also developed an 
-[image aesthetics assessment](https://merlinone.com/solutions/merlin-ai-impact/) service for scoring the aesthetic and 
-technical quality of images. 
+The search engine supports text-text, [text-image](https://merlinone.com/nomad/), [text-video](https://merlinone.com/nomad-for-video/) 
+and [image-image](https://merlinone.com/solutions/merlin-ai-visual-similarity/) search modes, optionally using information
+from [identified faces](https://merlinone.com/solutions/merlin-ai-facial-recognition/) in images. A meta-search engine 
+combines results from the neural search engine and more traditional search engines. It supports low search latencies and 
+scalability to very large datasets. I also developed an [image aesthetics assessment](https://merlinone.com/solutions/merlin-ai-impact/)
+service for scoring the aesthetic and technical quality of images. 
 
 All developed solutions have production deployments at several customers sites today and use models with specialized 
 neural network architectures. These are trained and fine-tuned on public and high-quality in-house datasets in order to
