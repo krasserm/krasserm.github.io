@@ -5,8 +5,8 @@ header-img: "img/distributed.png"
 ---
 
 The following are selected stories about my work on [distributed systems](#distributed-systems), [event sourcing](#event-sourcing), 
-[system integration](#system-integration) and [machine learning](#machine-learning). They primarily cover work that has been 
-open-sourced but also some proprietary work.
+[system integration](#system-integration) and [machine learning](#machine-learning). They primarily cover work that has 
+been open-sourced but also some proprietary work.
 
 ## Distributed systems
 
@@ -91,28 +91,34 @@ the official replacement for akka-camel and part of the [Alpakka](https://github
 
 ## Machine learning
 
+I'm currently working as freelance machine learning engineer for [MerlinOne](https://merlinone.com/) where I'm responsible 
+for the development of a multimodal neural search engine. The responsibility covers both scientific and engineering work. 
+The search engine supports text-text, [text-image](https://merlinone.com/nomad/), [text-video](https://merlinone.com/nomad-for-video/)
+and [image-image](https://merlinone.com/solutions/merlin-ai-visual-similarity/) search modes, integrated by a metasearch 
+engine. A further feature is [face recognition](https://merlinone.com/solutions/merlin-ai-facial-recognition/) in image
+and video searches. The search engine can be also trained on custom datasets to learn new concepts.
+
+The neural networks that are used by the search engine to encode assets (documents, images, videos, ...) can be trained
+at different scales depending on the model type, training algorithm and dataset. Large scale training is done in the 
+cloud on multiple nodes with AWS SageMaker. Batch-encoding of large asset databases is also cloud-based and can be 
+scaled horizontally. 
+
+Encoded assets are managed by a distributed search index. Distribution of the search index is required for fault-tolerance 
+and for scaling with data volume and concurrent users. Asset management (creation, update, versioning, deletion, ...) 
+is done with causal consistency, the strongest form of consistency that is still compatible with AP (availability and 
+partition-tolerance) of [CAP](https://en.wikipedia.org/wiki/CAP_theorem). The distributed search index is updated in 
+near-realtime as new assets are added to an asset database.
+
+Another solution I developed is an [image quality assessment](https://merlinone.com/solutions/merlin-ai-impact/) service
+for scoring the aesthetic and technical quality of images. The underlying model is trained from scratch with a high-quality 
+in-house dataset. All solutions I developed for MerlinOne have productions deployments at several customer sites which 
+must be maintained at an ever-increasing scale. Keeping myself up-to-date with state-of-the-art representation learning 
+approaches and training models on challenging new datasets is part of my daily work.
+
 I got into machine learning in 2014 with Andrew Ng's machine learning course on Coursera. After having applied
-machine learning in several smaller projects I decided for a sabbatical year in 2017 for diving deeper into mathematics, 
-statistics, "traditional" machine learning and deep learning. I attended several [online courses](/resume/#certifications)
-and gained further experience by reading numerous books and papers. Of special interest were also
-[Bayesian methods for machine learning](https://github.com/krasserm/bayesian-machine-learning) including Bayesian deep learning.
-I implemented what I learned mainly with scikit-learn, Tensorflow, PyTorch and PyMC3 and published part of my exercise
-work as [open source projects](/resume#open-source-projects) and [blog posts](/). 
-
-Even before my sabbatical year ended, [MerlinOne](https://merlinone.com/) offered me a position as machine learning engineer 
-where I'm currently extending the company's digital asset management (DAM) system with a multimodal neural search engine.
-The search engine supports text-text, [text-image](https://merlinone.com/nomad/), [text-video](https://merlinone.com/nomad-for-video/) 
-and [image-image](https://merlinone.com/solutions/merlin-ai-visual-similarity/) search modes, optionally using information
-from [identified faces](https://merlinone.com/solutions/merlin-ai-facial-recognition/) in images. A meta-search engine 
-combines results from the neural search engine and more traditional search engines. It supports low search latencies and 
-scalability to very large datasets. I also developed an [image aesthetics assessment](https://merlinone.com/solutions/merlin-ai-impact/)
-service for scoring the aesthetic and technical quality of images. 
-
-All developed solutions have production deployments at several customers sites today and use models with specialized 
-neural network architectures. These are trained and fine-tuned on public and high-quality in-house datasets in order to
-meet customer-specific requirements.
-
-I like the wide range of responsibilities I have in these projects e.g. tracking and applying the latest academic research,
-model development and training, solution development with a focus on scalability and low latency as well as production
-deployments using modern container management technologies. Ethical aspects like avoiding racial bias e.g. in facial 
-recognition also play an important role.
+machine learning in several smaller projects I decided for a sabbatical year in 2017 to go deeper into mathematics,
+statistics, "traditional" machine learning and deep learning. I attended several [online courses](/resume#certifications)
+and gained further experience from reading numerous books and papers. Of special interest for me are [Bayesian methods 
+for machine learning](https://github.com/krasserm/bayesian-machine-learning) including Bayesian deep learning. I 
+implemented what I learned with scikit-learn, Tensorflow, PyTorch and PyMC3 and published part of my exercise work 
+as [open source projects](/resume#open-source-projects) and [blog posts](/).
