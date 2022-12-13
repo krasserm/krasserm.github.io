@@ -7,6 +7,8 @@ author: "Martin Krasser"
 header-img: "img/distributed.png"
 ---
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/krasserm/krasserm.github.io/blob/master/notebooks/2022-12-13-rotary-position-embedding.ipynb)
+
 The [Transformer](https://arxiv.org/abs/1706.03762) model is invariant to reordering of the input sequence. For sequence modeling, position information must therefore be explicitly included. [Rotary position embedding](https://arxiv.org/abs/2104.09864) is an approach for including relative position information. It is a multiplicative approach, in contrast to most other approaches which are additive.
 
 ## Position information basics
