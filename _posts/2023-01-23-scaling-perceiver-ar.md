@@ -9,11 +9,6 @@ header-img: "img/distributed.png"
 
 Notebook and code for this article are available [here](https://github.com/krasserm/perceiver-io/tree/main/examples/scaling/clm).  
 
-```python
-import matplotlib.pyplot as plt
-import pandas as pd
-```
-
 ## Introduction
 
 In [Training Compute-Optimal Large Language Models](https://arxiv.org/abs/2203.15556) \[1\] (the *Chinchilla* paper) the authors describe how to determine the optimal model size $N_{opt}$ and number of training tokens $D_{opt}$ for a given compute budget $C$, and how $N_{opt}$ and $D_{opt}$ scale with $C$. These scaling laws are applicable to decoder-only transformer language models. 
@@ -46,6 +41,8 @@ The paper doesn't provide these factors directly, but they can be derived from e
 
 
 ```python
+import pandas as pd
+
 from scaling.laws import fit_scaling_law
 
 # Estimates from Table 3 in [1]
@@ -332,6 +329,8 @@ When training these models under the same self-attention compute budget $C_{self
 
 
 ```python
+import matplotlib.pyplot as plt
+
 from article import plot_experiment
 
 model_labels = ["Model 1 (ref)", "Model 2 (opt)", "Model 3"]
