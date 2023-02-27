@@ -99,7 +99,7 @@ The self-attention part includes input and position embedding of latent tokens, 
 
 ## Compute estimates
 
-For estimating the FLOPs required to train Perceiver AR models I'm using the compute estimates from Table 1 in \[3\] and additionally include the estimates for the embedding layer and the final output layer as done in Appendix F of \[1\]. This is implemented in class `ComputeEstimator`.
+For estimating the FLOPs required to train Perceiver AR models I'm using the compute estimates from Table 1 in \[3\] and additionally include the estimates for the embedding layer and the final output layer as done in Appendix F of \[1\]. This is implemented in class `ComputeEstimator`. **Update:** FLOPs computation as described in Appendix F of \[1\] seems to be incorrect. You can find all details [here](https://github.com/krasserm/perceiver-io/blob/main/examples/scaling/clm/update.md) and how it affects the results in this article (TL;DR the [conclusion](#conclusion) remains valid).
 
 The training FLOPs per latent token for the self-attention part of Perceiver AR can be estimated with the `self_attn()` method. The training FLOPs per latent token for the initial cross-attention can be estimated with `cross_attn()`. An example:
 
