@@ -7,7 +7,9 @@ author: "Martin Krasser"
 header-img: "img/distributed.png"
 ---
 
-*The source code for this article is available [here](https://github.com/krasserm/visual-chatgpt)*.
+*The source code for this article, an extended version of Visual ChatGPT, is available [here](https://github.com/krasserm/visual-chatgpt)*.
+***Update:** A* 🤗 *[Transformers Agent](https://huggingface.co/docs/transformers/transformers_agents) based implementation
+of the examples in this article is available [here](https://colab.research.google.com/github/krasserm/transformers-agent-examples/blob/main/image-search.ipynb).*
 
 A recent trend in software development uses large language models (LLMs) to understand natural language user input and
 to execute complex user instructions, autonomously decomposing them into simpler subtasks. These LLMs are often augmented
