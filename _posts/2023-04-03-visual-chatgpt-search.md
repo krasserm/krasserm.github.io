@@ -1,6 +1,5 @@
 ---
-title: Application development with large language models
-subtitle: Extending Visual ChatGPT with image search engines
+title: Extending Visual ChatGPT with image search engines
 layout: post
 comments: True
 author: "Martin Krasser"
