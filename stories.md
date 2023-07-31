@@ -91,31 +91,27 @@ the official replacement for akka-camel and part of the [Alpakka](https://github
 
 ## Machine learning
 
-I'm currently working as freelance machine learning engineer for [MerlinOne](https://merlinone.com/) where I'm responsible 
-for the development of a multimodal neural search engine. The responsibility covers both scientific and engineering work. 
-The search engine supports text-text, [text-image](https://merlinone.com/nomad/), [text-video](https://merlinone.com/nomad-for-video/)
-and [image-image](https://merlinone.com/solutions/merlin-ai-visual-similarity/) search modes, integrated by a metasearch 
-engine. A further feature is [face recognition](https://merlinone.com/solutions/merlin-ai-facial-recognition/) in image
-and video searches. The search engine can be also trained on custom datasets to learn new concepts.
+I'm currently working as freelance machine learning engineer at [MerlinOne](https://merlinone.com/) where I'm responsible 
+for the company-wide AI strategy and all ML research and development efforts with a team of ML engineers. One result of these
+efforts is the [Merlin Accelerated Intelligence (AI) Suite](https://merlinone.com/solutions/merlin-accelerated-intelligence-ai/) 
+with production deployments at many customer sites, including [AP](https://www.ap.org/)'s 
+[AI-powered image and video search](https://www.ap.org/press-releases/2023/millions-of-ap-images-and-video-now-available-on-single-platform-with-ai-powered-search)
+(accessible from the [AP newsroom](https://newsroom.ap.org/editorial-photos-videos/home), for example).
 
-The neural networks that are used by the search engine to encode assets (documents, images, videos, ...) can be trained
-at different scales depending on the model type, training algorithm and dataset. Large scale training is done in the 
-cloud on multiple nodes with AWS SageMaker. Batch-encoding of large asset databases is also cloud-based and can be 
-scaled horizontally. 
+The multimodal search engine of the Merlin AI Suite currently supports text-text, [text-image](https://merlinone.com/nomad/), [text-video](https://merlinone.com/nomad-for-video/)
+and [image-image](https://merlinone.com/solutions/merlin-ai-visual-similarity/) search modes, integrated by a metasearch engine. It is currently extended to support further 
+modalities like audio and searching across any modality combinations. Other features of the Merlin AI Suite are
+[face recognition](https://merlinone.com/solutions/merlin-ai-facial-recognition/) in images and videos and an 
+[image quality assessment](https://merlinone.com/solutions/merlin-ai-impact/) service for scoring the aesthetic and 
+technical quality of images. The underlying aesthetics model is trained from scratch on a high-quality in-house dataset.
 
-Encoded assets are managed by a distributed search index. Distribution of the search index is required for fault-tolerance 
-and for scaling with data volume and concurrent users. Asset management (creation, update, versioning, deletion, ...) 
-is done with causal consistency, the strongest form of consistency that is still compatible with AP (availability and 
-partition-tolerance) of [CAP](https://en.wikipedia.org/wiki/CAP_theorem). The distributed search index is updated in 
-near-realtime as new assets are added to an asset database.
+Deep neural networks for asset encoding (documents, images, videos, ...) are trained on in-house news datasets at 
+different scales depending on model type, training algorithm and dataset. Large scale training is done in the cloud 
+on multiple nodes with AWS SageMaker. Batch-encoding of large asset databases is also cloud-based and can be scaled 
+horizontally. Encoded assets are searchable via a distributed search index. Distribution of the search index is done for 
+fault-tolerance and for scaling with data volume and concurrent users. 
 
-Another solution I developed is an [image quality assessment](https://merlinone.com/solutions/merlin-ai-impact/) service
-for scoring the aesthetic and technical quality of images. The underlying model is trained from scratch with a high-quality 
-in-house dataset. All solutions I developed for MerlinOne have productions deployments at several customer sites which 
-must be maintained at an ever-increasing scale. Keeping myself up-to-date with state-of-the-art representation learning 
-approaches and training models on challenging new datasets is part of my daily work.
-
-I got into machine learning in 2014 with Andrew Ng's machine learning course on Coursera. After having applied
+I came to machine learning in 2014 with Andrew Ng's machine learning course on Coursera. After having applied
 machine learning in several smaller projects I decided for a sabbatical year in 2017 to go deeper into mathematics,
 statistics, "traditional" machine learning and deep learning. I attended several [online courses](/resume#certifications)
 and gained further experience from reading numerous books and papers. Of special interest for me are [Bayesian methods 

@@ -39,30 +39,27 @@ probabilistic programming.
 
 ## Work experience
 
-See also [Stories](https://krasserm.github.io/stories/) for further information.
-
-### Since 04.2018: Machine learning engineer
+### Since 04.2018: Freelance machine learning engineer, Director of ML 
 
 MerlinOne, [https://merlinone.com](https://merlinone.com), Freelance
 
-- Development of a multimodal neural search engine for the MerlinOne digital asset management system.
-  - Support for text-text, [text-image](https://merlinone.com/nomad/), [text-video](https://merlinone.com/nomad-for-video/) 
-    and [image-image](https://merlinone.com/solutions/merlin-ai-visual-similarity/) search modes, integrated by a
-    metasearch engine. 
-  - Support for [face recognition](https://merlinone.com/solutions/merlin-ai-facial-recognition/) in image and video 
-    searches. 
-  - Low search latency under high load and scalability to large datasets.
-  - Training of multimodal deep learning models on high-quality in-house datasets.
-- [Image aesthetics assessment](https://merlinone.com/solutions/merlin-ai-impact/) with criteria learned from custom in-house datasets.
-- [Single image super-resolution](https://github.com/krasserm/super-resolution) to improve the quality of low-resolution images.
-- Production deployments at many customer sites (hosted and on-premise).
-- Responsible for scientific and engineering work in all machine learning projects.
- 
-### Since 04.2011: Freelance software engineer, machine learning engineer 
+- Responsible for MerlinOne's AI strategy and all ML research and development efforts.
+- Development of the [Merlin Accelerated Intelligence (AI) Suite](https://merlinone.com/solutions/merlin-accelerated-intelligence-ai/):
+  - AI-powered, metadata-free multimodal search engine ([NOMAD](https://merlinone.com/nomad-main/)).
+  - Low search latency under high load, scalability to very large asset datasets.
+  - Large-scale training of asset encoding models on in-house news datasets.
+  - Used as backend for [AP](https://www.ap.org/)'s [AI-powered search](https://www.ap.org/press-releases/2023/millions-of-ap-images-and-video-now-available-on-single-platform-with-ai-powered-search) since May 2023.
+  - [Visual similarity](https://merlinone.com/solutions/merlin-ai-visual-similarity/) search based on global and local image features.
+  - [Face recognition](https://merlinone.com/solutions/merlin-ai-facial-recognition/) in images and videos.
+  - [Image aesthetics assessment](https://merlinone.com/solutions/merlin-ai-impact/) with models trained on custom aesthetics datasets.
+  - Merlin AI Suite is used at many customer sites in production at large scale.
+
+
+### Since 04.2011: Freelance software and machine learning engineer 
 
 [https://martin-krasser.com](https://martin-krasser.com)  
 
-- Research and development for industry machine learning and deep learning projects.
+- Research and development for industry machine learning projects (mainly deep learning).
 - Software development services with a focus on backend software and distributed systems.
 - See other positions since 2011 for further details. 
   
@@ -175,10 +172,10 @@ for a complete list.
 
 ### Machine learning
 
+- [Perceiver IO](https://github.com/krasserm/perceiver-io). A PyTorch implementation of Perceiver, Perceiver IO and
+  Perceiver AR.
 - [Bayesian machine learning](https://github.com/krasserm/bayesian-machine-learning). Collection of notebooks about 
   Bayesian machine learning.
-- [Perceiver IO](https://github.com/krasserm/perceiver-io). A PyTorch implementation of Perceiver, Perceiver IO and 
-  Perceiver AR.
 - [Super resolution](https://github.com/krasserm/super-resolution). Tensorflow 2.x based implementation of WDSR, EDSR 
   and SRGAN for single image super-resolution.
 - [Machine learning notebooks](https://github.com/krasserm/machine-learning-notebooks). Stanford machine learning course 
