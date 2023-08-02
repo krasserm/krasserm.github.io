@@ -153,7 +153,7 @@ Austrian Red Cross, [http://www.roteskreuz.at/](http://www.roteskreuz.at/)
 ## Tools experience (excerpt)
 
 - Programming languages: Python, Scala, Java, C/C++, Haskell
-- Machine learning: PyTorch, PyTorch Lightning, Hugging Face, Tensorflow, JAX, scikit-learn, PyMC3, Spark MLlib
+- Machine learning: PyTorch, PyTorch Lightning, Hugging Face, LangChain, Tensorflow, JAX, scikit-learn, PyMC3, Spark MLlib
 - Machine learning operations: AWS SageMaker, Weights & Biases, MLFlow
 - Data engineering: Apache Spark, Dask
 - Stream processing: Spark Streaming, Akka Streams, Kafka Streams
