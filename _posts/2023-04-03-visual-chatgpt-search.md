@@ -10,8 +10,8 @@ header-img: "img/distributed.png"
 ***Update:** A* 🤗 *[Transformers Agent](https://huggingface.co/docs/transformers/transformers_agents) based implementation
 of the examples in this article is available [here](https://colab.research.google.com/github/krasserm/transformers-agent-examples/blob/main/image-search.ipynb).*
 
-A recent trend in software development uses large language models (LLMs) to understand natural language user input and
-to execute complex user instructions, autonomously decomposing them into simpler subtasks. These LLMs are often augmented
+A recent trend in software development uses large language models (LLMs) to understand user input in natural language and
+to execute complex user instructions by autonomously decomposing them into simpler subtasks. These LLMs are often augmented
 with application-specific reasoning skills and the ability to use external tools \[1\]. LLM augmentation requires learning,
 either in-context learning (prompting) or fine-tuning. External tools help LLMs to execute specialized tasks for which the
 model itself doesn't have sufficient capabilities. This can be, for example, an external knowledge source for retrieving
@@ -19,7 +19,7 @@ factual and up-to-date information, or a calculator for answering more complex m
 
 ## Visual ChatGPT
 
-A good example is Visual ChatGPT \[2\], a ChatGPT application that enables users to interact with ChatGPT not only via
+A good example of an augmented LLM is Visual ChatGPT \[2\]. It enables users to interact with ChatGPT not only via
 text but also images. For image processing and generation it integrates visual foundation models (VFMs) as external
 tools. The language model learns usage of VFMs and handling of image data via prompting. Prompts are managed by a central
 component, the Prompt Manager, which also mediates information exchange between ChatGPT and VFMs:
