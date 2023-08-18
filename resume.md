@@ -43,7 +43,8 @@ probabilistic programming.
 
 MerlinOne, [https://merlinone.com](https://merlinone.com), Freelance
 
-- Responsible for MerlinOne's AI strategy and all ML research and development efforts.
+- ML research and engineering team lead, core ML software developer.
+- Responsible for all ML research and development efforts at MerlinOne.
 - Development of the [Merlin Accelerated Intelligence (AI) Suite](https://merlinone.com/solutions/merlin-accelerated-intelligence-ai/):
   - AI-powered, metadata-free multimodal search engine ([NOMAD](https://merlinone.com/nomad-main/)).
   - Low search latency under high load, scalability to very large asset datasets.

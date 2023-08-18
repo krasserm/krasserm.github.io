@@ -91,8 +91,8 @@ the official replacement for akka-camel and part of the [Alpakka](https://github
 
 ## Machine learning
 
-I'm currently working as freelance machine learning engineer at [MerlinOne](https://merlinone.com/) where I'm responsible 
-for the company-wide AI strategy and all ML research and development efforts with a team of ML engineers. One result of these
+I'm currently working as freelance machine learning engineer and ML team lead at [MerlinOne](https://merlinone.com/) where 
+I'm responsible for all ML research and development efforts. One result of these
 efforts is the [Merlin Accelerated Intelligence (AI) Suite](https://merlinone.com/solutions/merlin-accelerated-intelligence-ai/) 
 with production deployments at many customer sites, including [AP](https://www.ap.org/)'s 
 [AI-powered image and video search](https://www.ap.org/press-releases/2023/millions-of-ap-images-and-video-now-available-on-single-platform-with-ai-powered-search)
