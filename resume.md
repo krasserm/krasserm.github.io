@@ -39,7 +39,15 @@ probabilistic programming.
 
 ## Work experience
 
-### Since 04.2018: Freelance machine learning engineer, Director of ML 
+### Since 08.2023: Senior director machine learning
+
+Canto, [https://www.canto.com/](https://www.canto.com/), Freelance
+
+- Responsible for AI/ML development of Canto's digital asset management system. 
+- ML research and engineering team lead.
+- Core ML software developer.
+
+### 04.2018 - 08.2023: Lead machine learning engineer 
 
 MerlinOne, [https://merlinone.com](https://merlinone.com), Freelance
 
@@ -55,10 +63,9 @@ MerlinOne, [https://merlinone.com](https://merlinone.com), Freelance
   - [Image aesthetics assessment](https://merlinone.com/solutions/merlin-ai-impact/) with models trained on custom aesthetics datasets.
   - Merlin AI Suite is used at many customer sites in production at large scale.
 
+### Since 04.2011: Software engineer, Machine learning engineer 
 
-### Since 04.2011: Freelance software and machine learning engineer 
-
-[https://martin-krasser.com](https://martin-krasser.com)  
+[https://martin-krasser.com](https://martin-krasser.com), Freelance
 
 - Research and development for industry machine learning projects (mainly deep learning).
 - Software development services with a focus on backend software and distributed systems.
