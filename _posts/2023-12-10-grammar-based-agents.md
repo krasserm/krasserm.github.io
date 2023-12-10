@@ -6,6 +6,9 @@ author: "Martin Krasser"
 header-img: "img/distributed.png"
 ---
 
+[Notebook](https://github.com/krasserm/grammar-based-agents/blob/master/example.ipynb)  
+[Repository](https://github.com/krasserm/grammar-based-agents)
+
 LLM agents can decompose user-defined tasks into smaller steps and use tools at each step until the task is completed. Tool usage requires reasoning about current state, deciding which tool to use next, interacting with the environment by calling that tool, making an observation, updating the current state with the observation and repeating that until done. This synergy of reasoning and acting can either be achieved via prompt engineering, fine-tuning or a combination of both. 
 
 An interface to the underlying LLM should either return a tool call response (to be executed by the caller) if the LLM decides to interact with the environment or a final response to the user. An example of such an interface is OpenAI's [function calling](https://platform.openai.com/docs/guides/function-calling) interface.
