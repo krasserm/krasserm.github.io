@@ -1,5 +1,5 @@
 ---
-title: Llama-2 agent with grammar-based sampling of function calls
+title: Llama-2 agent with schema-based generation of function calls
 layout: post
 comments: True
 author: "Martin Krasser"
@@ -19,11 +19,11 @@ This article presents the results of my experiments implementing a function call
 
 To increase the probability that the model generates an appropriate tool call at each step i.e. selects the right tool and arguments, an unconstrained reasoning phase should precede the constrained tool call generation phase. Otherwise, attention to the thoughts generated during the reasoning phase is not possible.
 
-Llama-2 is known to have some zero-shot tool usage capabilities, but they are limited. In its current state, the implementation is a simple prototype for demonstrating grammar-based sampling in LangChain agents. It is general enough to be used with many other language models supported by llama.cpp, after some tweaks to the prompt templates.
+Llama-2 is known to have some zero-shot tool usage capabilities, but they are limited. In its current state, the implementation is a simple prototype for demonstrating schema-based generation in LangChain agents. It is general enough to be used with many other language models supported by llama.cpp, after some tweaks to the prompt templates.
 
 ## Agent
 
-A Llama-2 agent with grammar-based sampling of function calls can be created as follows (details in section [Components](#components)). The example uses a 4-bit quantized [Llama-2 70b chat model](https://huggingface.co/TheBloke/Llama-2-70B-Chat-GGUF) running on a [llama.cpp server](https://github.com/ggerganov/llama.cpp/blob/master/examples/server/README.md) (launch instructions [here](https://github.com/krasserm/grammar-based-agents/blob/master/README.md#getting-started)).
+A Llama-2 agent with schema-based generation of function calls can be created as follows (details in section [Components](#components)). The example uses a 4-bit quantized [Llama-2 70b chat model](https://huggingface.co/TheBloke/Llama-2-70B-Chat-GGUF) running on a [llama.cpp server](https://github.com/ggerganov/llama.cpp/blob/master/examples/server/README.md) (launch instructions [here](https://github.com/krasserm/grammar-based-agents/blob/master/README.md#getting-started)).
 
 
 ```python
