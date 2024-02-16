@@ -1,5 +1,5 @@
 ---
-title: Open LLM agents with schema-based generation of function calls
+title: Open LLM agents with schema-guided generation of function calls
 layout: post
 comments: True
 author: "Martin Krasser"
@@ -13,11 +13,11 @@ LLM agents use large language models (LLMs) to decide which tools to use for int
 
 Here, [grammar-based sampling](https://github.com/ggerganov/llama.cpp/pull/1773) available in llama.cpp is used for constrained decoding. A JSON schema of available tools is converted to a grammar used for generating instances of that schema (= tool calls) during decoding. This is used for implementing a function calling interface for a Llama-2-70b model, an LLM with (limited) tool usage capabilities.
 
-The [implementation](https://github.com/krasserm/grammar-based-agents) uses LangChain interfaces and is compatible LangChain's [agent framework](https://python.langchain.com/docs/modules/agents/). In its current state, it is a simple prototype for demonstrating schema-based generation in LangChain agents. It is general enough to be used with many other language models supported by llama.cpp, after some tweaks to the prompt templates.
+The [implementation](https://github.com/krasserm/grammar-based-agents) uses LangChain interfaces and is compatible LangChain's [agent framework](https://python.langchain.com/docs/modules/agents/). In its current state, it is a simple prototype for demonstrating schema-guided generation in LangChain agents. It is general enough to be used with many other language models supported by llama.cpp, after some tweaks to the prompt templates.
 
 ## Agent
 
-A Llama-2 agent with schema-based generation of function calls can be created as follows. Further details are described in section [Components](#components).
+A Llama-2 agent with schema-guided generation of function calls can be created as follows. Further details are described in section [Components](#components).
 
 
 ```python
