@@ -6,14 +6,14 @@ author: "Martin Krasser"
 header-img: "img/distributed.png"
 ---
 
-[Notebook](https://github.com/krasserm/grammar-based-agents/blob/master/example_agent.ipynb)  
-[Repository](https://github.com/krasserm/grammar-based-agents)
+[Notebook](https://github.com/krasserm/grammar-based-agents/blob/wip-article-1/example_agent.ipynb)  
+[Repository](https://github.com/krasserm/grammar-based-agents/tree/wip-article-1)
 
 LLM agents use large language models (LLMs) to decide which tools to use for interacting with their environment during multi-step task solving. Tool usage is done via function calling. The LLM is prompted or fine-tuned to generate JSON output representing one or more function calls. To ensure that the JSON output of an LLM follows a tool-specific schema one can use constrained decoding methods to control next token generation.
 
 Here, [grammar-based sampling](https://github.com/ggerganov/llama.cpp/pull/1773) available in llama.cpp is used for constrained decoding. A JSON schema of available tools is converted to a grammar used for generating instances of that schema (= tool calls) during decoding. This is used for implementing a function calling interface for a Llama-2-70b model, an LLM with (limited) tool usage capabilities.
 
-The [implementation](https://github.com/krasserm/grammar-based-agents) uses LangChain interfaces and is compatible LangChain's [agent framework](https://python.langchain.com/docs/modules/agents/). In its current state, it is a simple prototype for demonstrating schema-guided generation in LangChain agents. It is general enough to be used with many other language models supported by llama.cpp, after some tweaks to the prompt templates.
+The [implementation](https://github.com/krasserm/grammar-based-agents/tree/wip-article-1) uses LangChain interfaces and is compatible LangChain's [agent framework](https://python.langchain.com/docs/modules/agents/). In its current state, it is a simple prototype for demonstrating schema-guided generation in LangChain agents. It is general enough to be used with many other language models supported by llama.cpp, after some tweaks to the prompt templates.
 
 ## Agent
 
@@ -79,7 +79,7 @@ agent = AgentExecutor.from_agent_and_tools(
 )
 ```
 
-The `llm` is a proxy for a 4-bit quantized [Llama-2 70b chat model](https://huggingface.co/TheBloke/Llama-2-70B-Chat-GGUF) hosted on a [llama.cpp server](https://github.com/ggerganov/llama.cpp/blob/master/examples/server/README.md). Tools in this example are mainly mockups except the `calulate` tool which uses another LLM to interpret and evaluate mathematical queries. Instructions for serving these LLMs are available [here](https://github.com/krasserm/grammar-based-agents/blob/master/README.md#getting-started).
+The `llm` is a proxy for a 4-bit quantized [Llama-2 70b chat model](https://huggingface.co/TheBloke/Llama-2-70B-Chat-GGUF) hosted on a [llama.cpp server](https://github.com/ggerganov/llama.cpp/blob/master/examples/server/README.md). Tools in this example are mainly mockups except the `calulate` tool which uses another LLM to interpret and evaluate mathematical queries. Instructions for serving these LLMs are available [here](https://github.com/krasserm/grammar-based-agents/blob/wip-article-1/README.md#getting-started).
 
 ### Tool usage
 
