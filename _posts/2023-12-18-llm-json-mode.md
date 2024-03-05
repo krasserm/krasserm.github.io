@@ -1,5 +1,5 @@
 ---
-title: Implementing JSON mode for open LLMs
+title: Reliable JSON mode for open LLMs
 layout: post
 comments: True
 author: "Martin Krasser"
