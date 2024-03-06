@@ -111,7 +111,7 @@ config.update("jax_enable_x64", True)
 
 ### Training dataset
 
-The training dataset is taken from [this example](https://gpflow.readthedocs.io/en/master/notebooks/advanced/gps_for_big_data.html#Generating-data) of the [GPflow](https://gpflow.readthedocs.io/)<sup>\[2\]</sup> project. We'll use `n` noisy training examples drawn from `func` with Gaussian noise `sigma_y`. The number of inducing variables is `m`.
+The training dataset is taken from [this example](https://gpflow.github.io/GPflow/2.9.1/notebooks/advanced/gps_for_big_data.html#Generating-data) of the [GPflow](https://gpflow.github.io/GPflow/2.9.1)<sup>\[2\]</sup> project. We'll use `n` noisy training examples drawn from `func` with Gaussian noise `sigma_y`. The number of inducing variables is `m`.
 
 
 ```python
@@ -190,7 +190,7 @@ def kernel_diag(d, theta):
 
 ### Optimization
 
-A naive implementation of lower bound $\mathcal{L}(\mathbf{X}_m)$ as defined in equation $(10)$ is numerically unstable. A numerically stable approach is described [here](https://gpflow.readthedocs.io/en/master/notebooks/theory/SGPR_notes.html#Marginal-likelihood-bound) which derives the following expression for the lower bound:
+A naive implementation of lower bound $\mathcal{L}(\mathbf{X}_m)$ as defined in equation $(10)$ is numerically unstable. A numerically stable approach is described [here](https://gpflow.github.io/GPflow/2.9.1/notebooks/theory/SGPR_notes.html#Marginal-likelihood-bound) which derives the following expression for the lower bound:
 
 $$
 \begin{align*}
@@ -341,7 +341,7 @@ plt.legend();
 ### Prediction
 
 The parameters of the approximate posterior $q(\mathbf{f}\_\*)$ can now be computed with equations $(8)$ and $(9)$.
-An approach for an implementation that scales with $O(nm^2)$ is described [here](https://gpflow.readthedocs.io/en/develop/notebooks/theory/SGPR_notes.html#Prediction) (note that their notation uses $q(\mathbf{u})$ instead of our $\phi(\mathbf{f}\_m)$ and $p(\mathbf{f}^\*)$ instead of our $q(\mathbf{f}\_\*)$). Here, we use a naive implementation.
+An approach for an implementation that scales with $O(nm^2)$ is described [here](https://gpflow.github.io/GPflow/2.9.1/notebooks/theory/SGPR_notes.html#Prediction) (note that their notation uses $q(\mathbf{u})$ instead of our $\phi(\mathbf{f}\_m)$ and $p(\mathbf{f}^\*)$ instead of our $q(\mathbf{f}\_\*)$). Here, we use a naive implementation.
 
 
 ```python
@@ -51074,7 +51074,7 @@ S/4/g/VkIfKCkQMAAAAASUVORK5CYII=\
 
 ## Related
 
-A Tensorflow-based implementation of \[1\] is provided by the GPflow project with the [SGPR](https://gpflow.readthedocs.io/en/master/gpflow/models/index.html#gpflow.models.SGPR) model. One limitation of the algorithm described in \[1\] is that it cannot be applied to mini-batches of training data. A stochastic variational inference approach that additionally supports training with mini-batches is described in \[3\], for example. These two papers have strongly influenced further papers on scalable Gaussian processes.
+A Tensorflow-based implementation of \[1\] is provided by the GPflow project with the [SGPR](https://gpflow.github.io/GPflow/2.9.1/api/gpflow/models/index.html#gpflow-models-sgpr) model. One limitation of the algorithm described in \[1\] is that it cannot be applied to mini-batches of training data. A stochastic variational inference approach that additionally supports training with mini-batches is described in \[3\], for example. These two papers have strongly influenced further papers on scalable Gaussian processes.
 
 ## References
 
