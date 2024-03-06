@@ -11,11 +11,11 @@ header-img: "img/distributed.png"
 
 OpenAI recently introduced [JSON mode](https://platform.openai.com/docs/guides/text-generation/json-mode) for its chat models. Anyscale provides a [similar service](https://www.anyscale.com/blog/anyscale-endpoints-json-mode-and-function-calling-features) that additionally supports user-defined JSON schemas. Both do not disclose how this is done but it's relatively easy to implement it with grammar-based sampling in llama.cpp, and system prompt extensions.
 
-For this implementation I'll reuse the components introduced in [Open LLM agents with schema-based generation of function calls](https://krasserm.github.io/2023/12/10/grammar-based-agents/). These are a LangChain [LLM proxy](https://krasserm.github.io/2023/12/10/grammar-based-agents/#llamacppclient) communicating with a model running on a llama.cpp server, enforcing a user-defined schema if provided, and an [LLM wrapper](https://krasserm.github.io/2023/12/10/grammar-based-agents/#llama2chat) that applies a chat prompt template to incoming messages.
+For this implementation I'll reuse the components introduced in [Open LLM agents with schema-guided generation of function calls](https://krasserm.github.io/2023/12/10/grammar-based-agents/). These are a LangChain [LLM proxy](https://krasserm.github.io/2023/12/10/grammar-based-agents/#llamacppclient) communicating with a model running on a llama.cpp server, enforcing a user-defined schema if provided, and an [LLM wrapper](https://krasserm.github.io/2023/12/10/grammar-based-agents/#llama2chat) that applies a chat prompt template to incoming messages.
 
 Two models are used here, a Llama-2-70b-chat model and a Mistral-7b-instruct model. Instructions for running them on a llama.cpp server are available [here](https://github.com/krasserm/grammar-based-agents/blob/master/README.md#getting-started). Application examples are taken from [this article](https://www.anyscale.com/blog/anyscale-endpoints-json-mode-and-function-calling-features).
 
-## Schema-based generation
+## Schema-guided generation
 
 
 ```python
