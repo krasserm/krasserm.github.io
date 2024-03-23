@@ -286,4 +286,4 @@ The wrapped `chat_model` first receives a message with an instruction to think a
 
 ## Outlook
 
-This two-phase approach of unconstrained thinking and constrained tool call generation may also be the basis for using more specialized models e.g. one for the thinking phase and another one for the tool call generation phase. I plan to present this in another article.
+This two-phase approach of unconstrained thinking and constrained tool call generation may also be the basis for using more specialized models e.g. one for the thinking phase and another one for the tool call generation phase. I plan to present this in [another article](/2024/03/06/modular-agent/).
