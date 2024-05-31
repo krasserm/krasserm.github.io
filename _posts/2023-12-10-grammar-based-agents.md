@@ -1,5 +1,5 @@
 ---
-title: Open LLM agents with schema-guided generation of function calls
+title: Schema-guided generation in LangChain agents
 layout: post
 comments: True
 author: "Martin Krasser"
@@ -83,7 +83,7 @@ The `llm` is a proxy for a 4-bit quantized [Llama-2 70b chat model](https://hugg
 
 ### Tool usage
 
-Here's an example of a request that is decomposed by the agent into multiple steps, using a tool at each step. To increase the probability that the model generates an appropriate tool call at each step i.e. selects the right tool and arguments, an unconstrained thinking phase precedes the constrained tool call generation phase. This enables attention to thinking results during the tool call generation phase (details in section [ToolCalling](#ToolCalling)).
+Here's an example of a request that is decomposed by the agent into multiple steps, using a tool at each step. To increase the probability that the model generates an appropriate tool call at each step i.e. selects the right tool and arguments, an unconstrained thinking phase precedes the constrained tool call generation phase. This enables attention to generated thoughts during the tool call generation phase (details in section [ToolCalling](#ToolCalling)).
 
 
 ```python
@@ -286,4 +286,4 @@ The wrapped `chat_model` first receives a message with an instruction to think a
 
 ## Outlook
 
-This two-phase approach of unconstrained thinking and constrained tool call generation may also be the basis for using more specialized models e.g. one for the thinking phase and another one for the tool call generation phase. I plan to present this in [another article](/2024/03/06/modular-agent/).
+This two-phase approach of unconstrained thinking and constrained tool call generation may also be the basis for using more specialized models e.g. one for the thinking phase and another one for the tool call generation phase. This is covered in articles that [separate planning from function calling](/2024/03/06/modular-agent/) and [fine-tune the planner on a synthetic dataset](/2024/05/31/planner-fine-tuning/).

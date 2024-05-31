@@ -6,7 +6,7 @@ author: "Martin Krasser"
 header-img: "img/distributed.png"
 ---
 
-**Update 2024-05-31**: This article has been updated to use Llama-3-8B-Instruct, instead of Llama-2-70B-Chat, and the latest revision of [grammar-based-agents](https://github.com/krasserm/grammar-based-agents).
+**Update 2024-05-31**: This article has been updated to use Llama-3-8B-Instruct, instead of Llama-2-70B-Chat, and the latest version of [grammar-based-agents](https://github.com/krasserm/grammar-based-agents).
 
 Notebook ([original version](https://github.com/krasserm/grammar-based-agents/blob/wip-article-2/example_json.ipynb), [latest version](https://github.com/krasserm/grammar-based-agents/blob/master/json_mode.ipynb))  
 Repository ([original version](https://github.com/krasserm/grammar-based-agents/tree/wip-article-2), [latest version](https://github.com/krasserm/grammar-based-agents/tree/master))

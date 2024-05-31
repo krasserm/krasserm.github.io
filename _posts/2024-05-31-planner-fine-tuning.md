@@ -9,7 +9,7 @@ header-img: "img/distributed.png"
 [Notebook](https://github.com/krasserm/grammar-based-agents/blob/master/planner_finetuned.ipynb)  
 [Repository](https://github.com/krasserm/grammar-based-agents/tree/master)
 
-In a [previous article](https://krasserm.github.io/2024/03/06/modular-agent/) I experimented with separating planning from function calling in [ReAct](https://arxiv.org/abs/2210.03629)-style LLM agents. A central planner module is responsible for describing the task for the next step and selecting an appropriate tool. The selected tool is responsible for translating the informal task description into tool-specific executable actions. Reducing the planner's responsibility to task formulation and tool selection only, without having to deal with function calling details, enables usage of smaller, less capable LLMs for planning. It also eases the generation of datasets for planner fine-tuning.
+In a [previous article](/2024/03/06/modular-agent/) I experimented with separating planning from function calling in [ReAct](https://arxiv.org/abs/2210.03629)-style LLM agents. A central planner module is responsible for describing the task for the next step and selecting an appropriate tool. The selected tool is responsible for translating the informal task description into tool-specific executable actions. Reducing the planner's responsibility to task formulation and tool selection only, without having to deal with function calling details, enables usage of smaller, less capable LLMs for planning. It also eases the generation of datasets for planner fine-tuning.
 
 This article first how to generate a synthetic dataset for planner fine-tuning and how to fine-tune a 7B LLM to reach the performance of a GPT-4 based planner. To generate a synthetic dataset, we run an agent with a GPT-4 based planner in a simulation environment and record its trajectories. The interface to the environment is a set of simulated tools, instead or real ones. For example, a simulated `search_internet` tool, backed by GPT-4, generates search results from GPT-4's internal memory instead of actually searching the internet. 
 
@@ -93,7 +93,7 @@ The base model for [planner fine-tuning](https://github.com/krasserm/grammar-bas
 
 ## Planner evaluation
 
-The fine-tuned planners are [evaluated](https://github.com/krasserm/grammar-based-agents/tree/master/simulation#planner-evaluation) in the simulation environment, together with the GPT-4 based planner and the zero-shot planner from the [previous article](https://krasserm.github.io/2024/03/06/modular-agent/). Evaluation is done on a separate test set of 50 requests.
+The fine-tuned planners are [evaluated](https://github.com/krasserm/grammar-based-agents/tree/master/simulation#planner-evaluation) in the simulation environment, together with the GPT-4 based planner and the zero-shot planner from the [previous article](/2024/03/06/modular-agent/). Evaluation is done on a separate test set of 50 requests.
 
 | series          | pass_rate   | bad_task_rate | completion_rate |
 |:----------------|:-----------:|:-------------:|:---------------:|
