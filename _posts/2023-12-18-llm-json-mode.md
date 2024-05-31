@@ -1,19 +1,21 @@
 ---
-title: Reliable JSON mode for open LLMs
+title: Schema-guided generation with open LLMs
 layout: post
 comments: True
 author: "Martin Krasser"
 header-img: "img/distributed.png"
 ---
 
-[Notebook](https://github.com/krasserm/grammar-based-agents/blob/wip-article-2/example_json.ipynb)  
-[Repository](https://github.com/krasserm/grammar-based-agents/tree/wip-article-2)
+**Update 2024-05-31**: This article has been updated to use Llama-3-8B-Instruct, instead of Llama-2-70B-Chat, and the latest revision of [grammar-based-agents](https://github.com/krasserm/grammar-based-agents).
 
-OpenAI recently introduced [JSON mode](https://platform.openai.com/docs/guides/text-generation/json-mode) for its chat models. Anyscale provides a [similar service](https://www.anyscale.com/blog/anyscale-endpoints-json-mode-and-function-calling-features) that additionally supports user-defined JSON schemas. Both do not disclose how this is done but it's relatively easy to implement it with grammar-based sampling in llama.cpp, and system prompt extensions.
+Notebook ([original version](https://github.com/krasserm/grammar-based-agents/blob/wip-article-2/example_json.ipynb), [latest version](https://github.com/krasserm/grammar-based-agents/blob/master/json_mode.ipynb))  
+Repository ([original version](https://github.com/krasserm/grammar-based-agents/tree/wip-article-2), [latest version](https://github.com/krasserm/grammar-based-agents/tree/master))
 
-For this implementation I'll reuse the components introduced in [Open LLM agents with schema-guided generation of function calls](https://krasserm.github.io/2023/12/10/grammar-based-agents/). These are a LangChain [LLM proxy](https://krasserm.github.io/2023/12/10/grammar-based-agents/#llamacppclient) communicating with a model running on a llama.cpp server, enforcing a user-defined schema if provided, and an [LLM wrapper](https://krasserm.github.io/2023/12/10/grammar-based-agents/#llama2chat) that applies a chat prompt template to incoming messages.
+OpenAI recently introduced [JSON mode](https://platform.openai.com/docs/guides/text-generation/json-mode) for its chat models. Anyscale provides a [similar service](https://www.anyscale.com/blog/anyscale-endpoints-json-mode-and-function-calling-features) that additionally supports user-defined JSON schemas. Both do not disclose how this is done but it's relatively easy to implement it with grammar-based sampling in llama.cpp.
 
-Two models are used here, a Llama-2-70b-chat model and a Mistral-7b-instruct model. Instructions for running them on a llama.cpp server are available [here](https://github.com/krasserm/grammar-based-agents/blob/wip-article-2/README.md#getting-started). Application examples are taken from [this article](https://www.anyscale.com/blog/anyscale-endpoints-json-mode-and-function-calling-features).
+For this implementation I'll use an updated version of the components introduced in [Schema-guided generation in LangChain agents](/2023/12/10/grammar-based-agents/). These are a LangChain [LLM proxy](https://github.com/krasserm/grammar-based-agents/blob/master/gba/client/llamacpp.py) communicating with a model running on a llama.cpp server, enforcing a user-defined schema if provided, and an [LLM wrapper](https://github.com/krasserm/grammar-based-agents/blob/master/gba/client/chat.py) that applies a chat prompt template to incoming messages.
+
+Two models are used here, a Llama-3-8B-Instruct model and a Mistral-7B-instruct model. Instructions for running them on a llama.cpp server are available [here](https://github.com/krasserm/grammar-based-agents/blob/master/README.md#getting-started). Application examples are taken from [this article](https://www.anyscale.com/blog/anyscale-endpoints-json-mode-and-function-calling-features).
 
 ## Schema-guided generation
 
@@ -23,22 +25,23 @@ import json
 from typing import List
 
 import jsonref
-from langchain.schema.messages import HumanMessage, SystemMessage
-from langchain_experimental.chat_models.llm_wrapper import Llama2Chat
 from pydantic import BaseModel, Field
 
-from gba.llm import LlamaCppClient
+from gba.client import ChatClient, Llama3Instruct, LlamaCppClient
 
-# LLM proxy for a Llama-2-70b model hosted on a llama.cpp server
-llama2_llm = LlamaCppClient(url="http://localhost:8080/completion", temperature=-1)
+# LLM proxy for an 8-bit quantized Llama-3-8B instruct model hosted on a llama.cpp server
+llama3_llm = LlamaCppClient(url="http://localhost:8084/completion", temperature=-1)
 
-# LLM wrapper that applies a Llama-2 chat prompt (+ exposes chat model interface)
-llama2_chat = Llama2Chat(llm=llama2_llm)
+# LLM wrapper that applies a Llama-3 chat prompt (+ exposes chat model interface)
+llama3_chat = Llama3Instruct(llm=llama3_llm)
+
+# Chat client used by application
+llama3_client = ChatClient(llama3_chat)
 ```
 
 
 ```python
-system_message = SystemMessage(content="You are a helpful assistant.")
+system_message = {"role": "system", "content": "You are a helpful assistant."}
 ```
 
 ### Basic example
@@ -47,42 +50,23 @@ system_message = SystemMessage(content="You are a helpful assistant.")
 ```python
 class GameResult(BaseModel):
     winner_team: str
-    loser_team: str
     winner_score: int
+    loser_team: str
     loser_score: int
 
-human_message = HumanMessage(content="Who won the world series in 2020?")
+user_message = {"role": "user", "content": "Who won the world series in 2020?"}
 
-response = llama2_chat.predict_messages(
-    messages=[system_message, human_message],
+response = llama3_client.complete(
+    messages=[system_message, user_message],
     schema=GameResult.model_json_schema(),
 )
-response.content
+response["content"]
 ```
 
 
 
 
-    '{ "loser_score": 2, "loser_team": "Tampa Bay Rays", "winner_score": 4, "winner_team": "Los Angeles Dodgers" }'
-
-
-
-Grammar-based sampling in llama.cpp orders JSON keys alphabetically, by default. This can be customized with `prop_order`.
-
-
-```python
-response = llama2_chat.predict_messages(
-    messages=[system_message, human_message],
-    schema=GameResult.model_json_schema(),
-    prop_order=["loser_team", "loser_score", "winner_team", "winner_score"]
-)
-response.content
-```
-
-
-
-
-    '{ "loser_team": "Tampa Bay Rays", "loser_score": 2, "winner_team": "Los Angeles Dodgers", "winner_score": 4 }'
+    '{"winner_team": "Los Angeles Dodgers", "winner_score": 4, "loser_team": "Tampa Bay Rays", "loser_score": 2}'
 
 
 
@@ -94,19 +78,19 @@ class SortResult(BaseModel):
     """The format of the answer."""
     sorted_numbers: List[int] = Field(description="List of the sorted numbers")
 
-human_message = HumanMessage(content="Sort the following numbers: 2, 8, 6, 7")
+user_message = {"role": "user", "content": "Sort the following numbers: 2, 8, 6, 7"}
 
-response = llama2_chat.predict_messages(
-    messages=[system_message, human_message],
+response = llama3_client.complete(
+    messages=[system_message, user_message],
     schema=SortResult.model_json_schema(),
 )
-response.content
+response["content"]
 ```
 
 
 
 
-    '{"sorted_numbers": [2, 6, 7, 8]}'
+    '{ "sorted_numbers": [2, 6, 7, 8] }'
 
 
 
@@ -125,19 +109,19 @@ class Result(BaseModel):
     """The format of the answer."""
     sorted_list: List[Person] = Field(description="List of the sorted objects")
 
-human_message = HumanMessage(content="Alice is 10 years old, Bob is 7 and Carol is 2. Sort them by age in ascending order.")
+user_message = {"role": "user", "content": "Alice is 10 years old, Bob is 7 and Carol is 2. Sort them by age in ascending order."}
 
-response = llama2_chat.predict_messages(
-    messages=[system_message, human_message],
+response = llama3_client.complete(
+    messages=[system_message, user_message],
     schema=jsonref.replace_refs(Result.model_json_schema()),
 )
-response.content
+response["content"]
 ```
 
 
 
 
-    '{ "sorted_list": [ { "age": 2, "name": "Carol" }, { "age": 7, "name": "Bob" }, { "age": 10, "name": "Alice" } ] }'
+    '{ "sorted_list": [ {"name": "Carol", "age": 2}, {"name": "Bob", "age": 7}, {"name": "Alice", "age": 10} ] }'
 
 
 
@@ -150,24 +134,24 @@ There is one issue though. Field descriptions in schemas are ignored because the
 class Person(BaseModel):
     name: str = Field(description="Name of the person in uppercase")
     age: int = Field(description="The age of the person")
-
+    
 class Result(BaseModel):
     sorted_list: List[Person] = Field(description="List of the sorted objects")
 
-system_message = SystemMessage(content="You are a helpful assistant.")
-human_message = HumanMessage(content="Alice is 10 years old, Bob is 7 and Carol is 2. Sort them by age in ascending order.")
+system_message = {"role": "system", "content": "You are a helpful assistant."}
+user_message = {"role": "user", "content": "Alice is 10 years old, Bob is 7 and Carol is 2. Sort them by age in ascending order."}
 
-response = llama2_chat.predict_messages(
-    messages=[system_message, human_message],
+response = llama3_client.complete(
+    messages=[system_message, user_message],
     schema=jsonref.replace_refs(Result.model_json_schema()),
 )
-response.content
+response["content"]
 ```
 
 
 
 
-    '{ "sorted_list": [ { "age": 2, "name": "Carol" }, { "age": 7, "name": "Bob" }, { "age": 10, "name": "Alice" } ] }'
+    '{ "sorted_list": [ {"name": "Carol", "age": 2}, {"name": "Bob", "age": 7}, {"name": "Alice", "age": 10} ] }'
 
 
 
@@ -178,7 +162,7 @@ This can be mitigated by adding field descriptions to the system prompt. The `ob
 from gba.utils import object_from_schema
 
 schema = jsonref.replace_refs(Result.model_json_schema())
-schema_instance, keys = object_from_schema(schema, return_keys=True)
+schema_instance = object_from_schema(schema)
 
 system_prompt = f"""You are a helpful assistant. 
 
@@ -186,8 +170,9 @@ Generate JSON output in the following format:
 
 {json.dumps(schema_instance, indent=2)}"""
 
-system_message = SystemMessage(content=system_prompt)
-print(system_message.content)
+system_message = {"role": "system", "content": system_prompt}
+
+print(system_prompt)
 ```
 
     You are a helpful assistant. 
@@ -208,46 +193,27 @@ Then the output is as expected.
 
 
 ```python
-response = llama2_chat.predict_messages(
-    messages=[system_message, human_message],
+response = llama3_client.complete(
+    messages=[system_message, user_message],
     schema=jsonref.replace_refs(Result.model_json_schema()),
 )
-response.content
+response["content"]
 ```
 
 
 
 
-    '{ "sorted_list": [ {"age": 2, "name": "CAROL"}, {"age": 7, "name": "BOB"}, {"age": 10, "name": "ALICE"} ] }'
-
-
-
-For generating output with JSON keys in the same order as in our schema definition, we have to set `prop_order` to the list of `keys` returned from an `object_from_schema` call.
-
-
-```python
-response = llama2_chat.predict_messages(
-    messages=[system_message, human_message],
-    schema=jsonref.replace_refs(Result.model_json_schema()),
-    prop_order=keys,
-)
-response.content
-```
-
-
-
-
-    '{ "sorted_list": [ {"name": "CAROL", "age": 2}, {"name": "BOB", "age": 7}, {"name": "ALICE", "age": 10} ] }'
+    '{ "sorted_list": [ { "name": "CAROL", "age": 2 }, { "name": "BOB", "age": 7 }, { "name": "ALICE", "age": 10 } ] }'
 
 
 
 ## Support other models
 
-Using other open models is straightforward as shown here for a Mistral-7b-instruct model. You just need to replace `Llama2Chat` with `MistralInstruct` for applying a Mistral-specific chat prompt template. Examples of other chat prompt templates are [here](https://github.com/langchain-ai/langchain/pull/8295#issuecomment-1668988543) and [here](https://github.com/langchain-ai/langchain/pull/8295#issuecomment-1811914445).
+Using other open models is straightforward as shown here for a Mistral-7b-instruct model. You just need to replace `Llama3Instruct` with `MistralInstruct` for applying a Mistral-specific chat prompt template. Examples of other chat prompt templates are [here](https://github.com/langchain-ai/langchain/pull/8295#issuecomment-1668988543) and [here](https://github.com/langchain-ai/langchain/pull/8295#issuecomment-1811914445).
 
 
 ```python
-from gba.chat import MistralInstruct
+from gba.client import MistralInstruct
 
 # LLM proxy for a Mistral-7b-instruct model hosted on a llama.cpp server
 mistral_llm = LlamaCppClient(url="http://localhost:8081/completion", temperature=-1)
@@ -255,16 +221,17 @@ mistral_llm = LlamaCppClient(url="http://localhost:8081/completion", temperature
 # LLM wrapper that applies the Mistral chat prompt (+ exposes chat model interface)
 mistral_instruct = MistralInstruct(llm=mistral_llm)
 
-response = mistral_instruct.predict_messages(
-    messages=[HumanMessage(content="Sort the following numbers: 2, 8, 6, 7")],
+# Chat client used by application
+mistral_client = ChatClient(mistral_instruct)
+
+response = mistral_client.complete(
+    messages=[{"role": "user", "content": "Sort the following numbers: 2, 8, 6, 7"}],
     schema=SortResult.model_json_schema(),
 )
-response.content
+response["content"]
 ```
 
 
 
 
     '{ "sorted_numbers": [2, 6, 7, 8] }'
-
-
