@@ -6,8 +6,8 @@ author: "Martin Krasser"
 header-img: "img/distributed.png"
 ---
 
-[Notebook](https://github.com/krasserm/grammar-based-agents/blob/master/planner_finetuned.ipynb)  
-[Repository](https://github.com/krasserm/grammar-based-agents/tree/master)
+[Notebook](https://github.com/krasserm/bot-with-plan/blob/master/planner_finetuned.ipynb)  
+[Repository](https://github.com/krasserm/bot-with-plan/tree/master)
 
 In a [previous article](/2024/03/06/modular-agent/) I experimented with separating planning from function calling in [ReAct](https://arxiv.org/abs/2210.03629)-style LLM agents. A central planner module is responsible for describing the task for the next step and selecting an appropriate tool. The selected tool is responsible for translating the informal task description into tool-specific executable actions. Reducing the planner's responsibility to task formulation and tool selection only, without having to deal with function calling details, enables usage of smaller, less capable LLMs for planning. It also eases the generation of datasets for planner fine-tuning.
 
@@ -15,7 +15,7 @@ This article first how to generate a synthetic dataset for planner fine-tuning a
 
 For fine-tuning it is less important if observations are made in a simulation or a real environment. A planner has to learn to use these observations as-is, regardless whether they are hallucinated or not, and appropriately plan the next steps. The last part of this article runs the fine-tuned planner in a real environment, with a corresponding set of real tools as interface. The planner learns the available tools from the generated dataset so that they don't need to be specified in the prompt which can significantly reduce inference latencies. 
 
-The predefined set of [simulated tools](https://github.com/krasserm/grammar-based-agents/tree/master/simulation/tools) and their corresponding [real tools](https://github.com/krasserm/grammar-based-agents/tree/master/gba/tools) used in this article are just examples and can be adjusted to whatever is needed for other applications. [Generating trajectories](https://github.com/krasserm/grammar-based-agents/tree/master/simulation/README.md#generate-trajectories) in a simulation environment and [planner fine-tuning](https://github.com/krasserm/grammar-based-agents/tree/master/train/README.md#planner-fine-tuning) with a different set of tools is straightforward with the framework provided by the [bot-with-plan](https://github.com/krasserm/bot-with-plan) project. The currently used tools are:
+The predefined set of [simulated tools](https://github.com/krasserm/bot-with-plan/tree/master/simulation/tools) and their corresponding [real tools](https://github.com/krasserm/bot-with-plan/tree/master/gba/tools) used in this article are just examples and can be adjusted to whatever is needed for other applications. [Generating trajectories](https://github.com/krasserm/bot-with-plan/tree/master/simulation/README.md#generate-trajectories) in a simulation environment and [planner fine-tuning](https://github.com/krasserm/bot-with-plan/tree/master/train/README.md#planner-fine-tuning) with a different set of tools is straightforward with the framework provided by the [bot-with-plan](https://github.com/krasserm/bot-with-plan) project. The currently used tools are:
 
 | Tool name          | Tool description                                                                          |
 |--------------------|-------------------------------------------------------------------------------------------|
@@ -28,13 +28,13 @@ The predefined set of [simulated tools](https://github.com/krasserm/grammar-base
 | `use_bash`         | Useful for executing commands in a Linux bash.                                            |
 | `final_answer`     | Useful for providing the final answer to a request. Must always be used in the last step. |
 
-The `final_answer` tool is a special tool used by the agent for providing a final answer to the user. Simulated tools `search_internet` and `search_wikipedia` report with a probability of 0.1 that they couldn't find an answer to the query or provide an incomplete answer. This is helpful to make the planner more robust to error conditions during fine-tuning. The [corresponding real tools](https://github.com/krasserm/grammar-based-agents/tree/master/gba/tools/search) are fully-functional RAG-based search engines.
+The `final_answer` tool is a special tool used by the agent for providing a final answer to the user. Simulated tools `search_internet` and `search_wikipedia` report with a probability of 0.1 that they couldn't find an answer to the query or provide an incomplete answer. This is helpful to make the planner more robust to error conditions during fine-tuning. The [corresponding real tools](https://github.com/krasserm/bot-with-plan/tree/master/gba/tools/search) are fully-functional RAG-based search engines.
 
 ## Dataset generation
 
 ### Requests
 
-For running an [agent simulation](https://github.com/krasserm/grammar-based-agents/tree/master/simulation), we first need to [generate](https://github.com/krasserm/grammar-based-agents/tree/master/simulation#generate-requests) a set of requests i.e. questions and instructions that can be answered in one or more steps using a combination of available tools. Requests are generated with GPT-4 for a variety of topics. Overall, 2780 requests are generated. Examples include:
+For running an [agent simulation](https://github.com/krasserm/bot-with-plan/tree/master/simulation), we first need to [generate](https://github.com/krasserm/bot-with-plan/tree/master/simulation#generate-requests) a set of requests i.e. questions and instructions that can be answered in one or more steps using a combination of available tools. Requests are generated with GPT-4 for a variety of topics. Overall, 2780 requests are generated. Examples include:
 
 - *Get the average Rotten Tomatoes scores for DreamWorks' last 5 movies.*
 - *Email me articles about the renovation of the Taj Mahal happening this year.*
@@ -44,15 +44,15 @@ For running an [agent simulation](https://github.com/krasserm/grammar-based-agen
 
 ### Trajectories
 
-Trajectories for the 2780 training requests are [generated](https://github.com/krasserm/grammar-based-agents/tree/master/simulation#generate-trajectories) by an agent with a GPT-4 based planner and the predefined set of GPT-4 based simulated tools. A request like *Get the average Rotten Tomatoes scores for DreamWorks' last 5 movies*, for example, may result in [this trajectory](/docs/2024-05-31/trajectory.json), with a revised plan at each step. Note how `thoughts` at each step may plan several steps ahead whereas `task` describes the very next step only. Forcing the planner to summarize previous steps and reason about missing information or actions further improves planning accuracy.
+Trajectories for the 2780 training requests are [generated](https://github.com/krasserm/bot-with-plan/tree/master/simulation#generate-trajectories) by an agent with a GPT-4 based planner and the predefined set of GPT-4 based simulated tools. A request like *Get the average Rotten Tomatoes scores for DreamWorks' last 5 movies*, for example, may result in [this trajectory](/docs/2024-05-31/trajectory.json), with a revised plan at each step. Note how `thoughts` at each step may plan several steps ahead whereas `task` describes the very next step only. Forcing the planner to summarize previous steps and reason about missing information or actions further improves planning accuracy.
 
 ### Quality filtering
 
-Low quality trajectories must be excluded from the final training dataset. For [rating](https://github.com/krasserm/grammar-based-agents/tree/master/simulation#evaluate-trajectories) the quality of trajectories we ask GPT-4 to reflect on the steps and the final answer in the trajectory and assign ratings from 1 (poor) to 5 (excellent). Only trajectories with ratings 4 and 5 are accepted for the final training set.
+Low quality trajectories must be excluded from the final training dataset. For [rating](https://github.com/krasserm/bot-with-plan/tree/master/simulation#evaluate-trajectories) the quality of trajectories we ask GPT-4 to reflect on the steps and the final answer in the trajectory and assign ratings from 1 (poor) to 5 (excellent). Only trajectories with ratings 4 and 5 are accepted for the final training set.
 
 ## Training dataset
 
-For each step in a trajectory a training example can be [generated](https://github.com/krasserm/grammar-based-agents/tree/master/simulation#package-dataset). It contains the initial request, task-observations pairs from previous steps and the expected planner output for the next step. An example prompt is
+For each step in a trajectory a training example can be [generated](https://github.com/krasserm/bot-with-plan/tree/master/simulation#package-dataset). It contains the initial request, task-observations pairs from previous steps and the expected planner output for the next step. An example prompt is
 
 ````
 User request: 
@@ -85,15 +85,15 @@ The expected output is:
 }
 ```
 
-After [filtering](https://github.com/krasserm/grammar-based-agents/tree/master/simulation#package-dataset), we end up with a training set of 8579 examples. An important design decision was to omit the (static) set of available tools in the prompt and let the planner learn the available tools implicitly during fine-tuning. The advantage is a much shorter prompt and therefore lower inference latencies.
+After [filtering](https://github.com/krasserm/bot-with-plan/tree/master/simulation#package-dataset), we end up with a training set of 8579 examples. An important design decision was to omit the (static) set of available tools in the prompt and let the planner learn the available tools implicitly during fine-tuning. The advantage is a much shorter prompt and therefore lower inference latencies.
 
 ## Planner fine-tuning
 
-The base model for [planner fine-tuning](https://github.com/krasserm/grammar-based-agents/tree/master/train#planner-fine-tuning) is Mistral-7B-v0.1. It is trained for 3 epochs on the generated dataset with QLoRA using [autotrain-advanced](https://github.com/huggingface/autotrain-advanced), running locally. The loss is currently computed on the prompt and completion because the prompt contains a significant amount of planning-specific data which are task-observation pairs from the agent's current trajectory. After merging the adapters back into the base model, they are [converted](https://github.com/krasserm/grammar-based-agents/tree/master/train#gguf-conversion-and-quantization) to GGUF, quantized to 8-bit and 4-bit and served on a llama.cpp server. 
+The base model for [planner fine-tuning](https://github.com/krasserm/bot-with-plan/tree/master/train#planner-fine-tuning) is Mistral-7B-v0.1. It is trained for 3 epochs on the generated dataset with QLoRA using [autotrain-advanced](https://github.com/huggingface/autotrain-advanced), running locally. The loss is currently computed on the prompt and completion because the prompt contains a significant amount of planning-specific data which are task-observation pairs from the agent's current trajectory. After merging the adapters back into the base model, they are [converted](https://github.com/krasserm/bot-with-plan/tree/master/train#gguf-conversion-and-quantization) to GGUF, quantized to 8-bit and 4-bit and served on a llama.cpp server. 
 
 ## Planner evaluation
 
-The fine-tuned planners are [evaluated](https://github.com/krasserm/grammar-based-agents/tree/master/simulation#planner-evaluation) in the simulation environment, together with the GPT-4 based planner and the zero-shot planner from the [previous article](/2024/03/06/modular-agent/). Evaluation is done on a separate test set of 50 requests.
+The fine-tuned planners are [evaluated](https://github.com/krasserm/bot-with-plan/tree/master/simulation#planner-evaluation) in the simulation environment, together with the GPT-4 based planner and the zero-shot planner from the [previous article](/2024/03/06/modular-agent/). Evaluation is done on a separate test set of 50 requests.
 
 | series          | pass_rate   | bad_task_rate | completion_rate |
 |:----------------|:-----------:|:-------------:|:---------------:|
@@ -192,7 +192,7 @@ agent = Agent(planner=planner, tools=tools)
     Loading binary search index...
 
 
-Here's an example that uses the real tools `search_internet`, `create_request`, `ask_user` and `send_email`. The output shows the task, selected tool and the tool call result (observation) at each step. The `send_email` tool, defined as [application-specific function](https://github.com/krasserm/grammar-based-agents/blob/master/gba/tools/functions.py), additionally outputs the generated email body. The return value of the agent's `run` method is the final answer to the user.
+Here's an example that uses the real tools `search_internet`, `create_request`, `ask_user` and `send_email`. The output shows the task, selected tool and the tool call result (observation) at each step. The `send_email` tool, defined as [application-specific function](https://github.com/krasserm/bot-with-plan/blob/master/gba/tools/functions.py), additionally outputs the generated email body. The return value of the agent's `run` method is the final answer to the user.
 
 
 ```python

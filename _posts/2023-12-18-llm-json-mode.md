@@ -8,14 +8,14 @@ header-img: "img/distributed.png"
 
 **Update 2024-05-31**: This article has been updated to use Llama-3-8B-Instruct, instead of Llama-2-70B-Chat, and the latest version of [bot-with-plan](https://github.com/krasserm/bot-with-plan).
 
-Notebook ([original version](https://github.com/krasserm/grammar-based-agents/blob/wip-article-2/example_json.ipynb), [latest version](https://github.com/krasserm/grammar-based-agents/blob/master/json_mode.ipynb))  
-Repository ([original version](https://github.com/krasserm/grammar-based-agents/tree/wip-article-2), [latest version](https://github.com/krasserm/grammar-based-agents/tree/master))
+Notebook ([original version](https://github.com/krasserm/bot-with-plan/blob/wip-article-2/example_json.ipynb), [latest version](https://github.com/krasserm/bot-with-plan/blob/master/json_mode.ipynb))  
+Repository ([original version](https://github.com/krasserm/bot-with-plan/tree/wip-article-2), [latest version](https://github.com/krasserm/bot-with-plan/tree/master))
 
 OpenAI recently introduced [JSON mode](https://platform.openai.com/docs/guides/text-generation/json-mode) for its chat models. Anyscale provides a [similar service](https://www.anyscale.com/blog/anyscale-endpoints-json-mode-and-function-calling-features) that additionally supports user-defined JSON schemas. Both do not disclose how this is done but it's relatively easy to implement it with grammar-based sampling in llama.cpp.
 
-For this implementation I'll use an updated version of the components introduced in [Schema-guided generation in LangChain agents](/2023/12/10/grammar-based-agents/). These are a LangChain [LLM proxy](https://github.com/krasserm/grammar-based-agents/blob/master/gba/client/llamacpp.py) communicating with a model running on a llama.cpp server, enforcing a user-defined schema if provided, and an [LLM wrapper](https://github.com/krasserm/grammar-based-agents/blob/master/gba/client/chat.py) that applies a chat prompt template to incoming messages.
+For this implementation I'll use an updated version of the components introduced in [Schema-guided generation in LangChain agents](/2023/12/10/grammar-based-agents/). These are a LangChain [LLM proxy](https://github.com/krasserm/bot-with-plan/blob/master/gba/client/llamacpp.py) communicating with a model running on a llama.cpp server, enforcing a user-defined schema if provided, and an [LLM wrapper](https://github.com/krasserm/bot-with-plan/blob/master/gba/client/chat.py) that applies a chat prompt template to incoming messages.
 
-Two models are used here, a Llama-3-8B-Instruct model and a Mistral-7B-instruct model. Instructions for running them on a llama.cpp server are available [here](https://github.com/krasserm/grammar-based-agents/blob/master/README.md#getting-started). Application examples are taken from [this article](https://www.anyscale.com/blog/anyscale-endpoints-json-mode-and-function-calling-features).
+Two models are used here, a Llama-3-8B-Instruct model and a Mistral-7B-instruct model. Instructions for running them on a llama.cpp server are available [here](https://github.com/krasserm/bot-with-plan/blob/master/README.md#getting-started). Application examples are taken from [this article](https://www.anyscale.com/blog/anyscale-endpoints-json-mode-and-function-calling-features).
 
 ## Schema-guided generation
 

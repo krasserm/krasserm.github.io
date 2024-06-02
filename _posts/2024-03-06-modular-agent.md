@@ -6,8 +6,8 @@ author: "Martin Krasser"
 header-img: "img/distributed.png"
 ---
 
-[Notebook](https://github.com/krasserm/grammar-based-agents/blob/wip-article-2/example_agent.ipynb)  
-[Repository](https://github.com/krasserm/grammar-based-agents/tree/wip-article-2)
+[Notebook](https://github.com/krasserm/bot-with-plan/blob/wip-article-2/example_agent.ipynb)  
+[Repository](https://github.com/krasserm/bot-with-plan/tree/wip-article-2)
 
 LLM agents require a wide range of capabilities for executing tasks autonomously. They must be able to decompose complex user instructions, plan actions, interact with their environment using tools, call tools with correct arguments, reason about observations and adjust planning if needed.
 
@@ -29,11 +29,11 @@ At the core of the system is a [ReAct](https://arxiv.org/abs/2210.03629)-style a
 
 ### Planner
 
-The [planner](https://github.com/krasserm/grammar-based-agents/blob/wip-article-2/gba/agent.py) reasons about the user request, summarizes relevant information from previous task-observation pairs, thinks about the next useful steps (CoT), generates a task description for the very next step and selects an appropriate tool based on based on a short and high-level tool description (sample [prompt](/docs/2024-03-06/planner_prompt.txt) and [completion](/docs/2024-03-06/planner_completion.txt)). This information is then returned to the agent loop which executes the selected tool. The planner uses a zero-shot prompted Mistral-7B-Instruct-v0.2 model.
+The [planner](https://github.com/krasserm/bot-with-plan/blob/wip-article-2/gba/agent.py) reasons about the user request, summarizes relevant information from previous task-observation pairs, thinks about the next useful steps (CoT), generates a task description for the very next step and selects an appropriate tool based on based on a short and high-level tool description (sample [prompt](/docs/2024-03-06/planner_prompt.txt) and [completion](/docs/2024-03-06/planner_completion.txt)). This information is then returned to the agent loop which executes the selected tool. The planner uses a zero-shot prompted Mistral-7B-Instruct-v0.2 model.
 
 ### Summarizer
 
-Observations i.e. tool execution results can vary significantly in size and relevance. For example, a calculator may output a single number whereas a search engine may return large amounts of text, most of it not relevant for the current task. A [summarizer](https://github.com/krasserm/grammar-based-agents/blob/wip-article-2/gba/summary.py) uses that observation to formulate a short, task-specific answer (sample [prompt](/docs/2024-03-06/summarizer_prompt.txt) and [completion](/docs/2024-03-06/summarizer_completion.txt)). This makes it much easier for the planner to reason over past task-observation pairs. The summarizer uses a zero-shot prompted Mistral-7B-Instruct-v0.2 model.
+Observations i.e. tool execution results can vary significantly in size and relevance. For example, a calculator may output a single number whereas a search engine may return large amounts of text, most of it not relevant for the current task. A [summarizer](https://github.com/krasserm/bot-with-plan/blob/wip-article-2/gba/summary.py) uses that observation to formulate a short, task-specific answer (sample [prompt](/docs/2024-03-06/summarizer_prompt.txt) and [completion](/docs/2024-03-06/summarizer_completion.txt)). This makes it much easier for the planner to reason over past task-observation pairs. The summarizer uses a zero-shot prompted Mistral-7B-Instruct-v0.2 model.
 
 ### Tools
 
@@ -41,23 +41,23 @@ Most modules of the agent are tools and the system can be extended with further 
 
 #### Function call
 
-The function call tool wraps a user-defined function into a tool interface so that it can be selected by the planner. It binds information from the task description and previous observations to function parameters. The [default implementation](https://github.com/krasserm/grammar-based-agents/blob/wip-article-2/gba/tools/call/nexus.py) uses NexusRaven-V2-13B for that purpose, an LLM fine-tuned for function calling from natural language instructions (sample [prompt](/docs/2024-03-06/function_call_prompt.txt) and [completion](/docs/2024-03-06/function_call_completion.txt)). An [alternative implementation](https://github.com/krasserm/grammar-based-agents/blob/wip-article-2/gba/tools/call/python.py) uses a zero-shot prompted CodeLlama-7B-instruct model to generate function call arguments from instructions.
+The function call tool wraps a user-defined function into a tool interface so that it can be selected by the planner. It binds information from the task description and previous observations to function parameters. The [default implementation](https://github.com/krasserm/bot-with-plan/blob/wip-article-2/gba/tools/call/nexus.py) uses NexusRaven-V2-13B for that purpose, an LLM fine-tuned for function calling from natural language instructions (sample [prompt](/docs/2024-03-06/function_call_prompt.txt) and [completion](/docs/2024-03-06/function_call_completion.txt)). An [alternative implementation](https://github.com/krasserm/bot-with-plan/blob/wip-article-2/gba/tools/call/python.py) uses a zero-shot prompted CodeLlama-7B-instruct model to generate function call arguments from instructions.
 
 #### Calculate
 
-The [calculate](https://github.com/krasserm/grammar-based-agents/blob/wip-article-2/gba/tools/calc.py) tool generates and executes Python code from a mathematical task description and previous (numerical) observations. The current implementation supports calculations that result in a single number (sample [prompt](/docs/2024-03-06/calculate_prompt.txt) and [completion](/docs/2024-03-06/calculate_completion.txt)). Python code running this calculation is generated with a CodeLlama-7B-instruct model. Code execution is not sandboxed; use this component at your own risk.
+The [calculate](https://github.com/krasserm/bot-with-plan/blob/wip-article-2/gba/tools/calc.py) tool generates and executes Python code from a mathematical task description and previous (numerical) observations. The current implementation supports calculations that result in a single number (sample [prompt](/docs/2024-03-06/calculate_prompt.txt) and [completion](/docs/2024-03-06/calculate_completion.txt)). Python code running this calculation is generated with a CodeLlama-7B-instruct model. Code execution is not sandboxed; use this component at your own risk.
 
 #### Ask user
 
-This tool is used when the planner needs further input from the user. It doesn't use an LLM and simply returns the user's answer to the agent ([code](https://github.com/krasserm/grammar-based-agents/blob/wip-article-2/gba/tools/ask.py)).
+This tool is used when the planner needs further input from the user. It doesn't use an LLM and simply returns the user's answer to the agent ([code](https://github.com/krasserm/bot-with-plan/blob/wip-article-2/gba/tools/ask.py)).
 
 #### Respond to user
 
-A tool that generates a final answer to the original request using all previous task-observation pairs ([code](https://github.com/krasserm/grammar-based-agents/blob/wip-article-2/gba/tools/respond.py), sample [prompt](/docs/2024-03-06/response_prompt.txt) and [completion](/docs/2024-03-06/response_completion.txt)). This tool uses a zero-shot prompted Mistral-7B-Instruct-v0.2 model for generating the answer.
+A tool that generates a final answer to the original request using all previous task-observation pairs ([code](https://github.com/krasserm/bot-with-plan/blob/wip-article-2/gba/tools/respond.py), sample [prompt](/docs/2024-03-06/response_prompt.txt) and [completion](/docs/2024-03-06/response_completion.txt)). This tool uses a zero-shot prompted Mistral-7B-Instruct-v0.2 model for generating the answer.
 
 ## Examples
 
-All models used by the modular agent are running on a llama.cpp server. Instructions for serving these LLMs are available [here](https://github.com/krasserm/grammar-based-agents/blob/wip-article-2/README.md#getting-started).
+All models used by the modular agent are running on a llama.cpp server. Instructions for serving these LLMs are available [here](https://github.com/krasserm/bot-with-plan/blob/wip-article-2/README.md#getting-started).
 
 
 ```python
