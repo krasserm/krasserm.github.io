@@ -6,6 +6,14 @@ author: "Martin Krasser"
 header-img: "img/distributed.png"
 ---
 
+**Update 2024-05-31**: This article covers early work in the [bot-with-plan](https://github.com/krasserm/bot-with-plan) project and is now superseded by the following articles:
+
+- [Schema-guided generation with open LLMs](/2023/12/18/llm-json-mode/)
+- [Separation of planning concerns in open LLM agents](/2024/03/06/modular-agent/)
+- [Planner fine-tuning on synthetic agent trajectories](/2024/05/31/planner-fine-tuning/)
+
+---
+
 [Notebook](https://github.com/krasserm/bot-with-plan/blob/wip-article-1/example_agent.ipynb)  
 [Repository](https://github.com/krasserm/bot-with-plan/tree/wip-article-1)
 
@@ -83,7 +91,7 @@ The `llm` is a proxy for a 4-bit quantized [Llama-2 70b chat model](https://hugg
 
 ### Tool usage
 
-Here's an example of a request that is decomposed by the agent into multiple steps, using a tool at each step. To increase the probability that the model generates an appropriate tool call at each step i.e. selects the right tool and arguments, an unconstrained thinking phase precedes the constrained tool call generation phase. This enables attention to generated thoughts during the tool call generation phase (details in section [ToolCalling](#ToolCalling)).
+Here's an example of a request that is decomposed by the agent into multiple steps, using a tool at each step. To increase the probability that the model generates an appropriate tool call at each step i.e. selects the right tool and arguments, an unconstrained thinking phase precedes the constrained tool call generation phase. This enables attention to generated thoughts during the tool call generation phase (details in section [ToolCalling](#toolcalling)).
 
 
 ```python
