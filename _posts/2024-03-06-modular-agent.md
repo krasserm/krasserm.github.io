@@ -1,5 +1,5 @@
 ---
-title: Separation of planning concerns in open LLM agents
+title: Separation of planning concerns in LLM agents
 layout: post
 comments: True
 author: "Martin Krasser"

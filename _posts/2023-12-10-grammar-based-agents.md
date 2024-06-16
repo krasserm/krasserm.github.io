@@ -9,7 +9,7 @@ header-img: "img/distributed.png"
 **Update 2024-05-31**: This article covers early work in the [bot-with-plan](https://github.com/krasserm/bot-with-plan) project and is now superseded by the following articles:
 
 - [Schema-guided generation with open LLMs](/2023/12/18/llm-json-mode/)
-- [Separation of planning concerns in open LLM agents](/2024/03/06/modular-agent/)
+- [Separation of planning concerns in LLM agents](/2024/03/06/modular-agent/)
 - [Planner fine-tuning on synthetic agent trajectories](/2024/05/31/planner-fine-tuning/)
 
 ---
