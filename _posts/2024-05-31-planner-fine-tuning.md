@@ -85,7 +85,7 @@ The expected output is:
 }
 ```
 
-After [filtering](https://github.com/krasserm/bot-with-plan/tree/master/simulation#package-dataset), we end up with a training set of 8579 examples. An important design decision was to omit the (static) set of available tools in the prompt and let the planner learn the available tools implicitly during fine-tuning. The advantage is a much shorter prompt and therefore lower inference latencies.
+After [filtering](https://github.com/krasserm/bot-with-plan/tree/master/simulation#package-dataset), we end up with a training set of 8554 examples. An important design decision was to omit the (static) set of available tools in the prompt and let the planner learn the available tools implicitly during fine-tuning. The advantage is a much shorter prompt and therefore lower inference latencies.
 
 ## Planner fine-tuning
 
