@@ -89,18 +89,18 @@ After [filtering](https://github.com/krasserm/bot-with-plan/tree/master/simulati
 
 ## Planner fine-tuning
 
-The base model for [planner fine-tuning](https://github.com/krasserm/bot-with-plan/tree/master/train#planner-fine-tuning) is Mistral-7B-v0.1. It is trained for 3 epochs on the generated dataset with QLoRA using [autotrain-advanced](https://github.com/huggingface/autotrain-advanced), running locally. The loss is currently computed on the prompt and completion because the prompt contains a significant amount of planning-specific data which are task-observation pairs from the agent's current trajectory. After merging the adapters back into the base model, they are [converted](https://github.com/krasserm/bot-with-plan/tree/master/train#gguf-conversion-and-quantization) to GGUF, quantized to 8-bit and 4-bit and served on a llama.cpp server. 
+The base model for [planner fine-tuning](https://github.com/krasserm/bot-with-plan/tree/master/train#planner-fine-tuning) is Mistral-7B-v0.1. It is trained for 3 epochs on the generated dataset with QLoRA using [autotrain-advanced](https://github.com/huggingface/autotrain-advanced), running locally. The loss is currently computed over the full sequence (prompt and completion) because the prompt contains a significant amount of planning-specific data which are task-observation pairs from the agent's current trajectory. After merging the adapters back into the base model, they are [converted](https://github.com/krasserm/bot-with-plan/tree/master/train#gguf-conversion-and-quantization) to GGUF, quantized to 8-bit and 4-bit and served on a llama.cpp server. 
 
 ## Planner evaluation
 
 The fine-tuned planners are [evaluated](https://github.com/krasserm/bot-with-plan/tree/master/simulation#planner-evaluation) in the simulation environment, together with the GPT-4 based planner and the zero-shot planner from the [previous article](/2024/03/06/modular-agent/). Evaluation is done on a separate test set of 50 requests.
 
-| series          | pass_rate   | bad_task_rate | completion_rate |
+| series          |  pass_rate  | bad_task_rate | completion_rate |
 |:----------------|:-----------:|:-------------:|:---------------:|
-| zero-shot 8bit  | 0.72 ± 0.05 | 0.30 ± 0.04   | 0.88 ± 0.02     |
-| fine-tuned 4bit | 0.89 ± 0.04 | 0.14 ± 0.01   | 0.96 ± 0.02     |
-| fine-tuned 8bit | 0.88 ± 0.04 | 0.09 ± 0.01   | 0.95 ± 0.03     |
-| gpt-4           | 0.91 ± 0.05 | 0.07 ± 0.01   | 0.97 ± 0.02     |
+| zero-shot 8bit  | 0.72 ± 0.03 |  0.30 ± 0.02  |   0.88 ± 0.01   |
+| fine-tuned 4bit | 0.89 ± 0.02 |  0.14 ± 0.01  |   0.96 ± 0.01   |
+| fine-tuned 8bit | 0.88 ± 0.02 |  0.09 ± 0.01  |   0.95 ± 0.02   |
+| gpt-4           | 0.91 ± 0.03 |  0.07 ± 0.01  |   0.97 ± 0.01   |
 
 Basis for evaluation is the same rating procedure that has been used for filtering the training dataset. Evaluation metrics are pass rate, bad task rate and completion rate. 
 
@@ -108,9 +108,9 @@ Basis for evaluation is the same rating procedure that has been used for filteri
 - *bad task rate* is the fraction of steps with a task description rating of 3 or lower. 
 - *completion rate* is the number of requests that the agent could complete with a final answer in 10 steps or less.
 
-4 evaluation runs are executed for each planner to account for the non-deterministic behavior of simulated tools `search_internet` and `search_wikipedia`. These tools may decide with a probability of 0.1 to provide no answer or an incomplete answer. The mean and the standard deviation over 4 runs is reported in the table above.
+4 evaluation runs are executed for each planner to account for the non-deterministic behavior of simulated tools `search_internet` and `search_wikipedia`. These tools may decide with a probability of 0.1 to provide no answer or an incomplete answer. The mean and the standard error over 4 runs is reported in the table above.
 
-The pass rate of the fine-tuned planners (8-bit and 4-bit) is within a single standard deviation of that of the GPT-4 based planner but significantly higher than that of the zero-shot planner. This doesn't say much about their efficiency though. A better metric for the efficiency is bad task rate. A higher number means longer and therefore less efficient trajectories. The 8-bit fine-tuned planner is close to the GPT-4 based planner and significantly better than the 4-bit quantized planner on this metric. Again, there is a large gap to the zero-shot planner. The completion rates of the fine-tuned planners and the GPT-4 based planner are similar with a large gap to the zero-shot planner.
+The pass rates of the fine-tuned planners (8-bit and 4-bit) are close to that of the GPT-4 based planner but significantly higher than that of the zero-shot planner. This doesn't say much about their efficiency though. A better metric for the efficiency is bad task rate. A higher number means longer and therefore less efficient trajectories. The 8-bit fine-tuned planner is close to the GPT-4 based planner and significantly better than the 4-bit quantized planner on this metric. Again, there is a large gap to the zero-shot planner. The completion rates of the fine-tuned planners and the GPT-4 based planner are similar with a large gap to the zero-shot planner.
 
 ## Real environment
 
