@@ -1,5 +1,5 @@
 ---
-title: Separation of planning concerns in LLM agents
+title: Separation of planning concerns in ReAct-style LLM agents
 layout: post
 comments: True
 author: "Martin Krasser"
