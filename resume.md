@@ -18,8 +18,8 @@ from the development of numerous large-scale event-driven systems, including glo
 provide causal consistency guarantees. I'm a continuous learner and contributor to several open source projects.
 
 [https://martin-krasser.com](https://martin-krasser.com)  
-[https://twitter.com/mrt1nz](https://twitter.com/mrt1nz)  
 [https://github.com/krasserm](https://github.com/krasserm)  
+[https://x.com/mrt1nz](https://x.com/mrt1nz)
 
 ## Specialties
 
