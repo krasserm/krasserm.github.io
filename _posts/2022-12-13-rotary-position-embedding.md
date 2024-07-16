@@ -1,6 +1,5 @@
 ---
 title: A gentle introduction to Rotary Position Embedding
-subtitle: Intuition and implementation
 layout: post
 comments: True
 author: "Martin Krasser"

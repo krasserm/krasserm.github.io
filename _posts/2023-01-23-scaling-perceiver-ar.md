@@ -1,6 +1,5 @@
 ---
 title: Training compute-optimal Perceiver AR language models
-subtitle: An application of the Chinchilla paper
 layout: post
 comments: True
 author: "Martin Krasser"
