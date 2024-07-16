@@ -4,7 +4,7 @@ subtitle: 'Fault-tolerant model training on spot instances'
 layout: post
 comments: True
 author: "Martin Krasser"
-header-img: "img/strawberry.png"
+header-img: "img/distributed.png"
 ---
 
 In a [previous article](/2022/01/21/sagemaker-multi-node/) I introduced distributed training with PyTorch Lightning on 
