@@ -1,10 +1,11 @@
 ---
 layout: page
-title: "Stories"
+title: "Selected stories"
+nav-entry: "Stories"
 header-img: "img/distributed.png"
 ---
 
-The following are selected stories about my work on [machine learning](#machine-learning), [distributed systems](#distributed-systems), [event sourcing](#event-sourcing) and [system integration](#system-integration). They primarily cover open source work but also some closed source work in industry projects.
+The following are selected stories about my work on [machine learning](#machine-learning), [distributed systems](#distributed-systems), [event sourcing](#event-sourcing) and [system integration](#system-integration). They primarily cover [open source](/open-source/) work but also some closed source work in [industry projects](/industry/).
 
 ## Machine Learning
 

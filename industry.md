@@ -1,24 +1,9 @@
 ---
 layout: page
-title: "Resume"
+title: "Industry experience"
+nav-entry: "Industry"
 header-img: "img/distributed.png"
-header-includes:
-  - \hypersetup{colorlinks=false,
-            allbordercolors={0 0 0},
-            pdfborderstyle={/S/U/W 1}}
 ---
-
-# Martin Krasser
-
-I'm a freelance software engineer with a strong background in machine learning, distributed systems, event sourcing and system integration. My current focus is on AI search engines and agentic systems. I support customers in all phases of their machine learning projects, from initial research, prototyping, iterative solution development up to serving and maintaining machine learning solutions in production. My experience as distributed systems engineer comes from the development of numerous large-scale event-driven systems, including globally distributed systems that provide causal consistency guarantees. I’m a continuous learner and active open source contributor.
-
-- [Homepage](https://martin-krasser.com)
-- [GitHub](https://github.com/krasserm)
-- [LinkedIn](https://linkedin.com/in/krasserm)
-
-<p></p>
-
-## Industry experience
 
 ### Senior Director Machine Learning, Lead Machine Learning Engineer
 
@@ -81,7 +66,7 @@ Responsible for conception, design and implementation of Eventsourced and its in
 04.2011 - present, [https://martin-krasser.com](https://martin-krasser.com), Freelance
 
 **Freelance software development and consulting services**  
-Research and development for industry [machine learning](https://krasserm.github.io/stories/#machine-learning) projects, mainly deep learning. Software development services with a focus on backend software and distributed systems. Open source contributions to [machine learning](https://krasserm.github.io/stories/#machine-learning), [distributed systems](https://krasserm.github.io/stories/#distributed-systems), [event sourcing](https://krasserm.github.io/stories/#event-sourcing) and [system integration](https://krasserm.github.io/stories/#system-integration) projects.  
+Research and development for industry [machine learning](/stories/#machine-learning) projects, mainly deep learning. Software development services with a focus on backend software and distributed systems. Open source contributions to [machine learning](/stories/#machine-learning), [distributed systems](/stories/#distributed-systems), [event sourcing](/stories/#event-sourcing) and [system integration](/stories/#system-integration) projects.  
 
 
 ### Lead Software Architect, Senior Software Engineer
@@ -116,25 +101,3 @@ Development of algorithms and software for ab-initio protein structure predictio
 Development of a patient transportation management system in the IT department of the Red Cross in Graz, Austria. Selected from a pool of candidates during my civil service at the Red Cross.  
 
 
-
-## Education
-
-### Master of Science (Mag. rer. nat.) in Chemistry
-
-1997, Karl-Franzens Universität Graz
-
-### Various courses in computer science
-
-1996, Karl-Franzens Universität Graz
-
-
-## Additional information
-
-For further details about me, please refer to the following links:
-
-- [Open source projects](https://krasserm.github.io/open-source/)
-- [Selected stories](https://krasserm.github.io/stories/)
-- [Article catalog](https://krasserm.github.io/articles/)
-- [Conference talks](https://krasserm.github.io/talks/)
-- [Course certificates](https://krasserm.github.io/courses/)
-- [Technology skills](https://krasserm.github.io/technologies/)
