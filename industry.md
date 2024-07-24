@@ -98,6 +98,6 @@ Development of algorithms and software for ab-initio protein structure predictio
 07.1998 - 01.1999, [Austrian Red Cross](http://www.roteskreuz.at/)
 
 **Patient transportation management system**  
-Development of a patient transportation management system in the IT department of the Red Cross in Graz, Austria. Selected from a pool of candidates during my civil service at the Red Cross.  
+Development of a patient transportation management system in the IT department of the Red Cross in Graz, Austria. Work done during my civil service at the Red Cross.  
 
 
