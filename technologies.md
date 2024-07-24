@@ -5,7 +5,7 @@ nav-entry: "Technologies"
 header-img: "img/distributed.png"
 ---
 
-Here's an **incomplete** list of technologies and tools I worked with. Focus is more on machine learning, other groups contain representative entries.
+Here's an **incomplete** list of technologies and tools I worked with. Focus is more on machine learning, other groups contain representative examples.
 
 Group | Technology
 --- | ---
