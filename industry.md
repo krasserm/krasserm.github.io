@@ -10,7 +10,7 @@ header-img: "img/distributed.png"
 01.2025 - present, [Gradion AI](https://gradion.ai)
 
 **Agentic application development and consulting services**  
-We grow a team of AI agents running our own software development business. We combine solid software engineering skills with latest research and development in artificial intelligence to make agents more reliable and capable. We support clients in automating their business processes with agentic AI. 
+We grow a team of AI agents collaborating with us to run our own business. We combine solid software engineering skills with latest research and development in artificial intelligence to make agents more reliable and capable. We support clients in automating their business processes with agentic AI. 
 
 
 ### Senior Director Machine Learning, Lead Machine Learning Engineer
