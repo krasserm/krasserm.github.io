@@ -1,7 +1,6 @@
 ---
 layout: page
-title: "Technology skills"
-nav-entry: "Technologies"
+title: "Technologies"
 header-img: "img/distributed.png"
 ---
 
@@ -9,7 +8,7 @@ Here's an **incomplete** list of technologies and tools I worked with. Focus is 
 
 Group | Technology
 --- | ---
-Artificial Intelligence<br>Agentic Systems | [freeact](https://github.com/gradion-ai/freeact)<br>[ipybox](https://github.com/gradion-ai/ipybox)
+Artificial Intelligence<br>Agentic Systems | [Anthropic](https://anthropic.com)<br>[DeekSeek](https://deepseek.com)<br>[freeact](https://github.com/gradion-ai/freeact)<br>[Gemini](https://gemini.google.com)<br>[LangChain](https://langchain.com/)<br>[OpenAI](https://openai.com)
 Machine Learning<br>Machine Learning Operations<br>Data Engineering | [Apache Spark](https://spark.apache.org/)<br>[AWS SageMaker](https://aws.amazon.com/sagemaker/)<br>[fairseq](https://fairseq.readthedocs.io/)<br>[GPy](https://sheffieldml.github.io/GPy/)<br>[GPyOpt](https://sheffieldml.github.io/GPyOpt/)<br>[HF Accelerate](https://huggingface.co/docs/accelerate/index)<br>[HF AutoTrain](https://huggingface.co/docs/autotrain/index)<br>[HF Bitsandbytes](https://huggingface.co/docs/bitsandbytes/index)<br>[HF Datasets](https://huggingface.co/docs/datasets/index)<br>[HF PEFT](https://huggingface.co/docs/peft/index)<br>[HF Sentence Transformers](https://www.sbert.net/)<br>[HF Text Generation Inference](https://huggingface.co/docs/text-generation-inference/index)<br>[HF Tokenizers](https://huggingface.co/docs/tokenizers/index)<br>[HF Transformers](https://huggingface.co/docs/transformers/index)<br>[HF TRL](https://huggingface.co/docs/trl/index)<br>[JAX](https://jax.readthedocs.io/)<br>[Keras](https://keras.io/)<br>[LangChain](https://langchain.com/)<br>[llama.cpp](https://github.com/ggerganov/llama.cpp)<br>[NumPy](https://numpy.org/)<br>[OpenCV](https://opencv.org/)<br>[pandas](https://pandas.pydata.org/)<br>[PyMC](https://www.pymc.io/)<br>[PyTorch](https://pytorch.org/)<br>[PyTorch Lightning](https://lightning.ai/pytorch-lightning)<br>[scikit-learn](https://scikit-learn.org/)<br>[scikit-optimize](https://scikit-optimize.github.io/)<br>[SciPy](https://scipy.org/)<br>[spaCy](https://spacy.io/)<br>[Tensorflow](https://www.tensorflow.org/)<br>[Tensorflow Probability](https://www.tensorflow.org/probability)<br>[Weights & Biases](https://wandb.ai)<br>[XGBoost](https://xgboost.ai/)
 Distributed Systems<br>Stream Processing<br>Messaging | [Akka](https://akka.io/)<br>[Akka Streams](https://doc.akka.io/docs/akka/current/stream/index.html)<br>[Apache ActiveMQ](https://activemq.apache.org/)<br>[Apache Kafka](https://kafka.apache.org/)<br>[Apache Kafka Streams](https://kafka.apache.org/documentation/streams/)<br>[Apache ZooKeeper](https://zookeeper.apache.org/)<br>[Eventuate](https://rbmhtechnology.github.io/eventuate/)<br>[FS2](https://fs2.io/)<br>[Streamz](https://github.com/krasserm/streamz)
 Event Sourcing | [Akka Persistence](https://doc.akka.io/docs/akka/current/persistence.html)<br>[Eventsourced](https://github.com/eligosource/eventsourced)<br>[Eventuate](https://rbmhtechnology.github.io/eventuate/)

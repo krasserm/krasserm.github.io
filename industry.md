@@ -5,9 +5,17 @@ nav-entry: "Industry"
 header-img: "img/distributed.png"
 ---
 
+### Founder, Chief Agents Nanny
+
+01.2025 - present, [Gradion AI](https://gradion.ai)
+
+**Agentic application development and consulting services**  
+We grow a team of AI agents running our own software development business. We combine solid software engineering skills with latest research and development in artificial intelligence to make agents more reliable and capable. We support clients in automating their business processes with agentic AI. 
+
+
 ### Senior Director Machine Learning, Lead Machine Learning Engineer
 
-08.2023 - present, [Canto](https://www.canto.com/), Freelance
+08.2023 - 09.2024, [Canto](https://www.canto.com/), Freelance
 
 **Scaling and extending AI Visual Search**  
 Development of a cloud-native platform for scaling Canto's [AI Visual Search](https://www.canto.com/product/ai-visual-search/) solutions to thousands of customers. Development of hybrid search algorithms and research prototypes for inclusion of customer-specific asset metadata into AI Visual Search. 
@@ -66,7 +74,7 @@ Responsible for conception, design and implementation of Eventsourced and its in
 04.2011 - present, [https://martin-krasser.com](https://martin-krasser.com), Freelance
 
 **Freelance software development and consulting services**  
-Research and development for industry [machine learning](/stories/#machine-learning) projects, mainly deep learning. Software development services with a focus on backend software and distributed systems. Open source contributions to [machine learning](/stories/#machine-learning), [distributed systems](/stories/#distributed-systems), [event sourcing](/stories/#event-sourcing) and [system integration](/stories/#system-integration) projects. 
+Research and development for industry [machine learning](/stories/#machine-learning) projects, mainly deep learning. Software development services with a focus on backend software and distributed systems. Open source contributions to [machine learning](/stories/#machine-learning), [agentic systems](/stories/#agentic-systems), [distributed systems](/stories/#distributed-systems), [event sourcing](/stories/#event-sourcing) and [system integration](/stories/#system-integration) projects. 
 
 
 ### Lead Software Architect, Senior Software Engineer

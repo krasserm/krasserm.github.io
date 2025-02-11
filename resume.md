@@ -10,7 +10,8 @@ header-includes:
 
 # Martin Krasser
 
-I'm a freelance software engineer with a strong background in machine learning, distributed systems, event sourcing and system integration. My current focus is on AI search engines and agentic systems. I support customers in all phases of their machine learning projects, from initial research, prototyping, iterative solution development up to serving and maintaining machine learning solutions in production. My experience as distributed systems engineer comes from the development of numerous large-scale event-driven systems, including globally distributed systems that provide causal consistency guarantees. I’m a continuous learner and active open source contributor.
+Freelance AI engineer with strong background in machine learning, agentic systems, distributed systems, and system integration. Specialized in developing reliable AI systems and operating them at scale in production environments. Extensive industry experience in both technical and leadership roles. Active open source contributor.
+
 
 - [Homepage](https://martin-krasser.com)
 - [GitHub](https://github.com/krasserm)
@@ -20,9 +21,17 @@ I'm a freelance software engineer with a strong background in machine learning, 
 
 ## Industry experience
 
+### Founder, Chief Agents Nanny
+
+01.2025 - present, [Gradion AI](https://gradion.ai)
+
+**Agentic application development and consulting services**  
+We grow a team of AI agents running our own software development business. We combine solid software engineering skills with latest research and development in artificial intelligence to make agents more reliable and capable. We support clients in automating their business processes with agentic AI. 
+
+
 ### Senior Director Machine Learning, Lead Machine Learning Engineer
 
-08.2023 - present, [Canto](https://www.canto.com/), Freelance
+08.2023 - 09.2024, [Canto](https://www.canto.com/), Freelance
 
 **Scaling and extending AI Visual Search**  
 Development of a cloud-native platform for scaling Canto's [AI Visual Search](https://www.canto.com/product/ai-visual-search/) solutions to thousands of customers. Development of hybrid search algorithms and research prototypes for inclusion of customer-specific asset metadata into AI Visual Search. 
@@ -81,7 +90,7 @@ Responsible for conception, design and implementation of Eventsourced and its in
 04.2011 - present, [https://martin-krasser.com](https://martin-krasser.com), Freelance
 
 **Freelance software development and consulting services**  
-Research and development for industry [machine learning](https://krasserm.github.io/stories/#machine-learning) projects, mainly deep learning. Software development services with a focus on backend software and distributed systems. Open source contributions to [machine learning](https://krasserm.github.io/stories/#machine-learning), [distributed systems](https://krasserm.github.io/stories/#distributed-systems), [event sourcing](https://krasserm.github.io/stories/#event-sourcing) and [system integration](https://krasserm.github.io/stories/#system-integration) projects. 
+Research and development for industry [machine learning](https://krasserm.github.io/stories/#machine-learning) projects, mainly deep learning. Software development services with a focus on backend software and distributed systems. Open source contributions to [machine learning](https://krasserm.github.io/stories/#machine-learning), [agentic systems](https://krasserm.github.io/stories/#agentic-systems), [distributed systems](https://krasserm.github.io/stories/#distributed-systems), [event sourcing](https://krasserm.github.io/stories/#event-sourcing) and [system integration](https://krasserm.github.io/stories/#system-integration) projects. 
 
 
 ### Lead Software Architect, Senior Software Engineer
@@ -130,11 +139,9 @@ Development of a patient transportation management system in the IT department o
 
 ## Additional information
 
-For further details about me, please refer to the following links:
-
 - [Open source projects](https://krasserm.github.io/open-source/)
-- [Selected stories](https://krasserm.github.io/stories/)
-- [Article catalog](https://krasserm.github.io/articles/)
-- [Conference talks](https://krasserm.github.io/talks/)
-- [Course certificates](https://krasserm.github.io/courses/)
-- [Technology skills](https://krasserm.github.io/technologies/)
+- [Stories](https://krasserm.github.io/stories/)
+- [Articles](https://krasserm.github.io/articles/)
+- [Talks](https://krasserm.github.io/talks/)
+- [Courses](https://krasserm.github.io/courses/)
+- [Technologies](https://krasserm.github.io/technologies/)

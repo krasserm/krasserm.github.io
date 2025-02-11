@@ -7,21 +7,21 @@ header-img: "img/distributed.png"
 
 # Martin Krasser
 
-I'm a freelance software engineer with a strong background in machine learning, distributed systems, event sourcing and system integration. My current focus is on AI search engines and agentic systems. I support customers in all phases of their machine learning projects, from initial research, prototyping, iterative solution development up to serving and maintaining machine learning solutions in production. My experience as distributed systems engineer comes from the development of numerous large-scale event-driven systems, including globally distributed systems that provide causal consistency guarantees. I’m a continuous learner and active open source contributor.
+Freelance AI engineer with strong background in machine learning, agentic systems, distributed systems, and system integration. Specialized in developing reliable AI systems and operating them at scale in production environments. Extensive industry experience in both technical and leadership roles. Active open source contributor.
+ Founder of [gradion.ai](https://gradion.ai).
 
-- [Industry experience](/industry/)
+- [Industry projects](/industry/)
 - [Open source projects](/open-source/)
-- [Selected stories](/stories/)
-- [Article catalog](/articles/)
-- [Conference talks](/talks/)
-- [Course certificates](/courses/)
-- [Technology skills](/technologies/)
+- [Blog](/)
+- [Stories](/stories/)
+- [Articles](/articles/)
+- [Resume](/resume/)
 
 <p></p>
 
-For additional information, please visit my other public profiles:
+## Other profiles
 
 - [GitHub](https://github.com/krasserm)
 - [Hugging Face](https://huggingface.co/krasserm)
 - [LinkedIn](https://linkedin.com/in/krasserm)
-- [X](https://x.com/mrt1nz)  (Twitter)
+- [X](https://x.com/mrt1nz)
