@@ -1,5 +1,5 @@
 ---
-title: Exploring DeepSeek-R1's agentic capabilities through code actions
+title: DeepSeek-R1 agents with code actions
 layout: post
 comments: True
 author: "Martin Krasser"
