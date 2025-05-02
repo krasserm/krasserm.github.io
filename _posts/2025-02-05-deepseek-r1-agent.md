@@ -6,11 +6,11 @@ author: "Martin Krasser"
 header-img: "img/distributed.png"
 ---
 
-I ran a quick [experiment](https://github.com/gradion-ai/freeact/blob/main/evaluation/README.md) investigating how DeepSeek-R1 performs on agentic tasks, despite not supporting tool use natively, and I was quite impressed by preliminary results. This experiment runs DeepSeek-R1 in a single-agent setup, where the model not only plans the actions but also formulates the actions as executable Python code. On a subset<sup>1</sup> of the GAIA validation split, DeepSeek-R1 outperforms Claude 3.5 Sonnet by 12.5% absolute, from 53.1% to 65.6% correct, and other models by an even larger margin:
+I ran a quick [experiment](https://github.com/gradion-ai/freeact/blob/wip-legacy-pre-reasoning/evaluation/README.md) investigating how DeepSeek-R1 performs on agentic tasks, despite not supporting tool use natively, and I was quite impressed by preliminary results. This experiment runs DeepSeek-R1 in a single-agent setup, where the model not only plans the actions but also formulates the actions as executable Python code. On a subset<sup>1</sup> of the GAIA validation split, DeepSeek-R1 outperforms Claude 3.5 Sonnet by 12.5% absolute, from 53.1% to 65.6% correct, and other models by an even larger margin:
 
 ![eval](/img/2025-02-05/deepseek-r1-eval.png)
 
-The experiment followed model usage guidelines from the [DeepSeek-R1 paper](https://arxiv.org/abs/2501.12948) and the [model card](https://huggingface.co/deepseek-ai/DeepSeek-R1#usage-recommendations): Don't use few-shot examples, avoid adding a system prompt, and set the temperature to 0.5 - 0.7 (0.6 was used). You can find further evaluation details [here](https://github.com/gradion-ai/freeact/blob/main/evaluation/README.md).
+The experiment followed model usage guidelines from the [DeepSeek-R1 paper](https://arxiv.org/abs/2501.12948) and the [model card](https://huggingface.co/deepseek-ai/DeepSeek-R1#usage-recommendations): Don't use few-shot examples, avoid adding a system prompt, and set the temperature to 0.5 - 0.7 (0.6 was used). You can find further evaluation details [here](https://github.com/gradion-ai/freeact/blob/wip-legacy-pre-reasoning/evaluation/README.md).
 
 ## Approach
 
