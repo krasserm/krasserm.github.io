@@ -38,7 +38,7 @@ Despite its ability to generalize to tool use, DeepSeek-R1 often produces very l
 
 ## Underthinking
 
-I also observed the [underthinking phenomon](https://arxiv.org/abs/2501.18585) with DeepSeek-R1. This is when a reasoning model frequently switches between different reasoning thoughts without sufficiently exploring promising paths to reach a correct solution. This was a major reason for overly long reasoning traces produced by DeepSeek-R1. This can be seen in the recorded traces that are available for [download](https://github.com/user-attachments/files/18655103/evaluation-results-agents-5_medium_benchmark_2.zip).
+I also observed the [underthinking phenomenon](https://arxiv.org/abs/2501.18585) with DeepSeek-R1. This is when a reasoning model frequently switches between different reasoning thoughts without sufficiently exploring promising paths to reach a correct solution. This was a major reason for overly long reasoning traces produced by DeepSeek-R1. This can be seen in the recorded traces that are available for [download](https://github.com/user-attachments/files/18655103/evaluation-results-agents-5_medium_benchmark_2.zip).
 
 ## Future experiments
 
