@@ -3,6 +3,7 @@ layout: page
 title: "Resume"
 header-img: "img/distributed.png"
 header-includes:
+  - \usepackage{hyperref}
   - \hypersetup{colorlinks=false,
             allbordercolors={0 0 0},
             pdfborderstyle={/S/U/W 1}}
