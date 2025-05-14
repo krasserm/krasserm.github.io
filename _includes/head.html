@@ -33,7 +33,9 @@
     <!-- MathJax support -->
     <script type="text/x-mathjax-config">
         MathJax.Hub.Config({
-          tex2jax: {inlineMath: [['$','$']]}
+          tex2jax: {inlineMath: [['$','$']]},
+          "HTML-CSS": {availableFonts: []},  // disables local‑font sniffing
+          menuSettings: {renderer: "CommonHTML"}
         });
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
