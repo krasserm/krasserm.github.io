@@ -7,7 +7,7 @@ header-img: "img/distributed.png"
 
 # Martin Krasser
 
-Freelance AI engineer with strong background in machine learning, agentic systems, distributed systems, and system integration. Specialized in developing reliable AI systems and operating them at scale in production environments. Extensive industry experience in both technical and leadership roles. Active open source contributor.
+Freelance ML and AI engineer with strong background in machine learning, agentic systems, distributed systems, and system integration. Specialized in developing reliable AI systems and operating them at scale in production environments. Extensive industry experience in both technical and leadership roles. Active open source contributor.
  Founder of [gradion.ai](https://gradion.ai).
 
 - [Industry projects](/industry/)
