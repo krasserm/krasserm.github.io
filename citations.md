@@ -5,7 +5,7 @@ nav-entry: "Citations"
 header-img: "img/distributed.png"
 ---
 
-My [blog posts](/) and [open source projects](/open-source) that have received scholarly citations.
+Below are my blog posts and open source projects that have received scholarly citations.
 <p></p>
 
 ## Blog posts
