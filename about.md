@@ -13,8 +13,8 @@ Freelance ML and AI engineer with strong background in machine learning, agentic
 - [Industry projects](/industry/)
 - [Open source projects](/open-source/)
 - [Blog](/)
+- [Citations](/citations/)
 - [Stories](/stories/)
-- [Articles](/articles/)
 - [Resume](/resume/)
 
 <p></p>
@@ -24,4 +24,4 @@ Freelance ML and AI engineer with strong background in machine learning, agentic
 - [GitHub](https://github.com/krasserm)
 - [Hugging Face](https://huggingface.co/krasserm)
 - [LinkedIn](https://linkedin.com/in/krasserm)
-- [X](https://x.com/mrt1nz)
+- [Twitter](https://x.com/mrt1nz) (X)
