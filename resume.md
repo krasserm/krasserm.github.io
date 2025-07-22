@@ -22,12 +22,12 @@ Freelance ML and AI engineer with strong background in deep learning, agentic sy
 
 ## Industry experience
 
-### Founder, Chief Agents Nanny
+### Founder
 
 01.2025 - present, [Gradion AI](https://gradion.ai)
 
-**Agentic application development and consulting services**  
-We grow a team of AI agents collaborating with us to run our own business. We combine solid software engineering skills with latest research and development in artificial intelligence to make agents more reliable and capable. We support clients in automating their business processes with agentic AI. 
+**AI engineering and consulting services**  
+We are an IT consulting firm specializing in machine learning and agentic AI projects. Combining extensive expertise in ML and AI, with decades of experience in software development and systems engineering, we create custom solutions that are intelligent, meet customer requirements and run reliably in production. In-house, we are currently developing a group of AI agents collaborating with us to run our business. Our focus is on agents that collaborate with entire teams, rather than just individual users. To be most useful for team members, we provide agents with the full context of team dynamics. We also research collaborative and autonomous skill learning in code action agents. 
 
 
 ### Senior Director Machine Learning, Lead Machine Learning Engineer
@@ -88,7 +88,7 @@ Responsible for conception, design and implementation of Eventsourced and its in
 
 ### Software Engineer, Machine Learning Engineer
 
-04.2011 - present, [https://martin-krasser.com](https://martin-krasser.com), Freelance
+04.2011 - 12.2024, [https://martin-krasser.com](https://martin-krasser.com), Freelance
 
 **Freelance software development and consulting services**  
 Research and development for industry [machine learning](https://krasserm.github.io/stories/#machine-learning) projects, mainly deep learning. Software development services with a focus on backend software and distributed systems. Open source contributions to [machine learning](https://krasserm.github.io/stories/#machine-learning), [agentic systems](https://krasserm.github.io/stories/#agentic-systems), [distributed systems](https://krasserm.github.io/stories/#distributed-systems), [event sourcing](https://krasserm.github.io/stories/#event-sourcing) and [system integration](https://krasserm.github.io/stories/#system-integration) projects. 
