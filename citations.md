@@ -1,6 +1,6 @@
 ---
 layout: page
-title: "Scholarly citations"
+title: "Citations"
 nav-entry: "Citations"
 header-img: "img/distributed.png"
 ---
