@@ -6,7 +6,7 @@ author: "Martin Krasser"
 header-img: "img/distributed.png"
 ---
 
-This article was originally posted on [The Agents Nanny](https://gradion-ai.github.io/agents-nanny/) blog.
+This article was originally posted [here](https://gradion-ai.github.io/agents-nanny/2025/08/06/agent-authorization-without-the-pain/).
 
 ---
 
