@@ -2,6 +2,7 @@
 title: Agent authorization without the pain
 layout: post
 comments: True
+hidden: True
 author: "Martin Krasser"
 header-img: "img/distributed.png"
 ---
