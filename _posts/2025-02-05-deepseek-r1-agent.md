@@ -42,7 +42,7 @@ I also observed the [underthinking phenomenon](https://arxiv.org/abs/2501.18585)
 
 ## Future experiments
 
-Another common application of reasoning models is to use them for planning only, while using other models for generating code actions. This could be a potential new feature of [freeact](https://github.com/gradion-ai/freeact), if this separation of roles proves useful for more complex tasks.
+Another common application of reasoning models is to use them for planning only, while using other models for generating code actions. This could be a potential new feature of [freeact](https://github.com/gradion-ai/freeact/tree/0.6.x), if this separation of roles proves useful for more complex tasks.
 
 I'm also curious about how reasoning models that already support tool use (like o1, o3, ...) perform in a single-agent setup, with and without generating code actions. Recent developments like OpenAI's [Deep Research](https://openai.com/index/introducing-deep-research/) or Hugging Face's [open-source Deep Research](https://huggingface.co/blog/open-deep-research), which also uses code actions, look interesting.
 
