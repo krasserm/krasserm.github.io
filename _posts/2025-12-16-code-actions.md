@@ -17,6 +17,8 @@ These solutions typically generate Python or TypeScript APIs for MCP tools, let 
 
 This article fills that gap by presenting an approach for building reusable tools from code actions. When following certain design principles, code actions can be saved in a way that supports efficient discovery, inspection, and reuse in later code actions. This is demonstrated by example using a [Claude Code plugin](https://gradion-ai.github.io/ipybox/ccplugin/) that bundles a code action skill, and the [ipybox](https://gradion-ai.github.io/ipybox/) MCP server for local, sandboxed code execution.
 
+**Update 2026-01-07:** An alternative implementation of this approach is the [freeact](https://gradion-ai.github.io/freeact/) code action agent.
+
 ## Code Actions as Reusable Tools
 
 Most programmatic tool calling implementations treat code actions as ephemeral: generated, executed, then discarded. But a working code action represents a tested solution. An agent iterates on it based on execution feedback until it produces the desired outcome. If it is then saved in a discoverable format with a callable API, that code action becomes a tool that future code actions can import and compose with other tools.
