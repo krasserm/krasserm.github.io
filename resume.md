@@ -26,24 +26,24 @@ Freelance ML and AI engineer with strong background in deep learning, agentic sy
 
 01.2025 - present, [Gradion AI](https://gradion.ai)
 
-**AI engineering and consulting services**  
-We are an IT consulting firm specializing in machine learning and agentic AI projects. Combining extensive expertise in ML and AI, with decades of experience in software development and systems engineering, we create custom solutions that are intelligent, meet customer requirements and run reliably in production. In-house, we are currently developing a group of AI agents collaborating with us to run our business. Our focus is on agents that collaborate with entire teams, rather than just individual users. To be most useful for team members, we provide agents with the full context of team dynamics. We also research collaborative and autonomous skill learning in code action agents. 
+**AI and ML engineering services**  
+We build AI agents and ML applications for fun and profit. We draw from 20+ years of software development experience, with 8+ years in AI/ML engineering. Our solutions serve thousands of customers worldwide. We are active open source contributors, currently focused on multi-party conversational AI and on code action agents that evolve their own tool libraries. 
 
 
 ### Senior Director Machine Learning, Lead Machine Learning Engineer
 
 08.2023 - 09.2024, [Canto](https://www.canto.com/), Freelance
 
-**Scaling and extending AI Visual Search**  
-Development of a cloud-native platform for scaling Canto's [AI Visual Search](https://www.canto.com/product/ai-visual-search/) solutions to thousands of customers. Development of hybrid search algorithms and research prototypes for inclusion of customer-specific asset metadata into AI Visual Search. 
-Responsible for all AI search related research and development efforts at Canto.
+**AI-powered visual search platform**  
+Development of an AI-powered [visual and hybrid search](https://www.canto.com/product/ai-visual-search/) platform built as a cloud-native solution that scales seamlessly to thousands of enterprise customers worldwide. Training of custom query processing models with synthetic data to deliver accurate search results across diverse content types. 
+Responsible for all ML research and development efforts at Canto.
 
 ### Director Machine Learning, Lead Machine Learning Engineer
 
 04.2018 - 08.2023, [MerlinOne](https://merlinone.com/), Freelance
 
 **Merlin Accelerated Intelligence (AI) Suite**  
-Development of an AI search engine for semantic image, video, sound and document search in the MerlinOne digital asset management system. Supports facial recognition for identity-constrained searches and image aesthetics assessment for selecting images with highest perceived quality. Tuning of AI models and search indices on customer-specific data. 
+Development of an AI search engine for semantic image, video, sound and document search in the MerlinOne digital asset management system. Supports facial recognition for identity-constrained searches and image aesthetics assessment for selecting images with perceived highest quality. Tuning of AI models and search indices on customer-specific data. 
 Running in production at several customer sites, including the publicly accessible [AP Newsroom](https://newsroom.ap.org/) (see also [press release](https://www.ap.org/media-center/press-releases/2023/millions-of-ap-images-and-video-now-available-on-single-platform-with-ai-powered-search/)). Responsible for all ML research and development efforts at MerlinOne. The success of the Merlin AI Suite was a major factor in the acquisition of MerlinOne by Canto in 2023.
 
 ### Machine learning sabbatical
