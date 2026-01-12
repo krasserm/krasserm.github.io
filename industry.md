@@ -10,7 +10,7 @@ header-img: "img/distributed.png"
 01.2025 - present, [Gradion AI](https://gradion.ai)
 
 **AI and ML engineering services**  
-We build AI agents and ML applications for fun and profit. We draw from 20+ years of software development experience, with 8+ years in AI/ML engineering. Our solutions serve thousands of customers worldwide. We are active open source contributors, currently focused on multi-party conversational AI and on code action agents that evolve their own tool libraries. 
+We build AI agents and ML solutions for fun and profit. We draw from 20+ years of software development experience, with 8+ years in AI/ML engineering. Our solutions serve thousands of customers worldwide. We are active open source contributors, currently focused on multi-party conversational AI and on code action agents that evolve their own tool libraries. 
 
 
 ### Senior Director Machine Learning, Lead Machine Learning Engineer
