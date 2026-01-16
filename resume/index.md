@@ -9,7 +9,9 @@ Freelance AI engineer and architect with a proven track-record in agentic system
 ## Industry Experience
 
 
-### [Gradion AI](https://gradion.ai) - Agentic AI & ML solutions
+### Agentic AI & ML solutions
+
+**Company:** [Gradion AI](https://gradion.ai)
 
 **Roles:** Founder
 
@@ -21,7 +23,9 @@ We draw from 20+ years of experience in production-grade software development, w
 
 
 
-### [Canto](https://www.canto.com/) - AI-powered visual search platform
+### AI-powered visual search platform
+
+**Company:** [Canto](https://www.canto.com/)
 
 **Roles:** Senior Director Machine Learning, Lead Machine Learning Engineer
 
@@ -34,7 +38,9 @@ Development of an AI-powered <a href="https://www.canto.com/product/ai-visual-se
 
 
 
-### [MerlinOne](https://merlinone.com/) - Merlin Accelerated Intelligence (AI) Suite
+### Merlin Accelerated Intelligence (AI) Suite
+
+**Company:** [MerlinOne](https://merlinone.com/)
 
 **Roles:** Director Machine Learning, Lead Machine Learning Engineer
 
@@ -47,7 +53,9 @@ Conception and development of a multimodal, agentic AI search engine with semant
 
 
 
-### [https://martin-krasser.com](https://martin-krasser.com) - Applied machine learning study
+### Applied machine learning study
+
+**Company:** [https://martin-krasser.com](https://martin-krasser.com)
 
 **Roles:** Sabbatical Year
 
@@ -59,7 +67,9 @@ Focused on deep learning and traditional machine learning, supported by a detail
 
 
 
-### [Red Bull Media House](http://www.redbullmediahouse.com/) - Global distribution of a digital asset management system
+### Global distribution of a digital asset management system
+
+**Company:** [Red Bull Media House](http://www.redbullmediahouse.com/)
 
 **Roles:** Distributed Systems Engineer
 
@@ -72,7 +82,9 @@ Global distribution of the data management layer of RBMH's in-house DAM system f
 
 
 
-### [agido GmbH](http://www.agido.com/) - Streaming platform for sports betting applications
+### Streaming platform for sports betting applications
+
+**Company:** [agido GmbH](http://www.agido.com/)
 
 **Roles:** Distributed Systems Engineer
 
@@ -85,7 +97,9 @@ Development of a streaming platform for calculating <a href="https://www.agido.c
 
 
 
-### [Lightbend](http://www.lightbend.com/) - Akka Persistence: actor state persistence via event sourcing
+### Akka Persistence: actor state persistence via event sourcing
+
+**Company:** [Lightbend](http://www.lightbend.com/)
 
 **Roles:** Software Engineer, Software Architect
 
@@ -98,7 +112,9 @@ Development of <a href="https://doc.akka.io/docs/akka/current/persistence.html">
 
 
 
-### [Eligotech BV](http://www.eligotech.com/) - Low-latency, high-throughput e-wallet management web service
+### Low-latency, high-throughput e-wallet management web service
+
+**Company:** [Eligotech BV](http://www.eligotech.com/)
 
 **Roles:** Software Engineer, Software Architect
 
@@ -111,7 +127,9 @@ Developmenent of the persistence layer of an e-wallet management web service for
 
 
 
-### [https://martin-krasser.com](https://martin-krasser.com) - Software development and consulting services
+### Software development and consulting services
+
+**Company:** [https://martin-krasser.com](https://martin-krasser.com)
 
 **Roles:** Independent software engineer and architect
 
@@ -124,7 +142,9 @@ I partner with clients to develop and operate software systems at scale, with a 
 
 
 
-### [InterComponentWare AG](https://icw-global.com/) - E-Health integration platform based on HL7 and IHE standards
+### E-Health integration platform based on HL7 and IHE standards
+
+**Company:** [InterComponentWare AG](https://icw-global.com/)
 
 **Roles:** Lead Software Architect, Senior Software Engineer
 
@@ -136,7 +156,9 @@ Development of the <a href="https://oehf.github.io/ipf-docs/">Open eHealth Integ
 
 
 
-### [LION Bioscience AG](http://www.lionbioscience.com/) - Distributed scientific computing solution for a drug discovery pipeline
+### Distributed scientific computing solution for a drug discovery pipeline
+
+**Company:** [LION Bioscience AG](http://www.lionbioscience.com/)
 
 **Roles:** Senior Software Architect, Senior Software Engineer
 
@@ -148,7 +170,9 @@ Development of a distributed computing solution for integrating chemical analysi
 
 
 
-### [University of Salzburg](http://uni-salzburg.at/), CAME - Ab-initio protein structure prediction
+### Ab-initio protein structure prediction
+
+**Company:** [University of Salzburg](http://uni-salzburg.at/), CAME
 
 **Roles:** Software Developer, Research Assistant
 
@@ -160,7 +184,9 @@ Development of algorithms and software for ab-initio protein structure predictio
 
 
 
-### [Austrian Red Cross](http://www.roteskreuz.at/) - Patient transportation management system
+### Patient transportation management system
+
+**Company:** [Austrian Red Cross](http://www.roteskreuz.at/)
 
 **Roles:** Software Developer
 
