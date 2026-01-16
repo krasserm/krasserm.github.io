@@ -17,7 +17,7 @@ Freelance AI engineer and architect with a proven track-record in agentic system
 
 
 
-We draw from 20+ years of experience in production-grade software development, with 8+ years in AI/ML engineering. Solutions we've built serve thousands of B2B customers worldwide. We are active open source contributors, currently focused on multi-party conversational AI and on code action agents that evolve their own tool libraries.
+We draw from 20+ years of experience in production-grade software development, with 8+ years in AI/ML engineering. Solutions we've built for clients serve thousands of B2B customers worldwide. We are active open source contributors, currently focused on multi-party conversational AI and on code action agents that evolve their own tool libraries.
 
 
 
