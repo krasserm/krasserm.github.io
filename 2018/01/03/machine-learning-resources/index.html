@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#0a0e14">
+    <title>Resources for getting started with ML and DL - Martin Krasser</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/pygments.css">
+    <link rel="alternate" type="application/atom+xml" title="Martin Krasser Feed" href="/feed.xml">
+    
+<script>
+MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="/" class="nav-brand">Martin Krasser</a>
+            <ul class="nav-links">
+                
+                <li><a href="/about/">About</a></li>
+                
+                <li><a href="/">Blog</a></li>
+                
+                <li><a href="/industry/">Industry</a></li>
+                
+                <li><a href="/open-source/">Open Source</a></li>
+                
+                <li><a href="/citations/">Citations</a></li>
+                
+                <li><a href="/stories/">Stories</a></li>
+                
+                <li><a href="/contact/">Contact</a></li>
+                
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="container">
+            
+<article class="post">
+    <header class="post-header">
+        <h1 class="post-title">Resources for getting started with ML and DL</h1>
+        
+        <p class="post-meta">
+            <time datetime="2018-01-03">
+                January 03, 2018
+            </time>
+            
+            <span class="post-author">by Martin Krasser</span>
+            
+        </p>
+    </header>
+
+    <div class="post-content">
+        <p>The following is a collection of resources that I found useful when I started to learn machine learning and deep learning.
+In this post I'm using the term <em>machine learning</em> to refer to classical machine learning and the term <em>deep learning</em> 
+to refer to machine learning with deep neural networks. There are numerous other good resources out there which are not 
+mentioned here. This doesn't mean that I don't like them, it's just that I haven't used them and therefore can't comment 
+on them.</p>
+<h2 id="first-steps">First steps</h2>
+<p>If you are completely new to machine learning I recommend starting with the outstanding Stanford 
+<a href="https://www.coursera.org/learn/machine-learning">Machine Learning course</a> by Andrew Ng. It is easy to follow and covers 
+topics that every machine learning engineer really should know. The course uses Octave (an open source alternative to MATLAB) 
+for programming. Algorithms are implemented from scratch in order to get a better understanding of how they work. The course 
+is also a good preparation for Coursera's <a href="https://www.coursera.org/specializations/deep-learning">Deep Learning specialization</a>.</p>
+<p>After having taken the course I felt the need to learn Python and re-implement the exercises with <a href="http://scikit-learn.org">scikit-learn</a>. 
+Scikit-learn is a Python machine learning library that provides optimized and easy-to-use implementations for all algorithms 
+presented in the course (and much more). I published the results as <a href="https://github.com/krasserm/machine-learning-notebooks">machine-learning-notebooks</a> 
+project on GitHub.</p>
+<p>If you are new to Python, the <a href="https://docs.python.org/3/tutorial/">Python tutorial</a> is a good resource to start with. 
+I also recommend working at least through the <a href="https://docs.scipy.org/doc/numpy-dev/user/quickstart.html">NumPy tutorial</a>, 
+<a href="https://docs.scipy.org/doc/scipy/reference/tutorial/index.html">SciPy tutorial</a>, 
+<a href="http://pandas.pydata.org/pandas-docs/stable/10min.html">Pandas tutorial</a> and 
+<a href="http://matplotlib.org/users/pyplot_tutorial.html">Pyplot tutorial</a> before starting with the 
+<a href="http://scikit-learn.org/stable/tutorial/index.html">scikit-learn tutorials</a>. After having worked through these tutorials 
+you should be prepared for implementing the algorithms presented in the course with scikit-learn.</p>
+<h2 id="further-courses">Further courses</h2>
+<ul>
+<li><a href="https://www.coursera.org/specializations/deep-learning">Deep Learning specialization</a>. This specialization consists of 
+five courses, tought by Andrew Ng, covering deep neural network basics, regularization and optimization as well as models for 
+computer vision and sequences (text, speech, ...). If you enjoyed the quality and accessibility of Andrew's 
+<a href="https://www.coursera.org/learn/machine-learning">Machine Learning course</a> you will probably like this course too. It 
+provides you with the skills needed to follow more advanced deep learning literature, including research papers.  </li>
+</ul>
+<p>The initial programming exercises are in plain Python/NumPy to get a better understanding of how forward 
+and backward propagation work. Models for computer vision are implemented with <a href="https://www.tensorflow.org/">Tensorflow</a> 
+and <a href="https://keras.io/">Keras</a>. Many programming exercises are based on recent research literature from 2014 or newer (ResNet, 
+GoogLeNet, FaceNet, ... and many more). The last course on sequence models wasn't available yet at the time of writing this post. </p>
+<p>A good understanding of statistical inference basics is important to get more out of the machine learning, deep learning 
+and statistics books listed in the next section. If you need a refresher on statistical inference basics then the following 
+courses might be helpful:</p>
+<ul>
+<li>
+<p><a href="https://www.coursera.org/learn/inferential-statistics-intro">Inferential statistics</a>. This course covers the basics of 
+inference for numerical and categorical data, hypothesis testing and statistical tests such as ANOVA and Chi-squared. 
+It follows the <a href="https://en.wikipedia.org/wiki/Frequentist_inference">frequentist approach</a> to statistical inference and 
+is part of the <a href="https://www.coursera.org/specializations/statistics">Statistics with R specialization</a>. The course content 
+(except R basics) is also covered by the freely available book <a href="https://www.openintro.org/stat/textbook.php">OpenIntro Statistics</a>. </p>
+</li>
+<li>
+<p><a href="https://www.coursera.org/learn/bayesian-statistics">Bayesian statistics</a>. Many advanced machine learning and deep 
+learning techniques are based on <a href="https://en.wikipedia.org/wiki/Bayesian_inference">Bayesian inference</a>. This course 
+teaches the basics (Bayes' theorem, conjugate models, Bayesian inference on discrete and continuous data, ...) and compares
+them to the frequentist approach. Other topics like graphical models, approximate inference or sampling methods are not
+covered though. A good companion to this course is the book 
+<a href="https://www.amazon.com/Doing-Bayesian-Data-Analysis-Second/dp/0124058884">Doing Bayesian data analysis</a> (see below). 
+Before taking this course, you should be familiar with the frequentist approach. </p>
+</li>
+</ul>
+<h2 id="books">Books</h2>
+<ul>
+<li>
+<p><a href="https://mitpress.mit.edu/books/machine-learning-0">Machine learning - a probabilistic perspective</a>. A comprehensive 
+book on classical machine learning techniques. Its a math-heavy book that also contains many useful examples as well as
+exercises at the end of each chapter. All concepts and methods are explained in an excellent and easy to understand way, 
+even for machine learning beginners, given basic familiarity with multivariate calculus, probability and linear algebra. 
+The book focuses on Bayesian methods for machine learning but also covers the frequentist approach to some extend. Code 
+examples are in MATLAB but there is also a (limited) <a href="https://github.com/probml/pyprobml">Python port</a> available.  </p>
+</li>
+<li>
+<p><a href="http://www.deeplearningbook.org/">Deep learning</a>. A comprehensive book on deep learning. Part 1 covers 
+machine learning basics. Part 2 covers deep neural network basics, convolutional neural networks (CNNs) and recurrent 
+neural networks (RNNs). The content is comparable to that of the 
+<a href="https://www.coursera.org/specializations/deep-learning">Deep Learning specialization</a> but is presented in a more academic 
+way. Part 3 covers more advanced topics such as autoencoders, representation learning, graphical model and deep generative 
+models. Be prepared to use <a href="https://mitpress.mit.edu/books/machine-learning-0">Machine learning - a probabilistic perspective</a>
+as a companion ;-) The <em>Deep learning</em> book is not for practitioners but a great theoretical overview of the field.    </p>
+</li>
+<li>
+<p><a href="http://shop.oreilly.com/product/0636920052289.do">Hands-on machine learning with scikit-learn and Tensorflow</a>. If 
+you've already taken a first machine learning and deep learning course, this book is for you. It is packed with useful 
+code examples and guidelines for real-world machine learning projects. Part 1 focuses on the implementation of classical
+machine learning models with scikit-learn. Part 2 focuses on deep learning with Tensorflow. In addition to CNNs and RNNs 
+this part also has chapters on autoencoders and reinforcement learning. Both, theory and code examples are presented 
+in a clear and concise way.  </p>
+</li>
+<li>
+<p><a href="https://www.manning.com/books/deep-learning-with-python">Deep learning with Python</a>. Another excellent deep learning 
+book for practitioners with code examples in Keras. Keras is a deep learning framework with a higher-level API than 
+Tensorflow (and other frameworks) and aims to enable rapid prototyping. In addition to a good coverage of CNNs 
+and RNNs this book also has chapters on advanced deep learning best practices and generative deep learning. It is a good 
+complement to part 2 of the previous book. If you are not sure which one is better to start with, I recommend this one as 
+first steps are easier with Keras than with Tensorflow and you can get very far with Keras alone.  </p>
+</li>
+<li>
+<p><a href="http://www.springer.com/book/9781461471370">Introduction to statistical learning</a>. If 
+<a href="https://mitpress.mit.edu/books/machine-learning-0">Machine learning - a probabilistic perspective</a> is too math-heavy for 
+you, this book is a good alternative. It covers statistical learning basics with a minimum of math but has the focus on the
+frequentist approach. It is also an excellent introduction to R. If you want to go deeper after having read this book, 
+both in terms of mathematical details and number of approaches, I recommend 
+<a href="http://www.springer.com/book/9780387848570">The elements of statistical learning</a>. Both books are also freely available 
+as PDF (<a href="http://www-bcf.usc.edu/~gareth/ISL/ISLR%20Seventh%20Printing.pdf">ISL</a>, 
+<a href="https://web.stanford.edu/~hastie/ElemStatLearn/printings/ESLII_print12.pdf">ESL</a>).    </p>
+</li>
+<li>
+<p><a href="https://www.amazon.com/Doing-Bayesian-Data-Analysis-Second/dp/0124058884">Doing Bayesian data analysis</a>. An excellent 
+introduction to Bayesian statistics that prepares you well for reading more advanced literature in this field. It covers 
+the Bayesian analogues to traditional statistical tests (t, ANOVA, Chi-squared, ...) and to multiple linear and logistic 
+regression among many others. It requires only a basic knowledge of calculus. For me, the book was a helpful companion to 
+<a href="https://mitpress.mit.edu/books/machine-learning-0">Machine learning - a probabilistic perspective</a> and 
+<a href="http://www.deeplearningbook.org/">Deep learning</a>.  Code examples are written in R using packages 
+<a href="http://mcmc-jags.sourceforge.net/">JAGS</a> and <a href="http://mc-stan.org/users/interfaces/rstan">Stan</a> for MCMC sampling. There's 
+also a <a href="https://github.com/JWarmenhoven/DBDA-python">Python port</a> available using <a href="http://docs.pymc.io/">PyMC3</a>.  </p>
+</li>
+<li>
+<p><a href="http://shop.oreilly.com/product/0636920033400.do">Data Science from Scratch</a>. This book is about data science in its 
+most distilled form. Don't expect too much depth here but a great overview of data science topics such as probability and 
+statistics, data preparation and machine learning basics. The book focuses on understanding fundamental data science tools 
+by implementing them in plain Python from scratch. Common statistical and machine learning libraries are not used here 
+but each chapter contains references to libraries you should actually use for your own projects. Each chapter also contains 
+useful links for further reading.</p>
+</li>
+</ul>
+<p>There is also a large number of useful blogs and survey papers about machine learning which I'll leave for a separate 
+post. I nevertheless hope you find this a useful guide for getting started with machine learning.</p>
+    </div>
+
+    <nav class="post-nav">
+        
+        <a href="/2016/10/19/operation-based-crdt-framework/" class="post-nav-link post-nav-older">
+            <span class="post-nav-label">&larr; Older</span>
+            <span class="post-nav-title">A service framework for operation-based CRDTs</span>
+        </a>
+        
+        
+        <a href="/2018/02/07/deep-face-recognition/" class="post-nav-link post-nav-newer">
+            <span class="post-nav-label">Newer &rarr;</span>
+            <span class="post-nav-title">Deep face recognition with Keras, Dlib and OpenCV</span>
+        </a>
+        
+    </nav>
+
+    
+    <section class="comments">
+        <h2>Comments</h2>
+        <div id="disqus_thread"></div>
+    </section>
+    
+</article>
+
+        </div>
+    </main>
+
+    
+    <footer class="footer">
+        <div class="container">
+            
+<ul class="footer-social-links">
+    <li>
+        <a href="https://linkedin.com/in/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+    <rect x="2" y="9" width="4" height="12"/>
+    <circle cx="4" cy="4" r="2"/>
+</svg>
+
+            linkedin.com/in/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/gradion-ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/gradion-ai
+        </a>
+    </li>
+    <li>
+        <a href="https://gradion.ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
+    <path d="M9 22v-4h6v4"/>
+    <path d="M8 6h.01"/><path d="M16 6h.01"/>
+    <path d="M12 6h.01"/>
+    <path d="M12 10h.01"/><path d="M12 14h.01"/>
+    <path d="M16 10h.01"/><path d="M16 14h.01"/>
+    <path d="M8 10h.01"/><path d="M8 14h.01"/>
+</svg>
+
+            gradion.ai
+        </a>
+    </li>
+    <li>
+        <a href="/llms.txt">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 8V4H8"/>
+    <rect width="16" height="12" x="4" y="8" rx="2"/>
+    <path d="M2 14h2"/>
+    <path d="M20 14h2"/>
+    <path d="M15 13v2"/>
+    <path d="M9 13v2"/>
+</svg>
+
+            llms.txt
+        </a>
+    </li>
+    <li>
+        <a href="/feed.xml">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 11a9 9 0 0 1 9 9"/>
+    <path d="M4 4a16 16 0 0 1 16 16"/>
+    <circle cx="5" cy="19" r="1"/>
+</svg>
+
+            feed.xml
+        </a>
+    </li>
+</ul>
+
+            <p class="footer-copyright">// Martin Krasser, 2026</p>
+        </div>
+    </footer>
+
+    <script>
+    document.querySelectorAll('a[href^="http"]').forEach(link => {
+        if (!link.href.startsWith(location.origin)) {
+            link.target = '_blank';
+            link.rel = 'noopener';
+        }
+    });
+    </script>
+    
+
+<script>
+var disqus_config = function () {
+    this.page.url = 'https://krasserm.github.io/2018/01/03/machine-learning-resources/';
+    this.page.identifier = '/2018/01/03/machine-learning-resources/';
+};
+(function() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://krasserm.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+</body>
+</html>

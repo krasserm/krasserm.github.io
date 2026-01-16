@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#0a0e14">
+    <title>Single image super-resolution with deep neural networks - Martin Krasser</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/pygments.css">
+    <link rel="alternate" type="application/atom+xml" title="Martin Krasser Feed" href="/feed.xml">
+    
+<script>
+MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="/" class="nav-brand">Martin Krasser</a>
+            <ul class="nav-links">
+                
+                <li><a href="/about/">About</a></li>
+                
+                <li><a href="/">Blog</a></li>
+                
+                <li><a href="/industry/">Industry</a></li>
+                
+                <li><a href="/open-source/">Open Source</a></li>
+                
+                <li><a href="/citations/">Citations</a></li>
+                
+                <li><a href="/stories/">Stories</a></li>
+                
+                <li><a href="/contact/">Contact</a></li>
+                
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="container">
+            
+<article class="post">
+    <header class="post-header">
+        <h1 class="post-title">Single image super-resolution with deep neural networks</h1>
+        
+        <p class="post-meta">
+            <time datetime="2019-09-04">
+                September 04, 2019
+            </time>
+            
+            <span class="post-author">by Martin Krasser</span>
+            
+        </p>
+    </header>
+
+    <div class="post-content">
+        <p><em>Sources:</em></p>
+<ul>
+<li><em><a href="https://nbviewer.jupyter.org/github/krasserm/super-resolution/blob/master/article.ipynb">Notebook</a></em></li>
+<li><em><a href="https://github.com/krasserm/super-resolution">Repository</a></em></li>
+</ul>
+<p>This article is an introduction to single image super-resolution. It covers some important developments in recent years and shows their implementation in Tensorflow 2.0. The primary focus is on specialized residual network architectures and generative adversarial networks (GANs) for fine-tuning super-resolution models. </p>
+<p>Super-resolution is the process of recovering a high-resolution (HR) image from a low-resolution (LR) image. We will refer to a recovered HR image as <em>super-resolved image</em> or <em>SR image</em>. Super-resolution is an ill-posed problem since a large number of solutions exist for a single pixel in an LR image. Simple approaches like bilinear or bicubic interpolation use only local information in an LR image to compute pixel values in the corresponding SR image. </p>
+<p>Supervised machine learning approaches, on the other hand, learn mapping functions from LR images to HR images from a large number of examples. Super-resolution models are trained with LR images as input and HR images as target. The mapping function learned by these models is the inverse of a downgrade function that transforms HR images to LR images. Downgrade functions can be known or unknown. </p>
+<p>Known downgrade functions are used in image processing pipelines, for example, like bicubic downsampling. With known downgrade functions, LR images can be automatically obtained from HR images. This allows the creation of large training datasets from a vast amount of freely available HR images which enables <a href="https://hackernoon.com/self-supervised-learning-gets-us-closer-to-autonomous-learning-be77e6c86b5a">self-supervised learning</a>.</p>
+<p>If the downgrade function is unknown, supervised model training requires existing LR and HR image pairs to be available which can be difficult to collect. Alternatively, unsupervised learning methods can be used that learn to approximate the downgrade function from unpaired LR and HR images. In this article though, we will use a known downgrade function (bicubic downsampling) and follow a supervised learning approach. </p>
+<p>A more detailed overview on single image super-resolution is given in <a href="https://arxiv.org/abs/1902.06068">these</a> <a href="https://arxiv.org/abs/1904.07523">papers</a>. A higher-level training API for the example code in this article is implemented in <a href="https://github.com/krasserm/super-resolution">this repository</a>.</p>
+<h2 id="high-level-architecture">High-level architecture</h2>
+<p>Many state-of-the-art super-resolution models learn most of the mapping function in LR space followed by one or more upsampling layers at the end of the network. This is called <em>post-upsampling SR</em> in Fig. 1. Upsampling layers are learnable and trained together with the preceding convolution layers in an end-to-end manner. </p>
+<center><img src="/img/2019-09-04/figure_1.png"></center>
+<center>Fig. 1. Upsampling layers positions.</center>
+
+<p>Earlier approaches first upsampled the LR image with a pre-defined upsampling operation and then learned the mapping in HR space (<em>pre-upsampling SR</em>). A disadvantage of this approach is that more parameters per layer are required which leads to higher computational costs and limits the construction of deeper neural networks. </p>
+<h3 id="residual-design">Residual design</h3>
+<p>Super-resolution requires that most of the information contained in an LR image must be preserved in the SR image. Super-resolution models therefore mainly learn the residuals between LR and HR images. <a href="https://en.wikipedia.org/wiki/Residual_neural_network">Residual network designs</a> are therefore of high importance: identity information is conveyed via skip connections whereas reconstruction of high frequency content is done on the main path of the network.</p>
+<center><img src="/img/2019-09-04/figure_2.png"></center>
+<center>Fig. 2. Global skip connection.</center>
+
+<p>Fig. 2. shows a global skip connection over several layers. These layers are often residual blocks as in <a href="https://arxiv.org/abs/1512.03385">ResNet</a> or specialized variants (see sections <a href="#edsr">EDSR</a> and <a href="#wdsr">WDSR</a>). Local skip connections in residual blocks make the network easier to optimize and therefore support the construction of deeper networks.</p>
+<h3 id="upsampling-layer">Upsampling layer</h3>
+<p>The upsampling layer used in this article is a <a href="https://arxiv.org/abs/1609.05158">sub-pixel convolution</a> layer. Given an input of size $H \times W \times C$ and an upsampling factor $s$, the sub-pixel convolution layer first creates a representation of size $H \times W \times s^2C$ via a convolution operation and then reshapes it to $sH \times sW \times C$, completing the upsampling operation. The result is an output spatially scaled by factor $s$.</p>
+<center><img src="/img/2019-09-04/figure_3.png"></center>
+<center>Fig. 3. Sub-pixel convolution.</center>
+
+<p>An alternative are <a href="https://towardsdatascience.com/types-of-convolutions-in-deep-learning-717013397f4d">transposed convolution</a> layers. Transposed convolutions can be learned too but have the disadvantage that they have a smaller receptive field than sub-pixel convolutions and can therefore process less contextual information which often results in less accurate predictions.</p>
+<h2 id="super-resolution-models">Super-resolution models</h2>
+<h3 id="edsr">EDSR</h3>
+<p>One super-resolution model that follows this high-level architecture is described in the paper <a href="https://arxiv.org/abs/1707.02921">Enhanced Deep Residual Networks for Single Image Super-Resolution</a> (EDSR). It is a winner of the <a href="http://www.vision.ee.ethz.ch/ntire17/">NTIRE 2017</a> super-resolution challenge. Here's an overview of the EDSR architecture:</p>
+<center><img src="/img/2019-09-04/figure_4.png"></center>
+<center>Fig. 4. EDSR architecture.</center>
+
+<p>Its residual block design differs from that of ResNet. Batch normalization layers have been removed together with the final ReLU activation as shown on the right side of Fig. 5.  </p>
+<center><img src="/img/2019-09-04/figure_5.png"></center>
+<center>Fig. 5. Residual block design in ResNet (left) and in EDSR (right).</center>
+
+<p>The EDSR authors argue that batch normalization loses scale information of images and reduces the range flexibility of activations. Removal of batch normalization layers not only increases super-resolution performance but also reduces GPU memory up to 40% so that significantly larger models can be trained.</p>
+<p>EDSR uses a single sub-pixel upsampling layer for super-resolution scales (i.e. upsampling factors) $\times 2$ and $\times 3$ and two upsampling layers for scale $\times 4$. The following <code>edsr</code> function implements the EDSR model with Tensorflow 2.0. The default arguments correspond to the EDSR baseline described in the paper. Model training is described further below.</p>
+<div class="highlight"><pre><code><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tensorflow</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tf</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow.keras.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">Add</span><span class="p">,</span> <span class="n">Conv2D</span><span class="p">,</span> <span class="n">Input</span><span class="p">,</span> <span class="n">Lambda</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow.keras.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
+
+<span class="n">DIV2K_RGB_MEAN</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.4488</span><span class="p">,</span> <span class="mf">0.4371</span><span class="p">,</span> <span class="mf">0.4040</span><span class="p">])</span> <span class="o">*</span> <span class="mi">255</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">edsr</span><span class="p">(</span><span class="n">scale</span><span class="p">,</span> <span class="n">num_filters</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">num_res_blocks</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">res_block_scaling</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Creates an EDSR model.&quot;&quot;&quot;</span>
+    <span class="n">x_in</span> <span class="o">=</span> <span class="n">Input</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">Lambda</span><span class="p">(</span><span class="n">normalize</span><span class="p">)(</span><span class="n">x_in</span><span class="p">)</span>
+
+    <span class="n">x</span> <span class="o">=</span> <span class="n">b</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="n">num_filters</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_res_blocks</span><span class="p">):</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">res_block</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">num_filters</span><span class="p">,</span> <span class="n">res_block_scaling</span><span class="p">)</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="n">num_filters</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">)(</span><span class="n">b</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">Add</span><span class="p">()([</span><span class="n">x</span><span class="p">,</span> <span class="n">b</span><span class="p">])</span>
+
+    <span class="n">x</span> <span class="o">=</span> <span class="n">upsample</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">num_filters</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="n">x</span> <span class="o">=</span> <span class="n">Lambda</span><span class="p">(</span><span class="n">denormalize</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Model</span><span class="p">(</span><span class="n">x_in</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;edsr&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">res_block</span><span class="p">(</span><span class="n">x_in</span><span class="p">,</span> <span class="n">filters</span><span class="p">,</span> <span class="n">scaling</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Creates an EDSR residual block.&quot;&quot;&quot;</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="n">filters</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">)(</span><span class="n">x_in</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="n">filters</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">scaling</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">Lambda</span><span class="p">(</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">t</span> <span class="o">*</span> <span class="n">scaling</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">Add</span><span class="p">()([</span><span class="n">x_in</span><span class="p">,</span> <span class="n">x</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">x</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">upsample</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">num_filters</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">upsample_1</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">factor</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sub-pixel convolution.&quot;&quot;&quot;</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">Conv2D</span><span class="p">(</span><span class="n">num_filters</span> <span class="o">*</span> <span class="p">(</span><span class="n">factor</span> <span class="o">**</span> <span class="mi">2</span><span class="p">),</span> <span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Lambda</span><span class="p">(</span><span class="n">pixel_shuffle</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">factor</span><span class="p">))(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">scale</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">upsample_1</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;conv2d_1_scale_2&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">scale</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">upsample_1</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;conv2d_1_scale_3&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">scale</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">upsample_1</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;conv2d_1_scale_2&#39;</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">upsample_1</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;conv2d_2_scale_2&#39;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">x</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">pixel_shuffle</span><span class="p">(</span><span class="n">scale</span><span class="p">):</span>
+    <span class="k">return</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">depth_to_space</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">normalize</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">DIV2K_RGB_MEAN</span><span class="p">)</span> <span class="o">/</span> <span class="mf">127.5</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">denormalize</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="o">*</span> <span class="mf">127.5</span> <span class="o">+</span> <span class="n">DIV2K_RGB_MEAN</span>
+</code></pre></div>
+<h3 id="wdsr">WDSR</h3>
+<p>Another super-resolution model is a derivative of EDSR and is described in the paper <a href="https://arxiv.org/abs/1808.08718">Wide Activation for Efficient and Accurate Image Super-Resolution</a>, a winner in the realistic tracks of the <a href="http://www.vision.ee.ethz.ch/ntire18/">NTIRE 2018</a> super-resolution challenge. It makes further changes to the residual block design by reducing the number of channels on the identity mapping path and increasing the number of channels in each residual block without increasing the total number of parameters. The residual block design of their WDSR-A and WDSR-B models is shown in Fig. 6, a Tensorflow 2.0 implementation is available <a href="https://github.com/krasserm/super-resolution/blob/master/model/wdsr.py">here</a>.</p>
+<center><img src="/img/2019-09-04/figure_6.png"></center>
+<center>Fig. 6. Residual block design in EDSR (left), WDSR-A (middle) and WDSR-B (right).</center>
+
+<p>The authors conjecture that increasing the number of channels before ReLU in residual blocks allows more information to pass through the activation function which further increases model performance. They also found that the implementation of <a href="https://arxiv.org/abs/1602.07868">weight normalization</a> further eases training and convergence of deeper models so that they could use learning rates that are an order of magnitude higher compared to those used in EDSR training.</p>
+<p>This is not surprising as the removal of weight normalization layers in EDSR makes it more difficult to train deeper models. Weight normalization is just a reparameterization of neural network weights that decouples the direction of weight vectors from their magnitude which improves the conditioning of the optimization problem and speeds up convergence. </p>
+<p>Data-dependent initialization of weight normalization layer parameters is not done though. It would rescale features similar to batch normalization which would decrease model performance as has been shown in the EDSR paper and confirmed in the WDSR paper. On the other hand, using weight normalization alone without data-dependent initialization leads to better accuracy of deeper WDSR models.</p>
+<h2 id="model-training">Model training</h2>
+<p>If you want to skip running trained code in this section, you can download pre-trained models <a href="https://martin-krasser.de/sisr/weights-article-2.tar.gz">here</a> and use in the <a href="#results">next section</a> for generating SR images from LR images. </p>
+<h3 id="data">Data</h3>
+<p>For training EDSR and WDSR models we will use the <a href="https://data.vision.ee.ethz.ch/cvl/DIV2K/">DIV2K</a> dataset. It is a dataset of LR and HR image pairs with a large diversity of contents. LR images are available for different downgrade functions. We will use <code>bicubic</code> downsampling here. There are 800 training HR images and 100 validation HR images. </p>
+<p>For data augmentation, random crops, flips and rotations are made to get a large number of different training images. A <code>DIV2K</code> <a href="https://github.com/krasserm/super-resolution/blob/master/README.md#div2k-dataset">data loader</a> automatically downloads DIV2K images for given scale and downgrade function and provides LR and HR image pairs as <code>tf.data.Dataset</code>.  </p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DIV2K</span>
+
+<span class="n">train</span> <span class="o">=</span> <span class="n">DIV2K</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">downgrade</span><span class="o">=</span><span class="s1">&#39;bicubic&#39;</span><span class="p">,</span> <span class="n">subset</span><span class="o">=</span><span class="s1">&#39;train&#39;</span><span class="p">)</span>
+<span class="n">train_ds</span> <span class="o">=</span> <span class="n">train</span><span class="o">.</span><span class="n">dataset</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">random_transform</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="pixel-loss">Pixel loss</h3>
+<p>The pixel-wise $L^2$ loss and the pixel-wise $L^1$ loss are frequently used loss functions for training super-resolution models. They measure the pixel-wise mean squared error and the pixel-wise mean absolute error, respectively, between an HR image $I^{HR}$ and an SR image $I^{SR}$:</p>
+<p>$$
+\begin{align*}
+\mathcal{L}_{pixel, L^2}(I^{HR}, I^{SR}) &= {1 \over {HWC}} 
+\lVert I^{HR} - I^{SR} \rVert_2^2
+\tag{1} \\
+\mathcal{L}_{pixel, L^1}(I^{HR}, I^{SR}) &= {1 \over {HWC}} 
+\lVert I^{HR} - I^{SR} \rVert_1
+\tag{2}
+\end{align*}
+$$</p>
+<p>where $H$, $W$ and $C$ are the height, width and number of channels of the image, respectively. The pixel-wise $L^2$ loss directly optimizes <a href="https://en.wikipedia.org/wiki/Peak_signal-to-noise_ratio">PSNR</a>, an evaluation metric often used in super-resolution competitions. Experiments have shown that the pixel-wise $L^1$ loss can sometimes achieve even better performance and is therefore used for EDSR and WDSR training.</p>
+<div class="highlight"><pre><code><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow.keras.optimizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">Adam</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow.keras.optimizers.schedules</span><span class="w"> </span><span class="kn">import</span> <span class="n">PiecewiseConstantDecay</span>
+
+<span class="c1"># Create directory for saving model weights</span>
+<span class="n">weights_dir</span> <span class="o">=</span> <span class="s1">&#39;weights/article&#39;</span>
+<span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">weights_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># EDSR baseline as described in the EDSR paper (1.52M parameters)</span>
+<span class="n">model_edsr</span> <span class="o">=</span> <span class="n">edsr</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">num_res_blocks</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+
+<span class="c1"># Adam optimizer with a scheduler that halfs learning rate after 200,000 steps</span>
+<span class="n">optim_edsr</span> <span class="o">=</span> <span class="n">Adam</span><span class="p">(</span><span class="n">learning_rate</span><span class="o">=</span><span class="n">PiecewiseConstantDecay</span><span class="p">(</span><span class="n">boundaries</span><span class="o">=</span><span class="p">[</span><span class="mi">200000</span><span class="p">],</span> <span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="mf">1e-4</span><span class="p">,</span> <span class="mf">5e-5</span><span class="p">]))</span>
+
+<span class="c1"># Compile and train model for 300,000 steps with L1 pixel loss</span>
+<span class="n">model_edsr</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="n">optim_edsr</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="s1">&#39;mean_absolute_error&#39;</span><span class="p">)</span>
+<span class="n">model_edsr</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_ds</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+
+<span class="c1"># Save model weights</span>
+<span class="n">model_edsr</span><span class="o">.</span><span class="n">save_weights</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">weights_dir</span><span class="p">,</span> <span class="s1">&#39;weights-edsr-16-x4.h5&#39;</span><span class="p">))</span>
+</code></pre></div>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">model.wdsr</span><span class="w"> </span><span class="kn">import</span> <span class="n">wdsr_b</span>
+
+<span class="c1"># Custom WDSR B model (0.62M parameters)</span>
+<span class="n">model_wdsr</span> <span class="o">=</span> <span class="n">wdsr_b</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">num_res_blocks</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
+
+<span class="c1"># Adam optimizer with a scheduler that halfs learning rate after 200,000 steps</span>
+<span class="n">optim_wdsr</span> <span class="o">=</span> <span class="n">Adam</span><span class="p">(</span><span class="n">learning_rate</span><span class="o">=</span><span class="n">PiecewiseConstantDecay</span><span class="p">(</span><span class="n">boundaries</span><span class="o">=</span><span class="p">[</span><span class="mi">200000</span><span class="p">],</span> <span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="mf">1e-3</span><span class="p">,</span> <span class="mf">5e-4</span><span class="p">]))</span>
+
+<span class="c1"># Compile and train model for 300,000 steps with L1 pixel loss</span>
+<span class="n">model_wdsr</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="n">optim_wdsr</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="s1">&#39;mean_absolute_error&#39;</span><span class="p">)</span>
+<span class="n">model_wdsr</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_ds</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+
+<span class="c1"># Save weights</span>
+<span class="n">model_wdsr</span><span class="o">.</span><span class="n">save_weights</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">weights_dir</span><span class="p">,</span> <span class="s1">&#39;weights-wdsr-b-32-x4.h5&#39;</span><span class="p">))</span>
+</code></pre></div>
+<p>A major problem with pixel-wise loss functions is that they lead to poor perceptual quality. Generated SR images often lack high-frequency content, realistic textures and are perceived blurry. This problem is addressed with perceptual loss functions.</p>
+<h3 id="perceptual-loss">Perceptual loss</h3>
+<p>A milestone paper for generating SR images with better perceived quality is <a href="https://arxiv.org/abs/1609.04802">Photo-Realistic Single Image Super-Resolution Using a Generative Adversarial Network</a> (SRGAN). The authors use a perceptual loss function composed of a <em>content loss</em> and an <em>adversarial loss</em>. The content loss compares deep features extracted from SR and HR images with a pre-trained <a href="https://arxiv.org/abs/1409.1556">VGG network</a> $\phi$</p>
+<p>$$
+\mathcal{L}_{content}(I^{HR}, I^{SR}; \phi, l) = {1 \over {H_l W_l C_l}} 
+\lVert \phi_l(I^{HR}) - \phi_l(I^{SR}) \rVert_2^2
+\tag{3}
+$$</p>
+<p>were $\phi_l(I)$ is the feature map at layer $l$ and $H_l$, $W_l$ and $C_l$ are the height, width and number of channels of that feature map, respectively. They also train their super-resolution model as generator $G$ in a <a href="https://arxiv.org/abs/1406.2661">generative adversarial network</a> (GAN). The GAN descriminator $D$ is optimized for descriminating SR from HR images whereas the generator is optimized for generating more realistic SR images in order to fool the discriminator. They combine the generator loss</p>
+<p>$$
+\mathcal{L}_{generator}(I^{LR}; G, D) = 
+- \log D(G(I^{LR}))
+\tag{4}
+$$</p>
+<p>with the content loss to a perceptual loss which is used as optimization target for super-resolution model training:</p>
+<p>$$
+\mathcal{L}_{perceptual} = \mathcal{L}_{content} + 10^{-3} \mathcal{L}_{generator}
+\tag{5}
+$$</p>
+<p>Instead of training the super-resolution model i.e. the generator from scratch in a GAN, they pre-train it with a pixel-wise loss and fine-tune the model with a perceptual loss. The SRGAN paper uses <em>SRResNet</em> as super-resolution model, a predecessor of <a href="#edsr">EDSR</a>.</p>
+<p>I found in experiments that the SRGAN approach also works very well for fine-tuning EDSR and WDSR models. The following example fine-tunes an EDSR baseline model that was pre-trained with a pixel-wise $L^1$ loss. The definition of the SRGAN discriminator is <a href="https://github.com/krasserm/super-resolution/blob/f47a912d9540f2aa74d8c829ae8262b52776162e/model/srgan.py#L60">here</a>.</p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">model</span><span class="w"> </span><span class="kn">import</span> <span class="n">srgan</span>
+
+<span class="c1"># Used in content_loss</span>
+<span class="n">mean_squared_error</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">losses</span><span class="o">.</span><span class="n">MeanSquaredError</span><span class="p">()</span>
+
+<span class="c1"># Used in generator_loss and discriminator_loss</span>
+<span class="n">binary_cross_entropy</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">losses</span><span class="o">.</span><span class="n">BinaryCrossentropy</span><span class="p">(</span><span class="n">from_logits</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="c1"># Model that computes the feature map after the 4th convolution </span>
+<span class="c1"># before the 5th max-pooling layer in VGG19. This is layer 20 in</span>
+<span class="c1"># the corresponding Keras model.</span>
+<span class="n">vgg</span> <span class="o">=</span> <span class="n">srgan</span><span class="o">.</span><span class="n">vgg_54</span><span class="p">()</span>
+
+<span class="c1"># EDSR model used as generator in SRGAN</span>
+<span class="n">generator</span> <span class="o">=</span> <span class="n">edsr</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">num_res_blocks</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">generator</span><span class="o">.</span><span class="n">load_weights</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">weights_dir</span><span class="p">,</span> <span class="s1">&#39;weights-edsr-16-x4.h5&#39;</span><span class="p">))</span>
+
+<span class="c1"># SRGAN discriminator</span>
+<span class="n">discriminator</span> <span class="o">=</span> <span class="n">srgan</span><span class="o">.</span><span class="n">discriminator</span><span class="p">()</span>
+
+<span class="c1"># Optmizers for generator and discriminator. SRGAN will be trained for</span>
+<span class="c1"># 200,000 steps and learning rate is reduced from 1e-4 to 1e-5 after</span>
+<span class="c1"># 100,000 steps</span>
+<span class="n">schedule</span> <span class="o">=</span> <span class="n">PiecewiseConstantDecay</span><span class="p">(</span><span class="n">boundaries</span><span class="o">=</span><span class="p">[</span><span class="mi">100000</span><span class="p">],</span> <span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="mf">1e-4</span><span class="p">,</span> <span class="mf">1e-5</span><span class="p">])</span>
+<span class="n">generator_optimizer</span> <span class="o">=</span> <span class="n">Adam</span><span class="p">(</span><span class="n">learning_rate</span><span class="o">=</span><span class="n">schedule</span><span class="p">)</span>
+<span class="n">discriminator_optimizer</span> <span class="o">=</span> <span class="n">Adam</span><span class="p">(</span><span class="n">learning_rate</span><span class="o">=</span><span class="n">schedule</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">generator_loss</span><span class="p">(</span><span class="n">sr_out</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">binary_cross_entropy</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">sr_out</span><span class="p">),</span> <span class="n">sr_out</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">discriminator_loss</span><span class="p">(</span><span class="n">hr_out</span><span class="p">,</span> <span class="n">sr_out</span><span class="p">):</span>
+    <span class="n">hr_loss</span> <span class="o">=</span> <span class="n">binary_cross_entropy</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">hr_out</span><span class="p">),</span> <span class="n">hr_out</span><span class="p">)</span>
+    <span class="n">sr_loss</span> <span class="o">=</span> <span class="n">binary_cross_entropy</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">sr_out</span><span class="p">),</span> <span class="n">sr_out</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">hr_loss</span> <span class="o">+</span> <span class="n">sr_loss</span>
+
+<span class="nd">@tf</span><span class="o">.</span><span class="n">function</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">content_loss</span><span class="p">(</span><span class="n">hr</span><span class="p">,</span> <span class="n">sr</span><span class="p">):</span>
+    <span class="n">sr</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">applications</span><span class="o">.</span><span class="n">vgg19</span><span class="o">.</span><span class="n">preprocess_input</span><span class="p">(</span><span class="n">sr</span><span class="p">)</span>
+    <span class="n">hr</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">applications</span><span class="o">.</span><span class="n">vgg19</span><span class="o">.</span><span class="n">preprocess_input</span><span class="p">(</span><span class="n">hr</span><span class="p">)</span>
+    <span class="n">sr_features</span> <span class="o">=</span> <span class="n">vgg</span><span class="p">(</span><span class="n">sr</span><span class="p">)</span> <span class="o">/</span> <span class="mf">12.75</span>
+    <span class="n">hr_features</span> <span class="o">=</span> <span class="n">vgg</span><span class="p">(</span><span class="n">hr</span><span class="p">)</span> <span class="o">/</span> <span class="mf">12.75</span>
+    <span class="k">return</span> <span class="n">mean_squared_error</span><span class="p">(</span><span class="n">hr_features</span><span class="p">,</span> <span class="n">sr_features</span><span class="p">)</span>
+
+<span class="nd">@tf</span><span class="o">.</span><span class="n">function</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">train_step</span><span class="p">(</span><span class="n">lr</span><span class="p">,</span> <span class="n">hr</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;SRGAN training step.</span>
+
+<span class="sd">    Takes an LR and an HR image batch as input and returns</span>
+<span class="sd">    the computed perceptual loss and discriminator loss.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">GradientTape</span><span class="p">()</span> <span class="k">as</span> <span class="n">gen_tape</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">GradientTape</span><span class="p">()</span> <span class="k">as</span> <span class="n">disc_tape</span><span class="p">:</span>
+        <span class="n">lr</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">lr</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">hr</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">hr</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+        <span class="c1"># Forward pass</span>
+        <span class="n">sr</span> <span class="o">=</span> <span class="n">generator</span><span class="p">(</span><span class="n">lr</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">hr_output</span> <span class="o">=</span> <span class="n">discriminator</span><span class="p">(</span><span class="n">hr</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">sr_output</span> <span class="o">=</span> <span class="n">discriminator</span><span class="p">(</span><span class="n">sr</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Compute losses</span>
+        <span class="n">con_loss</span> <span class="o">=</span> <span class="n">content_loss</span><span class="p">(</span><span class="n">hr</span><span class="p">,</span> <span class="n">sr</span><span class="p">)</span>
+        <span class="n">gen_loss</span> <span class="o">=</span> <span class="n">generator_loss</span><span class="p">(</span><span class="n">sr_output</span><span class="p">)</span>
+        <span class="n">perc_loss</span> <span class="o">=</span> <span class="n">con_loss</span> <span class="o">+</span> <span class="mf">0.001</span> <span class="o">*</span> <span class="n">gen_loss</span>
+        <span class="n">disc_loss</span> <span class="o">=</span> <span class="n">discriminator_loss</span><span class="p">(</span><span class="n">hr_output</span><span class="p">,</span> <span class="n">sr_output</span><span class="p">)</span>
+
+    <span class="c1"># Compute gradient of perceptual loss w.r.t. generator weights </span>
+    <span class="n">gradients_of_generator</span> <span class="o">=</span> <span class="n">gen_tape</span><span class="o">.</span><span class="n">gradient</span><span class="p">(</span><span class="n">perc_loss</span><span class="p">,</span> <span class="n">generator</span><span class="o">.</span><span class="n">trainable_variables</span><span class="p">)</span>
+    <span class="c1"># Compute gradient of discriminator loss w.r.t. discriminator weights </span>
+    <span class="n">gradients_of_discriminator</span> <span class="o">=</span> <span class="n">disc_tape</span><span class="o">.</span><span class="n">gradient</span><span class="p">(</span><span class="n">disc_loss</span><span class="p">,</span> <span class="n">discriminator</span><span class="o">.</span><span class="n">trainable_variables</span><span class="p">)</span>
+
+    <span class="c1"># Update weights of generator and discriminator</span>
+    <span class="n">generator_optimizer</span><span class="o">.</span><span class="n">apply_gradients</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">gradients_of_generator</span><span class="p">,</span> <span class="n">generator</span><span class="o">.</span><span class="n">trainable_variables</span><span class="p">))</span>
+    <span class="n">discriminator_optimizer</span><span class="o">.</span><span class="n">apply_gradients</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">gradients_of_discriminator</span><span class="p">,</span> <span class="n">discriminator</span><span class="o">.</span><span class="n">trainable_variables</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">perc_loss</span><span class="p">,</span> <span class="n">disc_loss</span>
+
+<span class="n">pls_metric</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">metrics</span><span class="o">.</span><span class="n">Mean</span><span class="p">()</span>
+<span class="n">dls_metric</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">metrics</span><span class="o">.</span><span class="n">Mean</span><span class="p">()</span>
+
+<span class="n">steps</span> <span class="o">=</span> <span class="mi">200000</span>
+<span class="n">step</span> <span class="o">=</span> <span class="mi">0</span>
+
+<span class="c1"># Train SRGAN for 200,000 steps.</span>
+<span class="k">for</span> <span class="n">lr</span><span class="p">,</span> <span class="n">hr</span> <span class="ow">in</span> <span class="n">train_ds</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">steps</span><span class="p">):</span>
+    <span class="n">step</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="n">pl</span><span class="p">,</span> <span class="n">dl</span> <span class="o">=</span> <span class="n">train_step</span><span class="p">(</span><span class="n">lr</span><span class="p">,</span> <span class="n">hr</span><span class="p">)</span>
+    <span class="n">pls_metric</span><span class="p">(</span><span class="n">pl</span><span class="p">)</span>
+    <span class="n">dls_metric</span><span class="p">(</span><span class="n">dl</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">step</span> <span class="o">%</span> <span class="mi">50</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">step</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">steps</span><span class="si">}</span><span class="s1">, perceptual loss = </span><span class="si">{</span><span class="n">pls_metric</span><span class="o">.</span><span class="n">result</span><span class="p">()</span><span class="si">:</span><span class="s1">.4f</span><span class="si">}</span><span class="s1">, discriminator loss = </span><span class="si">{</span><span class="n">dls_metric</span><span class="o">.</span><span class="n">result</span><span class="p">()</span><span class="si">:</span><span class="s1">.4f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">pls_metric</span><span class="o">.</span><span class="n">reset_states</span><span class="p">()</span>
+        <span class="n">dls_metric</span><span class="o">.</span><span class="n">reset_states</span><span class="p">()</span>
+
+<span class="n">generator</span><span class="o">.</span><span class="n">save_weights</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">weights_dir</span><span class="p">,</span> <span class="s1">&#39;weights-edsr-16-x4-fine-tuned.h5&#39;</span><span class="p">))</span>
+</code></pre></div>
+<p>You can also use the WDSR-B model from the previous section as a drop-in replacement for EDSR by making the following changes in the above code:</p>
+<div class="highlight"><pre><code><span class="c1"># WDSR B model used as generator in SRGAN</span>
+<span class="n">generator</span> <span class="o">=</span> <span class="n">wdsr_b</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">num_res_blocks</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
+<span class="n">generator</span><span class="o">.</span><span class="n">load_weights</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">weights_dir</span><span class="p">,</span> <span class="s1">&#39;weights-wdsr-b-32-x4.h5&#39;</span><span class="p">))</span>
+<span class="c1"># Run SRGAN training ...</span>
+<span class="n">generator</span><span class="o">.</span><span class="n">save_weights</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">weights_dir</span><span class="p">,</span> <span class="s1">&#39;weights-wdsr-b-32-x4-fine-tuned.h5&#39;</span><span class="p">))</span>
+</code></pre></div>
+<h2 id="results">Results</h2>
+<p>If you didn't run training code in the <a href="#model-training">previous section</a>, download model weights <a href="https://martin-krasser.de/sisr/weights-article-2.tar.gz">here</a> and extract the downloaded archive. The trained EDSR model can now be used to create SR images from <a href="https://github.com/krasserm/super-resolution/tree/master/demo">LR images</a>. One can clearly see how fine-tuning with a perceptual loss creates more realistic textures in SR images compared to training with a pixel-wise loss alone.</p>
+<div class="highlight"><pre><code><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">model</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolve_single</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_image</span>
+
+<span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_and_plot</span><span class="p">(</span><span class="n">model_pre_trained</span><span class="p">,</span> <span class="n">model_fine_tuned</span><span class="p">,</span> <span class="n">lr_image_path</span><span class="p">):</span>
+    <span class="n">lr</span> <span class="o">=</span> <span class="n">load_image</span><span class="p">(</span><span class="n">lr_image_path</span><span class="p">)</span>
+
+    <span class="n">sr_pt</span> <span class="o">=</span> <span class="n">resolve_single</span><span class="p">(</span><span class="n">model_pre_trained</span><span class="p">,</span> <span class="n">lr</span><span class="p">)</span>
+    <span class="n">sr_ft</span> <span class="o">=</span> <span class="n">resolve_single</span><span class="p">(</span><span class="n">model_fine_tuned</span><span class="p">,</span> <span class="n">lr</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">))</span>
+
+    <span class="n">model_name</span> <span class="o">=</span> <span class="n">model_pre_trained</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+    <span class="n">images</span> <span class="o">=</span> <span class="p">[</span><span class="n">lr</span><span class="p">,</span> <span class="n">sr_pt</span><span class="p">,</span> <span class="n">sr_ft</span><span class="p">]</span>
+    <span class="n">titles</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;LR&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;SR (</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1">, pixel loss)&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;SR (</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s1">, perceptual loss)&#39;</span><span class="p">]</span>
+    <span class="n">positions</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">position</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">titles</span><span class="p">,</span> <span class="n">positions</span><span class="p">)):</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">position</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xticks</span><span class="p">([])</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">yticks</span><span class="p">([])</span>
+
+<span class="n">weights_dir</span> <span class="o">=</span> <span class="s1">&#39;weights/article&#39;</span>
+</code></pre></div>
+<div class="highlight"><pre><code><span class="n">edsr_pre_trained</span> <span class="o">=</span> <span class="n">edsr</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">num_res_blocks</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">edsr_pre_trained</span><span class="o">.</span><span class="n">load_weights</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">weights_dir</span><span class="p">,</span> <span class="s1">&#39;weights-edsr-16-x4.h5&#39;</span><span class="p">))</span>
+
+<span class="n">edsr_fine_tuned</span> <span class="o">=</span> <span class="n">edsr</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">num_res_blocks</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">edsr_fine_tuned</span><span class="o">.</span><span class="n">load_weights</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">weights_dir</span><span class="p">,</span> <span class="s1">&#39;weights-edsr-16-x4-fine-tuned.h5&#39;</span><span class="p">))</span>
+
+<span class="n">resolve_and_plot</span><span class="p">(</span><span class="n">edsr_pre_trained</span><span class="p">,</span> <span class="n">edsr_fine_tuned</span><span class="p">,</span> <span class="s1">&#39;demo/0869x4-crop.png&#39;</span><span class="p">)</span>
+</code></pre></div>
+<p><img alt="out_13_0" src="/img/2019-09-04/output_13_0.png" /></p>
+<p>Also the fine-tuned WDSR-B model produces SR images with more realistic textures. </p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">model.wdsr</span><span class="w"> </span><span class="kn">import</span> <span class="n">wdsr_b</span>
+
+<span class="n">wdsr_pre_trained</span> <span class="o">=</span> <span class="n">wdsr_b</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">num_res_blocks</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
+<span class="n">wdsr_pre_trained</span><span class="o">.</span><span class="n">load_weights</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">weights_dir</span><span class="p">,</span> <span class="s1">&#39;weights-wdsr-b-32-x4.h5&#39;</span><span class="p">))</span>
+
+<span class="n">wdsr_fine_tuned</span> <span class="o">=</span> <span class="n">wdsr_b</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">num_res_blocks</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
+<span class="n">wdsr_fine_tuned</span><span class="o">.</span><span class="n">load_weights</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">weights_dir</span><span class="p">,</span> <span class="s1">&#39;weights-wdsr-b-32-x4-fine-tuned.h5&#39;</span><span class="p">))</span>
+
+<span class="n">resolve_and_plot</span><span class="p">(</span><span class="n">wdsr_pre_trained</span><span class="p">,</span> <span class="n">wdsr_fine_tuned</span><span class="p">,</span> <span class="s1">&#39;demo/0829x4-crop.png&#39;</span><span class="p">)</span>
+</code></pre></div>
+<p><img alt="out_15_0" src="/img/2019-09-04/output_15_0.png" /></p>
+    </div>
+
+    <nav class="post-nav">
+        
+        <a href="/2019/03/14/bayesian-neural-networks/" class="post-nav-link post-nav-older">
+            <span class="post-nav-label">&larr; Older</span>
+            <span class="post-nav-title">Variational inference in Bayesian neural networks</span>
+        </a>
+        
+        
+        <a href="/2019/11/21/latent-variable-models-part-1/" class="post-nav-link post-nav-newer">
+            <span class="post-nav-label">Newer &rarr;</span>
+            <span class="post-nav-title">Latent variable models, part 1</span>
+        </a>
+        
+    </nav>
+
+    
+    <section class="comments">
+        <h2>Comments</h2>
+        <div id="disqus_thread"></div>
+    </section>
+    
+</article>
+
+        </div>
+    </main>
+
+    
+    <footer class="footer">
+        <div class="container">
+            
+<ul class="footer-social-links">
+    <li>
+        <a href="https://linkedin.com/in/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+    <rect x="2" y="9" width="4" height="12"/>
+    <circle cx="4" cy="4" r="2"/>
+</svg>
+
+            linkedin.com/in/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/gradion-ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/gradion-ai
+        </a>
+    </li>
+    <li>
+        <a href="https://gradion.ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
+    <path d="M9 22v-4h6v4"/>
+    <path d="M8 6h.01"/><path d="M16 6h.01"/>
+    <path d="M12 6h.01"/>
+    <path d="M12 10h.01"/><path d="M12 14h.01"/>
+    <path d="M16 10h.01"/><path d="M16 14h.01"/>
+    <path d="M8 10h.01"/><path d="M8 14h.01"/>
+</svg>
+
+            gradion.ai
+        </a>
+    </li>
+    <li>
+        <a href="/llms.txt">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 8V4H8"/>
+    <rect width="16" height="12" x="4" y="8" rx="2"/>
+    <path d="M2 14h2"/>
+    <path d="M20 14h2"/>
+    <path d="M15 13v2"/>
+    <path d="M9 13v2"/>
+</svg>
+
+            llms.txt
+        </a>
+    </li>
+    <li>
+        <a href="/feed.xml">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 11a9 9 0 0 1 9 9"/>
+    <path d="M4 4a16 16 0 0 1 16 16"/>
+    <circle cx="5" cy="19" r="1"/>
+</svg>
+
+            feed.xml
+        </a>
+    </li>
+</ul>
+
+            <p class="footer-copyright">// Martin Krasser, 2026</p>
+        </div>
+    </footer>
+
+    <script>
+    document.querySelectorAll('a[href^="http"]').forEach(link => {
+        if (!link.href.startsWith(location.origin)) {
+            link.target = '_blank';
+            link.rel = 'noopener';
+        }
+    });
+    </script>
+    
+
+<script>
+var disqus_config = function () {
+    this.page.url = 'https://krasserm.github.io/2019/09/04/super-resolution/';
+    this.page.identifier = '/2019/09/04/super-resolution/';
+};
+(function() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://krasserm.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+</body>
+</html>

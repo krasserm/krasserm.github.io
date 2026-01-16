@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#0a0e14">
+    <title>Agent authorization without the pain - Martin Krasser</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/pygments.css">
+    <link rel="alternate" type="application/atom+xml" title="Martin Krasser Feed" href="/feed.xml">
+    
+<script>
+MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="/" class="nav-brand">Martin Krasser</a>
+            <ul class="nav-links">
+                
+                <li><a href="/about/">About</a></li>
+                
+                <li><a href="/">Blog</a></li>
+                
+                <li><a href="/industry/">Industry</a></li>
+                
+                <li><a href="/open-source/">Open Source</a></li>
+                
+                <li><a href="/citations/">Citations</a></li>
+                
+                <li><a href="/stories/">Stories</a></li>
+                
+                <li><a href="/contact/">Contact</a></li>
+                
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="container">
+            
+<article class="post">
+    <header class="post-header">
+        <h1 class="post-title">Agent authorization without the pain</h1>
+        
+        <p class="post-meta">
+            <time datetime="2025-08-06">
+                August 06, 2025
+            </time>
+            
+            <span class="post-author">by Martin Krasser</span>
+            
+        </p>
+    </header>
+
+    <div class="post-content">
+        <p>This article was originally posted <a href="https://gradion-ai.github.io/agents-nanny/2025/08/06/agent-authorization-without-the-pain/">here</a>.</p>
+<hr />
+<p>Your agent needs to read from your Google Calendar and send emails through Gmail. This seemingly simple requirement quickly becomes complex when you realize you need OAuth flows, token refresh logic, and secure credential storage. Multiply that by every API your agent needs.</p>
+<p>You shouldn't have to build this infrastructure yourself. Connect your agents to 250+ APIs and 3000+ tools with <a href="https://modelcontextprotocol.io/">Model Context Protocol</a> (MCP) and <a href="https://composio.dev/">Composio</a>. Composio handles authorization, remote MCP servers and tool execution, while your application focuses on agentic reasoning and tool usage.</p>
+<!-- more -->
+
+<p><strong>Note:</strong> I'm not affiliated with Composio, I'm just a happy user. Their approach supports a useful separation of concerns between agent logic and API integration in agentic applications.</p>
+<h2 id="architecture">Architecture</h2>
+<p><img alt="architecture" src="https://gradion-ai.github.io/agents-nanny/agent-authorization/architecture.png" /></p>
+<p><strong>Your Application</strong></p>
+<ul>
+<li>Agents connect to Composio MCP servers and use their tools</li>
+<li>Agents act on behalf of users that authorized API access</li>
+<li>Agents focus on reasoning and tool usage, not plumbing</li>
+</ul>
+<p><strong>Composio Layer</strong></p>
+<ul>
+<li>MCP servers act as protocol bridges to external APIs</li>
+<li>Each API has an auth config, with a connected account per user</li>
+<li>Auth tokens are stored securely, supporting OAuth2, API keys, etc.</li>
+</ul>
+<p><strong>Key Benefits</strong></p>
+<ul>
+<li>No OAuth flows or token management in your code</li>
+<li>Access 250+ APIs and 3000+ tools through MCP</li>
+<li>Clean separation between agent logic and API integration</li>
+</ul>
+<h2 id="example">Example</h2>
+<video controls style="width: 100%;">
+  <source src="https://gradion-ai.github.io/agents-nanny/agent-authorization/agent-tools.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
+<p>The complete code is at <a href="https://github.com/krasserm/agent-auth">github.com/krasserm/agent-auth</a>. What follows is an overview of the key steps needed to authorize an agent to use Google Calendar on behalf of a user:</p>
+<p>Install the <a href="https://github.com/ComposioHQ/composio-base-py">Composio Python library</a>, used to access the <a href="https://docs.composio.dev/api-reference">Composio REST API</a>.</p>
+<div class="highlight"><pre><code>pip<span class="w"> </span>install<span class="w"> </span>composio-client
+</code></pre></div>
+<p>Create an auth configuration for the <a href="https://docs.composio.dev/toolkits/googlecalendar">googlecalendar</a> toolkit, using <code>OAUTH2</code> as <code>authScheme</code>.</p>
+<div class="highlight"><pre><code><span class="n">client</span> <span class="o">=</span> <span class="n">Composio</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;COMPOSIO_API_KEY&quot;</span><span class="p">))</span>
+
+<span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">auth_configs</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+    <span class="n">toolkit</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;slug&quot;</span><span class="p">:</span> <span class="s2">&quot;googlecalendar&quot;</span><span class="p">},</span>
+    <span class="n">auth_config</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;calendar-example&quot;</span><span class="p">,</span> 
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;use_composio_managed_auth&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;authScheme&quot;</span><span class="p">:</span> <span class="s2">&quot;OAUTH2&quot;</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+<span class="n">auth_config_id</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">auth_config</span><span class="o">.</span><span class="n">id</span>
+</code></pre></div>
+<p>Add a connected account to the auth config and link a <code>user_id</code> to it. That's the id of a user managed by your application, not by Composio.</p>
+<div class="highlight"><pre><code><span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">connected_accounts</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+    <span class="n">auth_config</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">auth_config_id</span><span class="p">},</span>
+    <span class="n">connection</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;user_id&quot;</span><span class="p">:</span> <span class="s2">&quot;martin&quot;</span><span class="p">},</span>
+<span class="p">)</span>
+</code></pre></div>
+<p>Initiate the authorization process by redirecting to an OAuth consent screen in a browser window. After completion, the connected account is authorized to use Google Calendar on behalf of the user who granted access.</p>
+<div class="highlight"><pre><code><span class="kn">import</span><span class="w"> </span><span class="nn">webbrowser</span>
+
+<span class="n">webbrowser</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">connection_data</span><span class="o">.</span><span class="n">val</span><span class="o">.</span><span class="n">redirect_url</span><span class="p">)</span>
+</code></pre></div>
+<p>Create an MCP server for the auth config created in step 2 and specify the tools that should be exposed.</p>
+<div class="highlight"><pre><code><span class="n">result</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">mcp</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;calendar-mcp-server&quot;</span><span class="p">,</span>
+    <span class="n">auth_config_ids</span><span class="o">=</span><span class="p">[</span><span class="n">auth_config_id</span><span class="p">],</span>
+    <span class="n">allowed_tools</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;GOOGLECALENDAR_FIND_EVENT&quot;</span><span class="p">]</span>
+<span class="p">)</span>
+</code></pre></div>
+<p>Create an MCP server URL that uses the connected account linked to <code>martin</code>.</p>
+<div class="highlight"><pre><code><span class="n">mcp_url</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">mcp_url</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;transport=sse&quot;</span><span class="p">,</span> <span class="s2">&quot;user_id=martin&quot;</span><span class="p">)</span>
+<span class="c1"># i.e. https://mcp.composio.dev/composio/server/&lt;uuid&gt;?user_id=martin</span>
+<span class="c1"># &lt;uuid&gt; is a string of pattern 12345678-90ab-cdef-1234-567890abcdef</span>
+</code></pre></div>
+<p>Configure a <a href="https://ai.pydantic.dev/">Pydantic AI</a> agent with the <code>mcp_url</code> so that it can use Google Calendar on behalf of the user who granted access in step 4.</p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_ai</span><span class="w"> </span><span class="kn">import</span> <span class="n">Agent</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_ai.mcp</span><span class="w"> </span><span class="kn">import</span> <span class="n">MCPServerStreamableHTTP</span>
+
+<span class="n">agent</span> <span class="o">=</span> <span class="n">Agent</span><span class="p">(</span>
+    <span class="s1">&#39;openai:o4-mini&#39;</span><span class="p">,</span>
+    <span class="n">toolsets</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">MCPServerStreamableHTTP</span><span class="p">(</span><span class="n">mcp_url</span><span class="p">),</span>  
+    <span class="p">]</span>
+<span class="p">)</span>
+
+<span class="k">async</span> <span class="k">with</span> <span class="n">agent</span><span class="p">:</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">agent</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+        <span class="s2">&quot;List my Sep 2025 calendar events&quot;</span>
+    <span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
+</code></pre></div>
+    </div>
+
+    <nav class="post-nav">
+        
+        <a href="/2025/02/05/deepseek-r1-agent/" class="post-nav-link post-nav-older">
+            <span class="post-nav-label">&larr; Older</span>
+            <span class="post-nav-title">DeepSeek-R1 agents with code actions</span>
+        </a>
+        
+        
+        <a href="/2025/11/12/multi-party-ai/" class="post-nav-link post-nav-newer">
+            <span class="post-nav-label">Newer &rarr;</span>
+            <span class="post-nav-title">From single-user to multi-party conversational AI</span>
+        </a>
+        
+    </nav>
+
+    
+    <section class="comments">
+        <h2>Comments</h2>
+        <div id="disqus_thread"></div>
+    </section>
+    
+</article>
+
+        </div>
+    </main>
+
+    
+    <footer class="footer">
+        <div class="container">
+            
+<ul class="footer-social-links">
+    <li>
+        <a href="https://linkedin.com/in/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+    <rect x="2" y="9" width="4" height="12"/>
+    <circle cx="4" cy="4" r="2"/>
+</svg>
+
+            linkedin.com/in/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/gradion-ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/gradion-ai
+        </a>
+    </li>
+    <li>
+        <a href="https://gradion.ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
+    <path d="M9 22v-4h6v4"/>
+    <path d="M8 6h.01"/><path d="M16 6h.01"/>
+    <path d="M12 6h.01"/>
+    <path d="M12 10h.01"/><path d="M12 14h.01"/>
+    <path d="M16 10h.01"/><path d="M16 14h.01"/>
+    <path d="M8 10h.01"/><path d="M8 14h.01"/>
+</svg>
+
+            gradion.ai
+        </a>
+    </li>
+    <li>
+        <a href="/llms.txt">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 8V4H8"/>
+    <rect width="16" height="12" x="4" y="8" rx="2"/>
+    <path d="M2 14h2"/>
+    <path d="M20 14h2"/>
+    <path d="M15 13v2"/>
+    <path d="M9 13v2"/>
+</svg>
+
+            llms.txt
+        </a>
+    </li>
+    <li>
+        <a href="/feed.xml">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 11a9 9 0 0 1 9 9"/>
+    <path d="M4 4a16 16 0 0 1 16 16"/>
+    <circle cx="5" cy="19" r="1"/>
+</svg>
+
+            feed.xml
+        </a>
+    </li>
+</ul>
+
+            <p class="footer-copyright">// Martin Krasser, 2026</p>
+        </div>
+    </footer>
+
+    <script>
+    document.querySelectorAll('a[href^="http"]').forEach(link => {
+        if (!link.href.startsWith(location.origin)) {
+            link.target = '_blank';
+            link.rel = 'noopener';
+        }
+    });
+    </script>
+    
+
+<script>
+var disqus_config = function () {
+    this.page.url = 'https://krasserm.github.io/2025/08/06/agent-authorization/';
+    this.page.identifier = '/2025/08/06/agent-authorization/';
+};
+(function() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://krasserm.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+</body>
+</html>

@@ -1,0 +1,32 @@
+# Blog Posts
+
+- [Code Actions as Tools](https://krasserm.github.io/2025/12/16/code-actions/index.md): Evolving Tool Libraries for Agents
+- [From single-user to multi-party conversational AI](https://krasserm.github.io/2025/11/12/multi-party-ai/index.md)
+- [DeepSeek-R1 agents with code actions](https://krasserm.github.io/2025/02/05/deepseek-r1-agent/index.md)
+- [Impact of prompt masking on LLM agent planning performance](https://krasserm.github.io/2024/06/26/planner-prompt-masking/index.md)
+- [Planner fine-tuning on synthetic agent trajectories](https://krasserm.github.io/2024/05/31/planner-fine-tuning/index.md)
+- [Separation of planning concerns in ReAct-style LLM agents](https://krasserm.github.io/2024/03/06/modular-agent/index.md)
+- [Schema-guided generation with open LLMs](https://krasserm.github.io/2023/12/18/llm-json-mode/index.md)
+- [Schema-guided generation in LangChain agents](https://krasserm.github.io/2023/12/10/grammar-based-agents/index.md)
+- [Extending Visual ChatGPT with image search engines](https://krasserm.github.io/2023/04/03/visual-chatgpt-search/index.md)
+- [Training compute-optimal Perceiver AR language models](https://krasserm.github.io/2023/01/23/scaling-perceiver-ar/index.md)
+- [A gentle introduction to Rotary Position Embedding](https://krasserm.github.io/2022/12/13/rotary-position-embedding/index.md)
+- [Using AWS SageMaker with minimal dependencies, part 2](https://krasserm.github.io/2022/02/26/sagemaker-fault-tolerance/index.md): Fault-tolerant model training on spot instances
+- [Using AWS SageMaker with minimal dependencies, part 1](https://krasserm.github.io/2022/01/21/sagemaker-multi-node/index.md): Distributed model training with PyTorch Lightning
+- [Sparse Gaussian processes](https://krasserm.github.io/2020/12/12/gaussian-processes-sparse/index.md)
+- [Gaussian processes for classification](https://krasserm.github.io/2020/11/04/gaussian-processes-classification/index.md)
+- [Reliable uncertainty estimates for neural network predictions](https://krasserm.github.io/2020/09/25/reliable-uncertainty-estimates/index.md)
+- [Latent variable models, part 2](https://krasserm.github.io/2019/12/17/latent-variable-models-part-2/index.md): Stochastic variational inference and variational autoencoders
+- [Latent variable models, part 1](https://krasserm.github.io/2019/11/21/latent-variable-models-part-1/index.md): Gaussian mixture models and the EM algorithm
+- [Single image super-resolution with deep neural networks](https://krasserm.github.io/2019/09/04/super-resolution/index.md)
+- [Variational inference in Bayesian neural networks](https://krasserm.github.io/2019/03/14/bayesian-neural-networks/index.md)
+- [Bayesian regression with linear basis function models](https://krasserm.github.io/2019/02/23/bayesian-linear-regression/index.md)
+- [Weight normalization options for Keras and Tensorflow](https://krasserm.github.io/2018/11/10/weightnorm-implementation-options/index.md)
+- [Deep feature consistent variational autoencoder](https://krasserm.github.io/2018/07/27/dfc-vae/index.md)
+- [Conditional generation via Bayesian optimization in latent space](https://krasserm.github.io/2018/04/07/latent-space-optimization/index.md)
+- [Bayesian optimization](https://krasserm.github.io/2018/03/21/bayesian-optimization/index.md)
+- [Gaussian processes](https://krasserm.github.io/2018/03/19/gaussian-processes/index.md)
+- [Deep face recognition with Keras, Dlib and OpenCV](https://krasserm.github.io/2018/02/07/deep-face-recognition/index.md)
+- [A service framework for operation-based CRDTs](https://krasserm.github.io/2016/10/19/operation-based-crdt-framework/index.md)
+- [A comparison of Akka Persistence with Eventuate](https://krasserm.github.io/2015/05/25/akka-persistence-eventuate-comparison/index.md)
+- [Event sourcing at global scale](https://krasserm.github.io/2015/01/13/event-sourcing-at-global-scale/index.md)

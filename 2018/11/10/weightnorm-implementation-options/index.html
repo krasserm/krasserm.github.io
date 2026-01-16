@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#0a0e14">
+    <title>Weight normalization options for Keras and Tensorflow - Martin Krasser</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/pygments.css">
+    <link rel="alternate" type="application/atom+xml" title="Martin Krasser Feed" href="/feed.xml">
+    
+<script>
+MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="/" class="nav-brand">Martin Krasser</a>
+            <ul class="nav-links">
+                
+                <li><a href="/about/">About</a></li>
+                
+                <li><a href="/">Blog</a></li>
+                
+                <li><a href="/industry/">Industry</a></li>
+                
+                <li><a href="/open-source/">Open Source</a></li>
+                
+                <li><a href="/citations/">Citations</a></li>
+                
+                <li><a href="/stories/">Stories</a></li>
+                
+                <li><a href="/contact/">Contact</a></li>
+                
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="container">
+            
+<article class="post">
+    <header class="post-header">
+        <h1 class="post-title">Weight normalization options for Keras and Tensorflow</h1>
+        
+        <p class="post-meta">
+            <time datetime="2018-11-10">
+                November 10, 2018
+            </time>
+            
+            <span class="post-author">by Martin Krasser</span>
+            
+        </p>
+    </header>
+
+    <div class="post-content">
+        <p>At the time of writing this blog post no official implementation of <a href="https://arxiv.org/abs/1602.07868">weight normalization</a> 
+for Tensorflow and Keras is available. I therefore want to present a few options for implementing weight normalization in 
+Tensorflow and Keras projects. The presented options for Keras only work in combination with the Tensorflow backend or
+with the Keras version that is bundled with Tensorflow.</p>
+<p>Tim Salimans, the author of the weight normalization paper <a href="https://github.com/openai/weightnorm/tree/master">published code</a> 
+for Keras 1.x and an older version of Tensorflow (about two years ago). If you're still using Keras 1.x or an older version 
+of Tensorflow, I recommend using one of these implementations. The Keras-based implementation extends the Keras SGD and Adam 
+optimizer with weight normalization functionality in a generic way so that different Keras layers (convolutional, dense, ...) 
+can be trained with weight normalization. A procedure for data-based initialization is also provided. A Keras 2.x port of 
+that code is available <a href="https://github.com/krasserm/weightnorm/tree/master/keras_2">here</a>. I tested 
+the Adam-based weight normalization implementation in <a href="https://github.com/krasserm/super-resolution/tree/previous">another project</a> (an implementation
+of <a href="https://arxiv.org/abs/1808.08718">WDSR</a> for single image super-resolution) and get almost identical results as the 
+PyTorch-based <a href="https://github.com/JiahuiYu/wdsr_ntire2018">reference implementation</a> (PyTorch already contains an 
+<a href="https://pytorch.org/docs/stable/nn.html#weight-norm">official implementation</a> of weight normalization). </p>
+<p>The authors of the WDSR reference implementation also published a 
+<a href="https://github.com/ychfan/tf_estimator_barebone/blob/master/models/wdsr.py">Tensorflow port</a> that contains a 2D convolutional 
+layer with support for weight normalization (<a href="https://github.com/ychfan/tf_estimator_barebone/blob/master/common/layers.py"><code>Conv2DWeightNorm</code></a>). 
+This layer can also be used as Keras layer when using the Keras version bundled with Tensorflow 1.11 or higher and can be 
+used in combination with any optimizer. Extending other layer types to support weight normalization should be easy using 
+this template (but less elegant compared to a generic wrapper as described further below). The 
+<a href="https://github.com/ychfan/tf_estimator_barebone/blob/master/common/layers.py"><code>Conv2DWeightNorm</code></a> code doesn't provide 
+a procedure for data-based initialization though. For the special case of <a href="https://arxiv.org/abs/1808.08718">WDSR</a>, this 
+is not needed as data-based initialization has a similar effect as batch-normalization which is known to harm single 
+image super-resolution training but this cannot be generalized to other projects, of course. I also tested the 
+<code>Conv2DWeightNorm</code> layer in the Keras version of WDSR (see section <a href="https://github.com/krasserm/super-resolution/tree/previous#weight-normalization">Weight normalization</a>) 
+and convergence is similar to that of Adam-based weight normalization. The latter shows slightly better initial 
+convergence but training with <code>Conv2DWeightNorm</code> in combination with a default Adam optimizer quickly catches up. The 
+difference is probably due to different weight initializations. </p>
+<p>There's also a long-time open <a href="https://github.com/tensorflow/tensorflow/pull/21276">pull request</a> 
+for adding weight normalization to Tensorflow, also supporting the bundled Keras version, but review is still pending. 
+It is a generic wrapper layer that works for several types of Tensorflow and Keras layers. Data-based initialization is 
+also supported but only in eager mode. <strong>Update:</strong> this is now part of the <a href="https://github.com/tensorflow/addons">Tensorflow Addons</a> 
+project and used in the <a href="https://github.com/krasserm/super-resolution">Tensorflow 2.0 port of WDSR</a>.</p>
+<p>Several other implementations are evailable but most of them are slight variations of what I presented here. I hope 
+this post saves you some time finding a weight normalization implementation for your project. If I missed something or 
+an official implementation was published in the meantime, please let me know and I'll update this blog post.</p>
+    </div>
+
+    <nav class="post-nav">
+        
+        <a href="/2018/07/27/dfc-vae/" class="post-nav-link post-nav-older">
+            <span class="post-nav-label">&larr; Older</span>
+            <span class="post-nav-title">Deep feature consistent variational autoencoder</span>
+        </a>
+        
+        
+        <a href="/2019/02/23/bayesian-linear-regression/" class="post-nav-link post-nav-newer">
+            <span class="post-nav-label">Newer &rarr;</span>
+            <span class="post-nav-title">Bayesian regression with linear basis function models</span>
+        </a>
+        
+    </nav>
+
+    
+    <section class="comments">
+        <h2>Comments</h2>
+        <div id="disqus_thread"></div>
+    </section>
+    
+</article>
+
+        </div>
+    </main>
+
+    
+    <footer class="footer">
+        <div class="container">
+            
+<ul class="footer-social-links">
+    <li>
+        <a href="https://linkedin.com/in/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+    <rect x="2" y="9" width="4" height="12"/>
+    <circle cx="4" cy="4" r="2"/>
+</svg>
+
+            linkedin.com/in/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/gradion-ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/gradion-ai
+        </a>
+    </li>
+    <li>
+        <a href="https://gradion.ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
+    <path d="M9 22v-4h6v4"/>
+    <path d="M8 6h.01"/><path d="M16 6h.01"/>
+    <path d="M12 6h.01"/>
+    <path d="M12 10h.01"/><path d="M12 14h.01"/>
+    <path d="M16 10h.01"/><path d="M16 14h.01"/>
+    <path d="M8 10h.01"/><path d="M8 14h.01"/>
+</svg>
+
+            gradion.ai
+        </a>
+    </li>
+    <li>
+        <a href="/llms.txt">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 8V4H8"/>
+    <rect width="16" height="12" x="4" y="8" rx="2"/>
+    <path d="M2 14h2"/>
+    <path d="M20 14h2"/>
+    <path d="M15 13v2"/>
+    <path d="M9 13v2"/>
+</svg>
+
+            llms.txt
+        </a>
+    </li>
+    <li>
+        <a href="/feed.xml">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 11a9 9 0 0 1 9 9"/>
+    <path d="M4 4a16 16 0 0 1 16 16"/>
+    <circle cx="5" cy="19" r="1"/>
+</svg>
+
+            feed.xml
+        </a>
+    </li>
+</ul>
+
+            <p class="footer-copyright">// Martin Krasser, 2026</p>
+        </div>
+    </footer>
+
+    <script>
+    document.querySelectorAll('a[href^="http"]').forEach(link => {
+        if (!link.href.startsWith(location.origin)) {
+            link.target = '_blank';
+            link.rel = 'noopener';
+        }
+    });
+    </script>
+    
+
+<script>
+var disqus_config = function () {
+    this.page.url = 'https://krasserm.github.io/2018/11/10/weightnorm-implementation-options/';
+    this.page.identifier = '/2018/11/10/weightnorm-implementation-options/';
+};
+(function() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://krasserm.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+</body>
+</html>

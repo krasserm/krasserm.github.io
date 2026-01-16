@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#0a0e14">
+    <title>A service framework for operation-based CRDTs - Martin Krasser</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/pygments.css">
+    <link rel="alternate" type="application/atom+xml" title="Martin Krasser Feed" href="/feed.xml">
+    
+<script>
+MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="/" class="nav-brand">Martin Krasser</a>
+            <ul class="nav-links">
+                
+                <li><a href="/about/">About</a></li>
+                
+                <li><a href="/">Blog</a></li>
+                
+                <li><a href="/industry/">Industry</a></li>
+                
+                <li><a href="/open-source/">Open Source</a></li>
+                
+                <li><a href="/citations/">Citations</a></li>
+                
+                <li><a href="/stories/">Stories</a></li>
+                
+                <li><a href="/contact/">Contact</a></li>
+                
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="container">
+            
+<article class="post">
+    <header class="post-header">
+        <h1 class="post-title">A service framework for operation-based CRDTs</h1>
+        
+        <p class="post-meta">
+            <time datetime="2016-10-19">
+                October 19, 2016
+            </time>
+            
+            <span class="post-author">by Martin Krasser</span>
+            
+        </p>
+    </header>
+
+    <div class="post-content">
+        <p>This article introduces a framework for developing operation-based CRDT services. It is part of the <a href="https://github.com/RBMHTechnology/eventuate">Eventuate</a> project and supports the integration of operation-based CRDTs into Eventuate’s reliable causal broadcast infrastructure. It exposes CRDT instances through an asynchronous service API, manages their durability and recovery and allows for CRDT replication up to global scale.</p>
+<p>After a brief introduction to operation-based CRDTs, their relation to Eventuate’s <a href="http://rbmhtechnology.github.io/eventuate/architecture.html#event-sourcing">event sourcing</a> and <a href="http://rbmhtechnology.github.io/eventuate/architecture.html#event-collaboration">event collaboration</a> features is discussed to get a better understanding of the inner workings of the framework. An example then demonstrates how to use the framework to implement a concrete CRDT service and how to run multiple replicas of that service. The rest of the article covers production deployment considerations and gives an overview of planned features.</p>
+<h2 id="operation-based-crdts">Operation-based CRDTs</h2>
+<p>Conflict-free replicated data types (CRDTs) are replicated data types that eventually converge to the same state under concurrent updates. A CRDT instance can be updated without requiring coordination with its replicas. This makes CRDTs highly available for writes. CRDTs can be classified into state-based CRDTs (CvRDTs or convergent replicated data types) and operation-based CRDTs (CmRDTs or commutative replicated data types). State-based CRDTs are designed to disseminate state among replicas whereas operation-based CRDTs are designed to disseminate operations. </p>
+<ul>
+<li>
+<p>CmRDT replicas are guaranteed to converge if operations are disseminated through a reliable causal broadcast (RCB) middleware and if they are designed to be commutative for concurrent operations. </p>
+</li>
+<li>
+<p>CvRDTs don’t require special guarantees from the underlying messaging middleware but require increasing network bandwidth for state dissemination with increasing state size. They converge if their state <em>merge</em> function is defined as a join: a least upper bound on a <a href="https://en.wikipedia.org/wiki/Join-semilattice">join-semilattice</a>. CvRDTs are not further discussed in this article.</p>
+</li>
+</ul>
+<p>The execution of a CmRDT operation is done in two phases, <em>prepare</em> and <em>effect</em> <a href="http://haslab.uminho.pt/sites/default/files/ashoker/files/opbaseddais14.pdf">[2]</a> (also called <em>atSource</em> and <em>downstream</em> in <a href="http://hal.upmc.fr/file/index/docid/555588/filename/techreport.pdf">[1]</a>): <em>prepare</em> is executed on the local replica. It looks at the operation and (optionally) the current state and produces a message, representing the operation, that is then disseminated to all replicas. <em>effect</em> applies the disseminated operation at all replicas.</p>
+<h2 id="relation-to-event-sourcing">Relation to event sourcing</h2>
+<p>The two CmRDT update phases, <em>prepare</em> and <em>effect</em>, are closely related to the update phases of event-sourced entities, <em>command handling</em> and <em>event handling</em>, respectively:</p>
+<ul>
+<li>
+<p>During <em>command handling</em>, an incoming command is (optionally) validated against current state of the entity and, if validation succeeds, an event representing the effect of the command is written to the event log. This corresponds to producing an operation representation during the CmRDT <em>prepare</em> phase.</p>
+</li>
+<li>
+<p>During <em>event handling</em>, the written event is consumed from the event log and used to update the current state of the entity. This corresponds to applying the produced operation representation to CmRDT state locally during the effect <em>phase</em>.</p>
+</li>
+</ul>
+<p>Event sourcing toolkits usually distinguish these two phases and provide event-sourced entity abstractions that let application define custom command and event handlers. For example, <a href="http://doc.akka.io/docs/akka/2.4/scala/persistence.html">Akka Persistence</a> provides <a href="http://doc.akka.io/api/akka/2.4/#akka.persistence.PersistentActor">PersistentActor</a>, Eventuate provides <a href="http://rbmhtechnology.github.io/eventuate/latest/api/index.html#com.rbmhtechnology.eventuate.EventsourcedActor">EventsourcedActor</a>. </p>
+<p>These are quite similar from a conceptual and API perspective but have one important difference: A <code>PersistentActor</code> can only consume self-emitted events whereas an <code>EventsourcedActor</code> can also consume events emitted by other event-sourced actors. And exactly this is needed to implement CmRDTs with event-sourced entities. They must be able to <a href="http://rbmhtechnology.github.io/eventuate/architecture.html#event-collaboration">collaborate</a> so that multiple replicas of the same entity can be deployed.</p>
+<p>CmRDTs in Eventuate are plain Scala objects that are <a href="http://rbmhtechnology.github.io/eventuate/architecture.html#operation-based-crdts">internally managed inside event-sourced CRDT actors</a>. CmRDTs encapsulate state and implement <em>prepare</em> and <em>effect</em> logic. Their concrete implementation follows the specifications in <a href="http://hal.upmc.fr/file/index/docid/555588/filename/techreport.pdf">[1]</a>. CRDT actors handle CmRDT update commands by persisting update operations to the event log in the <em>prepare</em> phase and delegate the execution of these operations to the CmRDT in the <em>effect</em> phase. An operation emitted by one event-sourced actor is not only consumed by that actor itself but also by all other event-sourced actors with the same <code>aggregateId</code>. This ensures that all replicas of a given CmRDT instance receive the update operation during the <em>effect</em> phase.</p>
+<h2 id="reliable-causal-broadcast">Reliable causal broadcast</h2>
+<p>Most CmRDTs specified in <a href="http://hal.upmc.fr/file/index/docid/555588/filename/techreport.pdf">[1]</a> require causal delivery order for update operations. Causal delivery is trivial to achieve with an event log that provides total order. But the availability of such an event log is limited because all updates to it must be coordinated if the event log itself is replicated (like a topic partition in a Kafka cluster, for example) or because it is not replicated at all. Consequently, the availability of CmRDTs that share a totally ordered event log is constrained by the availability of the underlying event log, which is not what we want.</p>
+<p>What we want is a distribution of CmRDT replicas across <em>locations</em> (or availability zones) where each location has its own local event log that remains available for writes even if partitioned from other locations. Events written at one location are asynchronously and reliably replicated to other locations. The strongest global ordering that can be achieved in such a <em>replication network</em> of local event logs is <em>causal ordering</em> which is sufficient for CmRDTs to work as specified. </p>
+<p>A replication network of local event logs in Eventuate is called a <a href="http://rbmhtechnology.github.io/eventuate/architecture.html#event-logs">replicated event log</a>. Causality in a replicated event log is tracked with <a href="http://rbmhtechnology.github.io/eventuate/architecture.html#vector-clocks">vector clocks</a> as <em>potential causality</em> (a partial order). The total order of events in a local event log at each location is consistent with potential causality. Events produced within a replication network can therefore be consumed in correct causal order at any location of that network. This property makes replicated event logs a reliable causal broadcast (RCB) mechanism as required by CmRDTs.</p>
+<p>Inter-location event replication is Eventuate-specific and ensures that local storage order is consistent with potential causality. The pluggable <a href="http://rbmhtechnology.github.io/eventuate/architecture.html#storage-backends">storage backend</a> of a local event log may additionally provide redundant storage of events if stronger durability is needed. Event replication within a storage backend is completely independent from inter-location event replication. Inter-location event replication also works between locations with different storage backends. </p>
+<h2 id="crdt-service-framework">CRDT service framework</h2>
+<h3 id="crdt-service-definition">CRDT service definition</h3>
+<p>The previous sections outlined how CmRDTs can be integrated into Eventuate’s event sourcing and event collaboration infrastructure. In order to free CmRDT developers and users from working with actor APIs directly, Eventuate provides a CmRDT service development framework that hides these low-level details. This framework is also the implementation basis for all CmRDTs that are part of Eventuate. Usage of the framework is demonstrated in the following by implementing an <em>MV-Register</em> CRDT service (full source code <a href="https://github.com/RBMHTechnology/eventuate/blob/master/eventuate-crdt/src/main/scala/com/rbmhtechnology/eventuate/crdt/MVRegister.scala">here</a>).</p>
+<p>An <em>MV-Register</em> or <em>Multi-Value Register</em> CRDT is a memory cell that supports <em>assign</em> to update the cell value and <em>value</em> to query it. In case of concurrent updates, multiple values are retained (in contrast to a <em>Last-Writer-Wins Register</em>, for example, where one of the values takes precedence). In case of multiple values, applications can later reduce them to a single value. </p>
+<div class="highlight"><pre><code><span class="k">import</span><span class="w"> </span><span class="nn">com</span><span class="p">.</span><span class="nn">rbmhtechnology</span><span class="p">.</span><span class="nn">eventuate</span><span class="p">.</span><span class="nc">VectorTime</span>
+<span class="k">import</span><span class="w"> </span><span class="nn">com</span><span class="p">.</span><span class="nn">rbmhtechnology</span><span class="p">.</span><span class="nn">eventuate</span><span class="p">.</span><span class="nc">Versioned</span>
+
+<span class="k">case</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">MVRegister</span><span class="p">[</span><span class="nc">A</span><span class="p">](</span><span class="n">versioned</span><span class="p">:</span><span class="w"> </span><span class="nc">Set</span><span class="p">[</span><span class="nc">Versioned</span><span class="p">[</span><span class="nc">A</span><span class="p">]]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">Set</span><span class="p">.</span><span class="n">empty</span><span class="p">[</span><span class="nc">Versioned</span><span class="p">[</span><span class="nc">A</span><span class="p">]])</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">def</span><span class="w"> </span><span class="nf">value</span><span class="p">:</span><span class="w"> </span><span class="nc">Set</span><span class="p">[</span><span class="nc">A</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">versioned</span><span class="p">.</span><span class="n">map</span><span class="p">(</span><span class="n">_</span><span class="p">.</span><span class="n">value</span><span class="p">)</span>
+
+<span class="w">  </span><span class="k">def</span><span class="w"> </span><span class="nf">assign</span><span class="p">(</span><span class="n">v</span><span class="p">:</span><span class="w"> </span><span class="nc">A</span><span class="p">,</span><span class="w"> </span><span class="n">vectorTimestamp</span><span class="p">:</span><span class="w"> </span><span class="nc">VectorTime</span><span class="p">):</span><span class="w"> </span><span class="nc">MVRegister</span><span class="p">[</span><span class="nc">A</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// &lt;-&gt; operator returns true for concurrent vector timestamps</span>
+
+<span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="n">concurrent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">versioned</span><span class="p">.</span><span class="n">filter</span><span class="p">(</span><span class="n">_</span><span class="p">.</span><span class="n">vectorTimestamp</span><span class="w"> </span><span class="o">&lt;-&gt;</span><span class="w"> </span><span class="n">vectorTimestamp</span><span class="p">)</span>
+<span class="w">    </span><span class="n">copy</span><span class="p">(</span><span class="n">concurrent</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nc">Versioned</span><span class="p">(</span><span class="n">v</span><span class="p">,</span><span class="w"> </span><span class="n">vectorTimestamp</span><span class="p">))</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>The <code>MVRegister[A]</code> class internally stores assigned values of type <code>A</code> together with the <code>vectorTimestamp</code> of the corresponding operation as <code>Versioned[A](value: A, vectorTimestamp: VectorTime)</code>. Here, <code>Set[Versioned[A]]</code> is used because multiple concurrent assignments are allowed. Vector timestamps are generated by Eventuate for each persisted event (i.e. operation) and can be used by applications to determine whether any two events are causally related or concurrent. The <code>assign</code> method retains all assignments that are concurrent to the new assignment. All other existing assignments can be assumed to causally precede the new assignment because of causal delivery order. The new assignment is then added to retained concurrent assignments. The current value of an <code>MVRegister[A]</code> can be obtained with <code>value</code>.</p>
+<p>To provide a service API for <code>MVRegister[A]</code>, we define a <code>MVRegisterService[A]</code> class that extends <code>CRDTService[MVRegister[A], Set[A]]</code>. <a href="http://rbmhtechnology.github.io/eventuate/latest/api/index.html#com.rbmhtechnology.eventuate.crdt.CRDTService">CRDTService</a> is an abstract service that manages CmRDT instances inside event-sourced actors and provides an asynchronous API for reading and updating those instances. The service-internal actors interact with the local event log for reading and writing CmRDT operations. The only concrete service method we need to implement is the asynchronous <code>assign</code> method that defines which operation to use for the <code>MVRegister[A]</code> update.</p>
+<div class="highlight"><pre><code><span class="k">import</span><span class="w"> </span><span class="nn">akka</span><span class="p">.</span><span class="nn">actor</span><span class="p">.</span><span class="nc">ActorRef</span>
+<span class="k">import</span><span class="w"> </span><span class="nn">akka</span><span class="p">.</span><span class="nn">actor</span><span class="p">.</span><span class="nc">ActorSystem</span>
+<span class="k">import</span><span class="w"> </span><span class="nn">com</span><span class="p">.</span><span class="nn">rbmhtechnology</span><span class="p">.</span><span class="nn">eventuate</span><span class="p">.</span><span class="nn">crdt</span><span class="p">.</span><span class="nc">CRDTService</span>
+<span class="k">import</span><span class="w"> </span><span class="nn">com</span><span class="p">.</span><span class="nn">rbmhtechnology</span><span class="p">.</span><span class="nn">eventuate</span><span class="p">.</span><span class="nn">crdt</span><span class="p">.</span><span class="nc">CRDTServiceOps</span>
+<span class="k">import</span><span class="w"> </span><span class="nn">scala</span><span class="p">.</span><span class="nn">concurrent</span><span class="p">.</span><span class="nc">Future</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MVRegisterService</span><span class="p">[</span><span class="nc">A</span><span class="p">]</span>
+<span class="w">    </span><span class="p">(</span><span class="kd">val</span><span class="w"> </span><span class="n">serviceId</span><span class="p">:</span><span class="w"> </span><span class="nc">String</span><span class="p">,</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="n">log</span><span class="p">:</span><span class="w"> </span><span class="nc">ActorRef</span><span class="p">)</span>
+<span class="w">    </span><span class="p">(</span><span class="k">implicit</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="n">system</span><span class="p">:</span><span class="w"> </span><span class="nc">ActorSystem</span><span class="p">,</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="n">ops</span><span class="p">:</span><span class="w"> </span><span class="nc">CRDTServiceOps</span><span class="p">[</span><span class="nc">MVRegister</span><span class="p">[</span><span class="nc">A</span><span class="p">],</span><span class="w"> </span><span class="nc">Set</span><span class="p">[</span><span class="nc">A</span><span class="p">]])</span>
+<span class="w">  </span><span class="k">extends</span><span class="w"> </span><span class="nc">CRDTService</span><span class="p">[</span><span class="nc">MVRegister</span><span class="p">[</span><span class="nc">A</span><span class="p">],</span><span class="w"> </span><span class="nc">Set</span><span class="p">[</span><span class="nc">A</span><span class="p">]]</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">  </span><span class="k">def</span><span class="w"> </span><span class="nf">assign</span><span class="p">(</span><span class="n">id</span><span class="p">:</span><span class="w"> </span><span class="nc">String</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">:</span><span class="w"> </span><span class="nc">A</span><span class="p">):</span><span class="w"> </span><span class="nc">Future</span><span class="p">[</span><span class="nc">Set</span><span class="p">[</span><span class="nc">A</span><span class="p">]]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">op</span><span class="p">(</span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="nc">AssignOp</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+<span class="p">}</span>
+
+<span class="k">case</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">AssignOp</span><span class="p">(</span><span class="n">value</span><span class="p">:</span><span class="w"> </span><span class="nc">Any</span><span class="p">)</span>
+</code></pre></div>
+<p>The <code>assign</code> service method creates an <code>AssignOp</code> instance, representing a persistent <em>assign</em> operation, that is first used by the local replica during the <em>prepare</em> phase, then written to the event log and finally used by the local and all remote replicas during the <em>effect</em> phase. <code>CRDTService[MVRegister[A], Set[A]]</code> also provides a <code>value(id: String): Future[Set[A]]</code> method for obtaining the current value of a local <code>MVRegister[A]</code> replica (usage shown in next section). </p>
+<p>For being able to work, <code>MVRegisterService[A]</code> requires an implicit <code>CRDTServiceOps[MVRegister[A], Set[A]]</code> instance in scope. <a href="http://rbmhtechnology.github.io/eventuate/latest/api/index.html#com.rbmhtechnology.eventuate.crdt.CRDTServiceOps">CRDTServiceOps</a> is a type class that maps the CmRDT update phases <em>prepare</em> and <em>effect</em> to methods on CmRDT instances. It also defines how to obtain the current value from a CmRDT instance.</p>
+<div class="highlight"><pre><code><span class="k">import</span><span class="w"> </span><span class="nn">com</span><span class="p">.</span><span class="nn">rbmhtechnology</span><span class="p">.</span><span class="nn">eventuate</span><span class="p">.</span><span class="nc">DurableEvent</span>
+
+<span class="k">object</span><span class="w"> </span><span class="nc">MVRegister</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">implicit</span><span class="w"> </span><span class="k">def</span><span class="w"> </span><span class="nf">MVRegisterServiceOps</span><span class="p">[</span><span class="nc">A</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="nc">CRDTServiceOps</span><span class="p">[</span><span class="nc">MVRegister</span><span class="p">[</span><span class="nc">A</span><span class="p">],</span><span class="w"> </span><span class="nc">Set</span><span class="p">[</span><span class="nc">A</span><span class="p">]]</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">override</span><span class="w"> </span><span class="k">def</span><span class="w"> </span><span class="nf">value</span><span class="p">(</span><span class="n">crdt</span><span class="p">:</span><span class="w"> </span><span class="nc">MVRegister</span><span class="p">[</span><span class="nc">A</span><span class="p">]):</span><span class="w"> </span><span class="nc">Set</span><span class="p">[</span><span class="nc">A</span><span class="p">]</span><span class="w"> </span><span class="o">=</span>
+<span class="w">      </span><span class="n">crdt</span><span class="p">.</span><span class="n">value</span>
+
+<span class="w">    </span><span class="k">override</span><span class="w"> </span><span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="n">crdt</span><span class="p">:</span><span class="w"> </span><span class="nc">MVRegister</span><span class="p">[</span><span class="nc">A</span><span class="p">],</span><span class="w"> </span><span class="n">operation</span><span class="p">:</span><span class="w"> </span><span class="nc">Any</span><span class="p">):</span><span class="w"> </span><span class="nc">Option</span><span class="p">[</span><span class="nc">Any</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>
+<span class="w">      </span><span class="bp">super</span><span class="p">.</span><span class="n">prepare</span><span class="p">(</span><span class="n">crdt</span><span class="p">,</span><span class="w"> </span><span class="n">operation</span><span class="p">)</span>
+
+<span class="w">    </span><span class="k">override</span><span class="w"> </span><span class="k">def</span><span class="w"> </span><span class="nf">effect</span><span class="p">(</span><span class="n">crdt</span><span class="p">:</span><span class="w"> </span><span class="nc">MVRegister</span><span class="p">[</span><span class="nc">A</span><span class="p">],</span><span class="w"> </span><span class="n">operation</span><span class="p">:</span><span class="w"> </span><span class="nc">Any</span><span class="p">,</span><span class="w"> </span><span class="n">event</span><span class="p">:</span><span class="w"> </span><span class="nc">DurableEvent</span><span class="p">):</span><span class="w"> </span><span class="nc">MVRegister</span><span class="p">[</span><span class="nc">A</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>
+<span class="w">      </span><span class="n">operation</span><span class="w"> </span><span class="k">match</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">case</span><span class="w"> </span><span class="nc">AssignOp</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">crdt</span><span class="p">.</span><span class="n">assign</span><span class="p">(</span><span class="n">value</span><span class="p">.</span><span class="k">asInstanceOf</span><span class="p">[</span><span class="nc">A</span><span class="p">],</span><span class="w"> </span><span class="n">event</span><span class="p">.</span><span class="n">vectorTimestamp</span><span class="p">)</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>For <code>MVRegister[A]</code>, the <code>prepare</code> phase is a no-op and the default implementation from <code>super</code> should be used (or better, inherited). The <code>effect</code> phase uses the persistent <code>AssignOp</code> to call the <code>assign</code> method on the <code>MVRegister[A]</code> instance. The vector timestamp is taken from the <code>event</code> parameter that provides all event metadata. </p>
+<p>The <a href="https://github.com/RBMHTechnology/eventuate/blob/master/eventuate-crdt/src/main/scala/com/rbmhtechnology/eventuate/crdt/MVRegister.scala">MVRegister</a> CmRDT and its service are defined in the <a href="http://rbmhtechnology.github.io/eventuate/download.html#id2">eventuate-crdt</a> module. Other CmRDTs provided by Eventuate are <a href="https://github.com/RBMHTechnology/eventuate/blob/master/eventuate-crdt/src/main/scala/com/rbmhtechnology/eventuate/crdt/Counter.scala">Counter</a>, <a href="https://github.com/RBMHTechnology/eventuate/blob/master/eventuate-crdt/src/main/scala/com/rbmhtechnology/eventuate/crdt/LWWRegister.scala">LWW-Register</a>, <a href="https://github.com/RBMHTechnology/eventuate/blob/master/eventuate-crdt/src/main/scala/com/rbmhtechnology/eventuate/crdt/ORSet.scala">OR-Set</a> and <a href="https://github.com/RBMHTechnology/eventuate/blob/master/eventuate-crdt/src/main/scala/com/rbmhtechnology/eventuate/crdt/ORCart.scala">OR-Cart</a> (an OR-Set based shopping cart CmRDT).</p>
+<h3 id="crdt-service-usage">CRDT service usage</h3>
+<p>The following example (full source code <a href="https://github.com/krasserm/eventuate-crdt-example/blob/master/src/main/scala/example/crdt/MVRegisterExample.scala">here</a>) sets up three locations, each running a local <code>MVRegisterService[String]</code> instance using the local event log for persisting <em>assign</em> operations. The local event logs are connected to each other via their <code>ReplicationEndpoint</code>s to form a replicated event log. This implements the reliable causal broadcast needed to disseminate <em>assign</em> operations to all replicas. The locations run all in the same JVM, each having its own <code>ActorSystem</code> (usually, locations run on different nodes in the same or even different data centers). </p>
+<div class="highlight"><pre><code><span class="k">import</span><span class="w"> </span><span class="nn">akka</span><span class="p">.</span><span class="nn">actor</span><span class="p">.</span><span class="nc">ActorSystem</span>
+<span class="k">import</span><span class="w"> </span><span class="nn">com</span><span class="p">.</span><span class="nn">rbmhtechnology</span><span class="p">.</span><span class="nn">eventuate</span><span class="p">.</span><span class="nc">ReplicationConnection</span>
+<span class="k">import</span><span class="w"> </span><span class="nn">com</span><span class="p">.</span><span class="nn">rbmhtechnology</span><span class="p">.</span><span class="nn">eventuate</span><span class="p">.</span><span class="nc">ReplicationEndpoint</span>
+<span class="k">import</span><span class="w"> </span><span class="nn">com</span><span class="p">.</span><span class="nn">rbmhtechnology</span><span class="p">.</span><span class="nn">eventuate</span><span class="p">.</span><span class="nn">crdt</span><span class="p">.</span><span class="nc">MVRegisterService</span>
+<span class="k">import</span><span class="w"> </span><span class="nn">com</span><span class="p">.</span><span class="nn">rbmhtechnology</span><span class="p">.</span><span class="nn">eventuate</span><span class="p">.</span><span class="nn">log</span><span class="p">.</span><span class="nn">leveldb</span><span class="p">.</span><span class="nc">LeveldbEventLog</span>
+<span class="k">import</span><span class="w"> </span><span class="nn">com</span><span class="p">.</span><span class="nn">typesafe</span><span class="p">.</span><span class="nn">config</span><span class="p">.</span><span class="nc">ConfigFactory</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">config</span><span class="p">(</span><span class="n">port</span><span class="p">:</span><span class="w"> </span><span class="nc">Int</span><span class="p">):</span><span class="w"> </span><span class="nc">String</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="c1">// set port in akka-remote config (omitted)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">service</span><span class="p">(</span><span class="n">locationId</span><span class="p">:</span><span class="w"> </span><span class="nc">String</span><span class="p">,</span><span class="w"> </span><span class="n">port</span><span class="p">:</span><span class="w"> </span><span class="nc">Int</span><span class="p">,</span><span class="w"> </span><span class="n">connectToPorts</span><span class="p">:</span><span class="w"> </span><span class="nc">Set</span><span class="p">[</span><span class="nc">Int</span><span class="p">]):</span><span class="w"> </span><span class="nc">MVRegisterService</span><span class="p">[</span><span class="nc">String</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">implicit</span><span class="w"> </span><span class="kd">val</span><span class="w"> </span><span class="n">system</span><span class="p">:</span><span class="w"> </span><span class="nc">ActorSystem</span><span class="w"> </span><span class="o">=</span>
+<span class="w">    </span><span class="nc">ActorSystem</span><span class="p">(</span><span class="nc">ReplicationConnection</span><span class="p">.</span><span class="nc">DefaultRemoteSystemName</span><span class="p">,</span><span class="w"> </span><span class="nc">ConfigFactory</span><span class="p">.</span><span class="n">parseString</span><span class="p">(</span><span class="n">config</span><span class="p">(</span><span class="n">port</span><span class="p">)))</span>
+
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="n">logName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;L&quot;</span>
+
+<span class="w">  </span><span class="kd">val</span><span class="w"> </span><span class="n">endpoint</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="nc">ReplicationEndpoint</span><span class="p">(</span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">locationId</span><span class="p">,</span><span class="w"> </span><span class="n">logNames</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nc">Set</span><span class="p">(</span><span class="n">logName</span><span class="p">),</span>
+<span class="w">    </span><span class="n">logFactory</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">logId</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="nc">LeveldbEventLog</span><span class="p">.</span><span class="n">props</span><span class="p">(</span><span class="n">logId</span><span class="p">),</span>
+<span class="w">    </span><span class="n">connections</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">connectToPorts</span><span class="p">.</span><span class="n">map</span><span class="p">(</span><span class="nc">ReplicationConnection</span><span class="p">(</span><span class="s">&quot;127.0.0.1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">_</span><span class="p">)))</span>
+
+<span class="w">  </span><span class="n">endpoint</span><span class="p">.</span><span class="n">activate</span><span class="p">()</span>
+
+<span class="w">  </span><span class="k">new</span><span class="w"> </span><span class="nc">MVRegisterService</span><span class="p">[</span><span class="nc">String</span><span class="p">](</span><span class="s">s&quot;service-</span><span class="si">$</span><span class="n">locationId</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">endpoint</span><span class="p">.</span><span class="n">logs</span><span class="p">(</span><span class="n">logName</span><span class="p">))</span>
+<span class="p">}</span>
+
+<span class="kd">val</span><span class="w"> </span><span class="n">serviceA</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">service</span><span class="p">(</span><span class="s">&quot;A&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">2552</span><span class="p">,</span><span class="w"> </span><span class="nc">Set</span><span class="p">(</span><span class="mi">2553</span><span class="p">,</span><span class="w"> </span><span class="mi">2554</span><span class="p">))</span><span class="w"> </span><span class="cm">/* at location A */</span>
+<span class="kd">val</span><span class="w"> </span><span class="n">serviceB</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">service</span><span class="p">(</span><span class="s">&quot;B&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">2553</span><span class="p">,</span><span class="w"> </span><span class="nc">Set</span><span class="p">(</span><span class="mi">2552</span><span class="p">,</span><span class="w"> </span><span class="mi">2554</span><span class="p">))</span><span class="w"> </span><span class="cm">/* at location B */</span>
+<span class="kd">val</span><span class="w"> </span><span class="n">serviceC</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">service</span><span class="p">(</span><span class="s">&quot;C&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">2554</span><span class="p">,</span><span class="w"> </span><span class="nc">Set</span><span class="p">(</span><span class="mi">2552</span><span class="p">,</span><span class="w"> </span><span class="mi">2553</span><span class="p">))</span><span class="w"> </span><span class="cm">/* at location C */</span>
+
+<span class="c1">// ...</span>
+</code></pre></div>
+<p>We will use a single <code>MVRegister[String]</code> instance, identified by <code>crdtId</code>, with a replica at each location. When calling <code>assign</code> or <code>value</code> for the first time after service creation, the service tries to recover the local replica from the event log by replaying operations or initializes a new one if there are no persistent operations for that instance id.</p>
+<div class="highlight"><pre><code><span class="kd">val</span><span class="w"> </span><span class="n">crdtId</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;1&quot;</span>
+
+<span class="n">serviceA</span><span class="p">.</span><span class="n">assign</span><span class="p">(</span><span class="n">crdtId</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;abc&quot;</span><span class="p">).</span><span class="n">onSuccess</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">case</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">println</span><span class="p">(</span><span class="s">s&quot;assign result to replica at location A: </span><span class="si">$</span><span class="n">r</span><span class="s">&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="n">serviceB</span><span class="p">.</span><span class="n">assign</span><span class="p">(</span><span class="n">crdtId</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;xyz&quot;</span><span class="p">).</span><span class="n">onSuccess</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">case</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">println</span><span class="p">(</span><span class="s">s&quot;assign result to replica at location B: </span><span class="si">$</span><span class="n">r</span><span class="s">&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">// wait a bit ...</span>
+
+<span class="nc">Thread</span><span class="p">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
+
+<span class="n">serviceC</span><span class="p">.</span><span class="n">value</span><span class="p">(</span><span class="n">crdtId</span><span class="p">).</span><span class="n">onSuccess</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">case</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">println</span><span class="p">(</span><span class="s">s&quot;read result from replica at location C: </span><span class="si">$</span><span class="n">r</span><span class="s">&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>The updates start when <code>serviceA</code> assigns its local replica the value <code>abc</code> and <code>serviceB</code> its local replica the value <code>xyz</code>. These operations are expected to be concurrent because <code>serviceB</code> will likely have finished the local update before having received the <em>assign</em> operation from <code>serviceA</code>. However, there is a small chance that this is not the case. We can find that out by reading the value from <code>serviceC</code>, after having given operation dissemination enough time. In case of concurrent operations, output similar to the following is generated:</p>
+<pre><code>assign result to replica at location A: Set(abc)
+assign result to replica at location B: Set(xyz)
+read result from replica at location C: Set(abc, xyz)
+</code></pre>
+<p>If the read value from <code>serviceC</code> contains both assignments, the operations were concurrent. If it only contains a single assignment, the operations are causally related.</p>
+<h2 id="production-deployment-considerations">Production deployment considerations</h2>
+<p>All operations executed on a single CRDT service instance go to the same event log which puts an upper limit on write throughput. Applications that want to scale writes should consider creating <a href="http://rbmhtechnology.github.io/eventuate/reference/event-log.html#replicated-event-log">multiple replicated event logs</a> and partition CRDT service instances accordingly. On the other hand, applications with moderate write rates may also share the same event log among multiple CRDT services of different type. Eventuate properly isolates these services.</p>
+<p>As long as the total number of updates per CRDT instance is moderate e.g. less than a few thousand updates it is not necessary to create snapshots of CRDT state. Eventuate event logs are indexed on CRDT id (i.e. <code>aggregateId</code>) so that operation replay per instance is reasonably fast. For a much larger number of updates per instance it is recommended to save snapshots. CRDT services provide a generic <code>save(id: String): Future[SnapshotMetadata]</code> method for saving CRDT state snapshots where <code>id</code> is the CRDT instance id.</p>
+<p>All CRDT services provided by Eventuate serialize CRDT operations and snapshots with Google <a href="https://developers.google.com/protocol-buffers/">protocol buffers</a>. The corresponding serializers are configured as described in <a href="http://rbmhtechnology.github.io/eventuate/reference/event-sourcing.html#custom-serialization">Custom serialization</a>. When using the CRDT framework for the development of custom CRDT services, it is recommended to provide custom serializers as well, otherwise Akka’s default serializer i.e. Java serializer is used for serializing operations and snapshots.</p>
+<p>Eventuate’s CRDTs and its reliable causal broadcast infrastructure have been heavily <a href="https://github.com/RBMHTechnology/eventuate-chaos/">tested under chaotic conditions</a> with all currently available <a href="http://rbmhtechnology.github.io/eventuate/architecture.html#storage-backends">storage backends</a>. Chaos was generated by randomly injecting network partitions between Eventuate locations, within Cassandra clusters and between Eventuate locations and Cassandra cluster nodes. Furthermore, network packets have been dropped randomly too. </p>
+<p>In all tests, replicated state successfully converged at all locations, even after long-running chaos tests (approx. 1 hour). A single missing event or a duplicate delivered to in-memory CRDT replicas would have broken convergence and let the chaos tests fail. The failure handling consequences learned during the chaos tests are summarized in the <a href="http://rbmhtechnology.github.io/eventuate/reference/event-sourcing.html#failure-handling">Failure handling</a> section of the Eventuate documentation. </p>
+<h2 id="planned-features">Planned features</h2>
+<p>In addition to the basic CRDTs that are currently part of Eventuate, we plan to work on tree and graph CRDTs as well as CRDTs for collaborative text editing. We are also working on a Java API for the framework. A Java API for the existing CRDT services <a href="https://github.com/RBMHTechnology/eventuate/tree/master/eventuate-crdt/src/main/scala/com/rbmhtechnology/eventuate/crdt/japi">is already available</a>.</p>
+<p>Eventuate’s CRDTs currently follow the specifications in <a href="http://hal.upmc.fr/file/index/docid/555588/filename/techreport.pdf">[1]</a>. As explained in <a href="http://haslab.uminho.pt/sites/default/files/ashoker/files/opbaseddais14.pdf">[2]</a> these specifications can be improved to make them <em>pure</em> operation-based. A prerequisite for such an implementation is a <em>tagged</em> reliable causal broadcast (TRCB) which is a RCB middleware that additionally exposes causality metadata to the application. Eventuate already delivers vector timestamps together with events to applications and can therefore be used as TRCB. We currently think about factoring out the TRCB part of Eventuate into a separate open source project.</p>
+<p>Switching to pure operation-based CRDTs also increases write throughput as explained in <a href="https://github.com/RBMHTechnology/eventuate/issues/301">ticket 301</a>. We also work on increasing replication throughput by parallelizing stages in the replication pipelines and reducing the replication protocol overhead.</p>
+<h2 id="references">References</h2>
+<p>[1] <a href="http://hal.upmc.fr/file/index/docid/555588/filename/techreport.pdf">A comprehensive study of Convergent and Commutative Replicated Data Types</a>, 2011, Marc Shapiro et. al.<br />
+[2] <a href="http://haslab.uminho.pt/sites/default/files/ashoker/files/opbaseddais14.pdf">Making Operation-based CRDTs Operation-based</a>, 2014, Carlos Baquero et. al.</p>
+    </div>
+
+    <nav class="post-nav">
+        
+        <a href="/2015/05/25/akka-persistence-eventuate-comparison/" class="post-nav-link post-nav-older">
+            <span class="post-nav-label">&larr; Older</span>
+            <span class="post-nav-title">A comparison of Akka Persistence with Eventuate</span>
+        </a>
+        
+        
+        <a href="/2018/01/03/machine-learning-resources/" class="post-nav-link post-nav-newer">
+            <span class="post-nav-label">Newer &rarr;</span>
+            <span class="post-nav-title">Resources for getting started with ML and DL</span>
+        </a>
+        
+    </nav>
+
+    
+    <section class="comments">
+        <h2>Comments</h2>
+        <div id="disqus_thread"></div>
+    </section>
+    
+</article>
+
+        </div>
+    </main>
+
+    
+    <footer class="footer">
+        <div class="container">
+            
+<ul class="footer-social-links">
+    <li>
+        <a href="https://linkedin.com/in/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+    <rect x="2" y="9" width="4" height="12"/>
+    <circle cx="4" cy="4" r="2"/>
+</svg>
+
+            linkedin.com/in/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/gradion-ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/gradion-ai
+        </a>
+    </li>
+    <li>
+        <a href="https://gradion.ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
+    <path d="M9 22v-4h6v4"/>
+    <path d="M8 6h.01"/><path d="M16 6h.01"/>
+    <path d="M12 6h.01"/>
+    <path d="M12 10h.01"/><path d="M12 14h.01"/>
+    <path d="M16 10h.01"/><path d="M16 14h.01"/>
+    <path d="M8 10h.01"/><path d="M8 14h.01"/>
+</svg>
+
+            gradion.ai
+        </a>
+    </li>
+    <li>
+        <a href="/llms.txt">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 8V4H8"/>
+    <rect width="16" height="12" x="4" y="8" rx="2"/>
+    <path d="M2 14h2"/>
+    <path d="M20 14h2"/>
+    <path d="M15 13v2"/>
+    <path d="M9 13v2"/>
+</svg>
+
+            llms.txt
+        </a>
+    </li>
+    <li>
+        <a href="/feed.xml">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 11a9 9 0 0 1 9 9"/>
+    <path d="M4 4a16 16 0 0 1 16 16"/>
+    <circle cx="5" cy="19" r="1"/>
+</svg>
+
+            feed.xml
+        </a>
+    </li>
+</ul>
+
+            <p class="footer-copyright">// Martin Krasser, 2026</p>
+        </div>
+    </footer>
+
+    <script>
+    document.querySelectorAll('a[href^="http"]').forEach(link => {
+        if (!link.href.startsWith(location.origin)) {
+            link.target = '_blank';
+            link.rel = 'noopener';
+        }
+    });
+    </script>
+    
+
+<script>
+var disqus_config = function () {
+    this.page.url = 'https://krasserm.github.io/2016/10/19/operation-based-crdt-framework/';
+    this.page.identifier = '/2016/10/19/operation-based-crdt-framework/';
+};
+(function() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://krasserm.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+</body>
+</html>

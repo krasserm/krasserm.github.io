@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#0a0e14">
+    <title>Latent variable models, part 1 - Martin Krasser</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/pygments.css">
+    <link rel="alternate" type="application/atom+xml" title="Martin Krasser Feed" href="/feed.xml">
+    
+<script>
+MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="/" class="nav-brand">Martin Krasser</a>
+            <ul class="nav-links">
+                
+                <li><a href="/about/">About</a></li>
+                
+                <li><a href="/">Blog</a></li>
+                
+                <li><a href="/industry/">Industry</a></li>
+                
+                <li><a href="/open-source/">Open Source</a></li>
+                
+                <li><a href="/citations/">Citations</a></li>
+                
+                <li><a href="/stories/">Stories</a></li>
+                
+                <li><a href="/contact/">Contact</a></li>
+                
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="container">
+            
+<article class="post">
+    <header class="post-header">
+        <h1 class="post-title">Latent variable models, part 1</h1>
+        
+        <p class="post-subtitle">Gaussian mixture models and the EM algorithm</p>
+        
+        <p class="post-meta">
+            <time datetime="2019-11-21">
+                November 21, 2019
+            </time>
+            
+            <span class="post-author">by Martin Krasser</span>
+            
+        </p>
+    </header>
+
+    <div class="post-content">
+        <p><a href="https://colab.research.google.com/github/krasserm/bayesian-machine-learning/blob/dev/latent-variable-models/latent_variable_models_part_1.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a></p>
+<p><em>Sources:</em></p>
+<ul>
+<li><em><a href="https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/dev/latent-variable-models/latent_variable_models_part_1.ipynb">Notebook</a></em></li>
+<li><em><a href="https://github.com/krasserm/bayesian-machine-learning">Repository</a></em></li>
+</ul>
+<p>This is part 1 of a two-part series of articles about latent variable models. Part 1 covers the expectation maximization (EM) algorithm and its application to Gaussian mixture models. <a href="/2019/12/17/latent-variable-models-part-2/">Part 2</a> covers approximate inference and variational autoencoders.</p>
+<h2 id="introduction">Introduction</h2>
+<p>Given a probabilistic model $p(\mathbf{x} \lvert \boldsymbol{\theta})$ and $N$ observations $\mathbf{X} = \\{ \mathbf{x}_1, \ldots, \mathbf{x}_N \\}$ we often want to find a value for parameter $\boldsymbol{\theta}$ that maximizes the likelihood function $p(\mathbf{X} \lvert \boldsymbol{\theta})$, a function of parameter $\boldsymbol{\theta}$. This is known as <a href="https://en.wikipedia.org/wiki/Maximum_likelihood_estimation">maximimum likelihood estimation</a> (MLE). </p>
+<p>$$
+\boldsymbol{\theta}_{MLE} = \underset{\boldsymbol{\theta}}{\mathrm{argmax}} p(\mathbf{X} \lvert \boldsymbol{\theta})
+\tag{1}
+$$</p>
+<p>If the model is a simple probability distribution, like a single Gaussian, for example, then $\boldsymbol{\theta}_{MLE} = \\{ \boldsymbol{\mu}_{MLE}, \boldsymbol{\Sigma}_{MLE} \\}$ has an analytical solution. A common approach for more complex models is <em>gradient descent</em> using the <em>negative log likelihood</em>, $-\log p(\mathbf{X} \lvert \boldsymbol{\theta})$, as loss function. This can easily be implemented with frameworks like PyTorch or Tensorflow provided that $p(\mathbf{X} \lvert \boldsymbol{\theta})$ is differentiable w.r.t. $\boldsymbol{\theta}$. But this is not necessarily the most efficient approach.</p>
+<h2 id="gaussian-mixture-model">Gaussian mixture model</h2>
+<p>MLE can often be simplified by introducing <em>latent variables</em>. A latent variable model makes the assumption that an observation $\mathbf{x}_i$ is caused by some underlying latent variable, a variable that cannot be observed directly but can be inferred from observed variables and parameters. For example, the following plot shows observations in 2-dimensional space and one can see that their overall distribution doesn't seem follow a simple distribution like a single Gaussian.</p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">latent_variable_models_util</span><span class="w"> </span><span class="kn">import</span> <span class="n">n_true</span><span class="p">,</span> <span class="n">mu_true</span><span class="p">,</span> <span class="n">sigma_true</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">latent_variable_models_util</span><span class="w"> </span><span class="kn">import</span> <span class="n">generate_data</span><span class="p">,</span> <span class="n">plot_data</span><span class="p">,</span> <span class="n">plot_densities</span>
+
+<span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
+
+<span class="n">X</span><span class="p">,</span> <span class="n">T</span> <span class="o">=</span> <span class="n">generate_data</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">n_true</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="n">mu_true</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">sigma_true</span><span class="p">)</span>
+
+<span class="n">plot_data</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">)</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2019-11-21/output_1_0.png" /></p>
+<p>But we can see that there are clusters of higher density. Also, the distribution within a cluster looks more like a Gaussian compared to the overall distribution. Indeed, these data were generated using a <em>mixture</em> of three Gaussians as shown in the following plot.</p>
+<div class="highlight"><pre><code><span class="n">plot_data</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">T</span><span class="p">)</span>
+<span class="n">plot_densities</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="n">mu_true</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">sigma_true</span><span class="p">)</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2019-11-21/output_3_0.png" /></p>
+<p>The underlying probabilistic model is called a <em>Gaussian mixture model</em> (GMM), a weighted sum of $C$ Gaussian components where $C=3$ in this example.</p>
+<p>$$
+p(\mathbf{x} \lvert \boldsymbol{\theta}) = \sum_{c=1}^{C} \pi_c \mathcal{N}(\mathbf{x} \lvert \boldsymbol{\mu}_c, \boldsymbol{\Sigma}_c)
+\tag{2}
+$$</p>
+<p>$\pi_c$, $\boldsymbol{\mu}_{c}$ and $\boldsymbol{\Sigma}_{c}$ are the weight, mean vector and covariance matrix of mixture component $c$, respectively. The weights are non-negative and sum up to $1$ i.e. $\sum_{c=1}^{C} \pi_c = 1$. Parameter vector $\boldsymbol{\theta} = \\{ \pi_1, \boldsymbol{\mu}_{1}, \boldsymbol{\Sigma}_{1}, \ldots, \pi_C, \boldsymbol{\mu}_{C}, \boldsymbol{\Sigma}_{C} \\}$ denotes the set of all model parameters. If we introduce a discrete latent variable $\mathbf{t}$ that determines the assignment of observations to mixture components we can define a joint distribution over observed and latent variables $p(\mathbf{x}, \mathbf{t} \lvert \boldsymbol{\theta})$ in terms of a conditional distribution $p(\mathbf{x} \lvert \mathbf{t}, \boldsymbol{\theta})$ and a prior distribution $p(\mathbf{t} \lvert \boldsymbol{\theta})$</p>
+<p>$$
+p(\mathbf{x}, \mathbf{t} \lvert \boldsymbol{\theta}) = p(\mathbf{x} \lvert \mathbf{t}, \boldsymbol{\theta}) p(\mathbf{t} \lvert \boldsymbol{\theta})
+\tag{3}
+$$</p>
+<p>where $p(\mathbf{x} \lvert t_c = 1, \boldsymbol{\theta}) = \mathcal{N}(\mathbf{x} \lvert \boldsymbol{\mu}_c, \boldsymbol{\Sigma}_c)$ and $p(t_c = 1 \lvert \boldsymbol{\theta}) = \pi_c$. The values of $\mathbf{t}$ are one-hot encoded. For example, $t_2 = 1$ refers to the second mixture component  which means $\mathbf{t} = (0,1,0)^T$ if there are $C=3$ components in total. The marginal distribution $p(\mathbf{x} \lvert \boldsymbol{\theta})$ is obtained by summing over all possible states of $\mathbf{t}$.</p>
+<p>$$
+\begin{align*}
+p(\mathbf{x} \lvert \boldsymbol{\theta}) &= 
+\sum_{c=1}^{C} p(t_c = 1 \lvert \boldsymbol{\theta}) p(\mathbf{x} \lvert t_c = 1, \boldsymbol{\theta}) \\ &= 
+\sum_{c=1}^{C} \pi_c \mathcal{N}(\mathbf{x} \lvert \boldsymbol{\mu}_c, \boldsymbol{\Sigma}_c)
+\tag{4}
+\end{align*}
+$$</p>
+<p>For each observation $\mathbf{x}_i$ we have one latent variable $\mathbf{t}_i$, as shown in the following plate notation of the model.</p>
+<p><img alt="gmm" src="/img/2019-11-21/gmm.png" /></p>
+<p>We denote the set of all observations by $\mathbf{X}$ and the set of all latent variables by $\mathbf{T}$. If we could observe $\mathbf{T}$ directly, we could easily maximize the <em>complete-data likelihood</em> $p(\mathbf{X}, \mathbf{T} \lvert \boldsymbol{\theta})$ because we would then know the assignment of data points to components, and fitting a single Gaussian per component can be done analytically. But since we can only observe $\mathbf{X}$, we have to maximize the <em>marginal likelihood</em> or <em>incomplete-data likelihood</em> $p(\mathbf{X} \lvert \boldsymbol{\theta})$. By using the logarithm of the likelihood we have </p>
+<p>$$
+\begin{align*}
+\boldsymbol{\theta}_{MLE} &= 
+\underset{\boldsymbol{\theta}}{\mathrm{argmax}} \log p(\mathbf{X} \lvert \boldsymbol{\theta}) \\ &=
+\underset{\boldsymbol{\theta}}{\mathrm{argmax}} \log \sum_{T} p(\mathbf{X}, \mathbf{T} \lvert \boldsymbol{\theta})
+\tag{5}
+\end{align*}
+$$</p>
+<p>which involves a summation over latent variables inside the logarithm. This prevents a simple analytical solution to the optimization problem. </p>
+<h2 id="expectation-maximization-algorithm">Expectation maximization algorithm</h2>
+<p>Although we cannot observe latent variables directly, we can obtain their posterior distribution. We start with a preliminary parameter value $\boldsymbol{\theta}^{old}$.</p>
+<p>$$
+p(\mathbf{T} \lvert \mathbf{X}, \boldsymbol{\theta}^{old}) = {
+p(\mathbf{X} \lvert \mathbf{T}, \boldsymbol{\theta}^{old}) p(\mathbf{T} \lvert \boldsymbol{\theta}^{old}) \over 
+\sum_{T} p(\mathbf{X} \lvert \mathbf{T}, \boldsymbol{\theta}^{old}) p(\mathbf{T} \lvert \boldsymbol{\theta}^{old})}
+\tag{6}
+$$</p>
+<p>This allows us to define an <em><ins>e</ins>xpectation</em> of the complete-data likelihood w.r.t. to the posterior distribution. </p>
+<p>$$
+\begin{align*}
+\mathcal{Q}(\boldsymbol{\theta}, \boldsymbol{\theta}^{old}) &= 
+\sum_{T} p(\mathbf{T} \lvert \mathbf{X}, \boldsymbol{\theta}^{old}) \log p(\mathbf{X}, \mathbf{T} \lvert \boldsymbol{\theta}) \\ &= 
+\mathbb{E}_{p(\mathbf{T} \lvert \mathbf{X}, \boldsymbol{\theta}^{old})} \log p(\mathbf{X}, \mathbf{T} \lvert \boldsymbol{\theta})
+\tag{7}
+\end{align*}
+$$</p>
+<p>This expectation is then <em><ins>m</ins>aximized</em> w.r.t. to $\boldsymbol{\theta}$ resulting in an updated parameter vector $\boldsymbol{\theta}^{new}$.</p>
+<p>$$
+\boldsymbol{\theta}^{new} = \underset{\boldsymbol{\theta}}{\mathrm{argmax}} \mathcal{Q}(\boldsymbol{\theta}, \boldsymbol{\theta}^{old})
+\tag{8}
+$$</p>
+<p>In Eq. $(7)$ the summation is outside the logarithm which enables an analytical solution for $\boldsymbol{\theta}^{new}$ in the case of GMMs. We then let $\boldsymbol{\theta}^{old} \leftarrow \boldsymbol{\theta}^{new}$ and repeat these steps until convergence. This is the essence of the <em>expectation maximization (EM) algorithm</em>. It has an expectation- or <em>E-step</em> where the posterior over latent variables is obtained and a maximization- or <em>M-step</em> where the expectation of the complete-data likelihood w.r.t. the posterior distribution is maximized. It can be shown that the EM algorithm always converges to a local maximum of $p(\mathbf{X} \lvert \boldsymbol{\theta})$. The following subsection describes the EM algorithm in a more general form.</p>
+<h3 id="general-form">General form</h3>
+<p>By introducing a latent variable $\mathbf{t}_i$ for each observation $\mathbf{x}_i$ we can define the log marginal likelihood as</p>
+<p>$$
+\begin{align*}
+\log p(\mathbf{X} \lvert \boldsymbol{\theta}) &=
+\sum_{i=1}^{N} \log p(\mathbf{x}_i \lvert \boldsymbol{\theta}) \\ &=
+\sum_{i=1}^{N} \log \sum_{c=1}^{C} p(\mathbf{x}_i, t_{ic} = 1 \lvert \boldsymbol{\theta})
+\tag{9}
+\end{align*}
+$$</p>
+<p>Next we introduce a distribution $q(\mathbf{t}_i)$ over latent variable $\mathbf{t}_i$, which can be any probability distribution, and multiply and divide the RHS of the Eq. $(9)$ with this distribution.</p>
+<p>$$
+\begin{align*}
+\log p(\mathbf{X} \lvert \boldsymbol{\theta}) &=
+\sum_{i=1}^{N} \log \sum_{c=1}^{C} q(t_{ic} = 1) {p(\mathbf{x}_i, t_{ic} = 1 \lvert \boldsymbol{\theta}) \over q(t_{ic} = 1)} \\ &= 
+\sum_{i=1}^{N} \log \mathbb{E}_{q(\mathbf{t}_i)} {p(\mathbf{x}_i, \mathbf{t}_i \lvert \boldsymbol{\theta}) \over q(\mathbf{t}_i)}
+\tag{10}
+\end{align*}
+$$</p>
+<p>We now have a concave function ($\log$) of an expectation which allows us to apply <a href="https://en.wikipedia.org/wiki/Jensen%27s_inequality">Jensen's inequality</a> to define a <em>lower bound</em> $\mathcal{L}$ on $\log p(\mathbf{X} \lvert \boldsymbol{\theta})$. </p>
+<p>$$
+\begin{align*}
+\log p(\mathbf{X} \lvert \boldsymbol{\theta}) &=
+\sum_{i=1}^{N} \log \mathbb{E}_{q(\mathbf{t}_i)} {p(\mathbf{x}_i, \mathbf{t}_i\lvert \boldsymbol{\theta}) \over q(\mathbf{t}_i)} \\ &\geq
+\sum_{i=1}^{N} \mathbb{E}_{q(\mathbf{t}_i)} \log {p(\mathbf{x}_i, \mathbf{t}_i\lvert \boldsymbol{\theta}) \over q(\mathbf{t}_i)} \\ &=
+\mathbb{E}_{q(\mathbf{T})} \log {p(\mathbf{X}, \mathbf{T} \lvert \boldsymbol{\theta}) \over q(\mathbf{T})} \\ &=
+\mathcal{L}(\boldsymbol{\theta}, q)
+\tag{11}
+\end{align*} 
+$$</p>
+<p>This lower bound is a function of $\boldsymbol{\theta}$ and $q$. When we subtract the lower bound from the log marginal likelihood we should end up with something that is non-negative.</p>
+<p>$$
+\begin{align*}
+\log p(\mathbf{X} \lvert \boldsymbol{\theta}) - \mathcal{L}(\boldsymbol{\theta}, q) &= 
+\log p(\mathbf{X} \lvert \boldsymbol{\theta}) - \mathbb{E}_{q(\mathbf{T})} \log {p(\mathbf{X}, \mathbf{T} \lvert \boldsymbol{\theta}) \over q(\mathbf{T})} \\ &=
+\mathbb{E}_{q(\mathbf{T})} \log {p(\mathbf{X} \lvert \boldsymbol{\theta}) q(\mathbf{T}) \over p(\mathbf{X}, \mathbf{T} \lvert \boldsymbol{\theta})} \\ &=
+\mathbb{E}_{q(\mathbf{T})} \log {q(\mathbf{T}) \over p(\mathbf{T} \lvert \mathbf{X}, \boldsymbol{\theta})} \\ &=
+\mathrm{KL}(q(\mathbf{T}) \mid\mid p(\mathbf{T} \lvert \mathbf{X}, \boldsymbol{\theta}))
+\tag{12}
+\end{align*}
+$$</p>
+<p>We end up with the Kullback-Leibler (KL) divergence between $q(\mathbf{T})$ and the true posterior over latent variables. It can be shown that the KL divergence is always non-negative. We finally can write the following expression for the lower bound.</p>
+<p>$$
+\mathcal{L}(\boldsymbol{\theta}, q) = \log p(\mathbf{X} \lvert \boldsymbol{\theta}) - \mathrm{KL}(q(\mathbf{T}) \mid\mid p(\mathbf{T} \lvert \mathbf{X}, \boldsymbol{\theta}))
+\tag{13}
+$$</p>
+<p>In the E-step of the EM algorithm $\mathcal{L}(\boldsymbol{\theta}, q)$ is maximized w.r.t. $q$ and $\boldsymbol{\theta}$ is held fixed.</p>
+<p>$$
+\begin{align*}
+q^{new} &= 
+\underset{q}{\mathrm{argmax}} \mathcal{L}(\boldsymbol{\theta}^{old}, q) \\ &=
+\underset{q}{\mathrm{argmin}} \mathrm{KL}(q(\mathbf{T}) \mid\mid p(\mathbf{T} \lvert \mathbf{X}, \boldsymbol{\theta}^{old}))
+\tag{14}
+\end{align*}
+$$</p>
+<p>$\mathcal{L}(\boldsymbol{\theta}, q)$ is maximized when $\mathrm{KL}(q(\mathbf{T}) \mid\mid p(\mathbf{T} \lvert \mathbf{X}, \boldsymbol{\theta}))$ is minimized as $\log p(\mathbf{X} \lvert \boldsymbol{\theta})$ doesn't depend on $q$. If we can obtain the true posterior, like in the GMM case, we can set $q(\mathbf{T})$ to $p(\mathbf{T} \lvert \mathbf{X}, \boldsymbol{\theta})$ and the KL divergence becomes $0$. If the true posterior is not tractable we have to use approximations. One family of approximation techniques is called <em>variational inference</em> which uses specific forms of $q$ to approximate the true posterior. For example, $q$ may come from a parameteric family of distributions and the parameters of $q$ are chosen such that the KL divergence is minimized. Variational inference is covered in more detail in part 2.</p>
+<p>In the M-step $\mathcal{L}(\boldsymbol{\theta}, q)$ is maximized w.r.t. $\boldsymbol{\theta}$ and $q$ is held fixed.  Using Eq. $(11)$ we get</p>
+<p>$$
+\begin{align*}
+\boldsymbol{\theta}^{new} &= 
+\underset{\boldsymbol{\theta}}{\mathrm{argmax}} \mathcal{L}(\boldsymbol{\theta}, q^{new}) \\ &=
+\underset{\boldsymbol{\theta}}{\mathrm{argmax}} \mathbb{E}_{q^{new}(\mathbf{T})} \log {p(\mathbf{X}, \mathbf{T} \lvert \boldsymbol{\theta}) \over q^{new}(\mathbf{T})} \\ &=
+\underset{\boldsymbol{\theta}}{\mathrm{argmax}} \mathbb{E}_{q^{new}(\mathbf{T})} \log p(\mathbf{X}, \mathbf{T} \lvert \boldsymbol{\theta}) - \mathbb{E}_{q^{new}(\mathbf{T})} \log q^{new}(\mathbf{T}) \\ &=
+\underset{\boldsymbol{\theta}}{\mathrm{argmax}} \mathbb{E}_{q^{new}(\mathbf{T})} \log p(\mathbf{X}, \mathbf{T} \lvert \boldsymbol{\theta}) +\mathrm{const.}
+\tag{15}
+\end{align*}
+$$</p>
+<p>If the true posterior is known Eq. $(15)$ becomes Eq. $(7)$ except for the constant term which can be ignored during optimization. Again, we let $\boldsymbol{\theta}^{old} \leftarrow \boldsymbol{\theta}^{new}$ and repeat these steps until convergence. The next section applies the EM algorithm to GMMs.</p>
+<h2 id="expectation-maximization-algorithm-for-gmms">Expectation maximization algorithm for GMMs</h2>
+<p>The parameters for a GMM with 3 components are $\boldsymbol{\theta} = \\{ \pi_1, \boldsymbol{\mu}_{1}, \boldsymbol{\Sigma}_{1}, \pi_2, \boldsymbol{\mu}_{2}, \boldsymbol{\Sigma}_{2}, \pi_3, \boldsymbol{\mu}_{3}, \boldsymbol{\Sigma}_{3} \\}$. The prior probability for component $c$ is $p(t_c = 1 \lvert \boldsymbol{\theta}) = \pi_c$ and the conditional distribution of $\mathbf{x}$ given the latent variable value for this component is $p(\mathbf{x} \lvert t_c = 1, \boldsymbol{\theta}) = \mathcal{N}(\mathbf{x} \lvert \boldsymbol{\mu}_c, \boldsymbol{\Sigma}_c)$.</p>
+<h3 id="implementation-with-numpy-and-scipy">Implementation with numpy and scipy</h3>
+<div class="highlight"><pre><code><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">multivariate_normal</span> <span class="k">as</span> <span class="n">mvn</span>
+</code></pre></div>
+<p>In the E-step we set $q(\mathbf{T})$ to the known posterior $ p(\mathbf{T} \lvert \mathbf{X}, \boldsymbol{\theta})$ using Eq. $(6)$ and compute the posterior probabilities.</p>
+<div class="highlight"><pre><code><span class="k">def</span><span class="w"> </span><span class="nf">e_step</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">pi</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes posterior probabilities from data and parameters.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        X: observed data (N, D).</span>
+<span class="sd">        pi: prior probabilities (C,).</span>
+<span class="sd">        mu: mixture component means (C, D).</span>
+<span class="sd">        sigma: mixture component covariances (C, D, D).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Posterior probabilities (N, C).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">N</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">C</span> <span class="o">=</span> <span class="n">mu</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">N</span><span class="p">,</span> <span class="n">C</span><span class="p">))</span>
+
+    <span class="c1"># Equation (6)</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">C</span><span class="p">):</span>
+        <span class="n">q</span><span class="p">[:,</span> <span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">mvn</span><span class="p">(</span><span class="n">mu</span><span class="p">[</span><span class="n">c</span><span class="p">],</span> <span class="n">sigma</span><span class="p">[</span><span class="n">c</span><span class="p">])</span><span class="o">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">*</span> <span class="n">pi</span><span class="p">[</span><span class="n">c</span><span class="p">]</span>        
+    <span class="k">return</span> <span class="n">q</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+<p>In the M-step, we take the derivatives of $\mathcal{L}(\boldsymbol{\theta}, q)$ w.r.t. to $\pi_c$, $\boldsymbol{\mu}_{c}$ and $\boldsymbol{\Sigma}_{c}$ and set the resulting expressions to $0$ i.e. do MLE of parameters and also apply constraints to ensure that $\sum_{c=1}^C \pi_c = 1$ and $\boldsymbol{\Sigma}_{c})^T$ is positive semi-definite. The details are omitted here and only the results are presented.</p>
+<p>$$
+\begin{align*}
+\pi_c &= {1 \over N} \sum_{i=1}^N q(t_{ic} = 1) \tag{16} \\
+\boldsymbol{\mu}_{c} &= {\sum_{i=1}^N q(t_{ic} = 1) \mathbf{x}_i \over \sum_{i=1}^N q(t_{ic} = 1)} \tag{17} \\
+\boldsymbol{\Sigma}_{c} &= {\sum_{i=1}^N q(t_{ic} = 1) (\mathbf{x}_i - \boldsymbol{\mu}_{c}) (\mathbf{x}_i - \boldsymbol{\mu}_{c})^T \over \sum_{i=1}^N q(t_{ic} = 1)} \tag{18}
+\end{align*}
+$$</p>
+<div class="highlight"><pre><code><span class="k">def</span><span class="w"> </span><span class="nf">m_step</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes parameters from data and posterior probabilities.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        X: data (N, D).</span>
+<span class="sd">        q: posterior probabilities (N, C).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple of</span>
+<span class="sd">        - prior probabilities (C,).</span>
+<span class="sd">        - mixture component means (C, D).</span>
+<span class="sd">        - mixture component covariances (C, D, D).</span>
+<span class="sd">    &quot;&quot;&quot;</span>    
+
+    <span class="n">N</span><span class="p">,</span> <span class="n">D</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">C</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>    
+    <span class="n">sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">C</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">D</span><span class="p">))</span>
+
+    <span class="c1"># Equation (16)</span>
+    <span class="n">pi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="n">N</span>
+
+    <span class="c1"># Equation (17)</span>
+    <span class="n">mu</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Equation (18)</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">C</span><span class="p">):</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span> <span class="o">-</span> <span class="n">mu</span><span class="p">[</span><span class="n">c</span><span class="p">])</span>
+        <span class="n">sigma</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">q</span><span class="p">[:,</span> <span class="p">[</span><span class="n">c</span><span class="p">]]</span> <span class="o">*</span> <span class="n">delta</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">q</span><span class="p">[:,</span> <span class="n">c</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">pi</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span>
+</code></pre></div>
+<p>For computing the lower bound, using the results from the E-step and M-step, we first re-arrange Eq. $(11)$ </p>
+<p>$$
+\begin{align*}
+\mathcal{L}(\boldsymbol{\theta}, q) &= 
+\sum_{i=1}^{N} \mathbb{E}_{q(\mathbf{t}_i)} \log {p(\mathbf{x}_i, \mathbf{t}_i \lvert \boldsymbol{\theta}) \over q(\mathbf{t}_i)} \\ &=
+\sum_{i=1}^{N} \sum_{c=1}^{C} q(t_{ic} = 1) \log {p(\mathbf{x}_i, t_{ic} = 1 \lvert \boldsymbol{\theta}) \over q(t_{ic} = 1)} \\ &=
+\sum_{i=1}^{N} \sum_{c=1}^{C} q(t_{ic} = 1) \left\{ \log p(\mathbf{x}_i \lvert t_{ic} = 1, \boldsymbol{\theta}) + \log p(t_{ic} = 1 \lvert \boldsymbol{\theta}) - \log q(t_{ic} = 1) \right\}
+ \tag{19}
+\end{align*}
+$$</p>
+<p>and then implement it in this form.</p>
+<div class="highlight"><pre><code><span class="k">def</span><span class="w"> </span><span class="nf">lower_bound</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">pi</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes lower bound from data, parameters and posterior probabilities.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        X: observed data (N, D).</span>
+<span class="sd">        pi: prior probabilities (C,).</span>
+<span class="sd">        mu: mixture component means (C, D).</span>
+<span class="sd">        sigma: mixture component covariances (C, D, D).</span>
+<span class="sd">        q: posterior probabilities (N, C).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Lower bound.</span>
+<span class="sd">    &quot;&quot;&quot;</span>    
+
+    <span class="n">N</span><span class="p">,</span> <span class="n">C</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">ll</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">N</span><span class="p">,</span> <span class="n">C</span><span class="p">))</span>
+
+    <span class="c1"># Equation (19)</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">C</span><span class="p">):</span>
+        <span class="n">ll</span><span class="p">[:,</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">mvn</span><span class="p">(</span><span class="n">mu</span><span class="p">[</span><span class="n">c</span><span class="p">],</span> <span class="n">sigma</span><span class="p">[</span><span class="n">c</span><span class="p">])</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">q</span> <span class="o">*</span> <span class="p">(</span><span class="n">ll</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">pi</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="mf">1e-8</span><span class="p">))))</span>
+</code></pre></div>
+<p>Model training iterates over E- and M-steps alternately until convergence of the lower bound. To increase the chance of escaping local maxima and finding the global maximum, training is restarted several times from random initial parameters.</p>
+<div class="highlight"><pre><code><span class="k">def</span><span class="w"> </span><span class="nf">random_init_params</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">C</span><span class="p">):</span>
+    <span class="n">D</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">pi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">C</span><span class="p">)</span> <span class="o">/</span> <span class="n">C</span>
+    <span class="n">mu</span> <span class="o">=</span> <span class="n">mvn</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">cov</span><span class="o">=</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">X</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]),</span> 
+                                           <span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">X</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])])</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">C</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">C</span><span class="p">,</span> <span class="n">D</span><span class="p">)</span>
+    <span class="n">sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="n">C</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">pi</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">n_restarts</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">):</span>
+    <span class="n">q_best</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">pi_best</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">mu_best</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">sigma_best</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">lb_best</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_restarts</span><span class="p">):</span>
+        <span class="n">pi</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="n">random_init_params</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">C</span><span class="p">)</span>
+        <span class="n">prev_lb</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_iter</span><span class="p">):</span>
+                <span class="n">q</span> <span class="o">=</span> <span class="n">e_step</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">pi</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="p">)</span>
+                <span class="n">pi</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="n">m_step</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>
+                <span class="n">lb</span> <span class="o">=</span> <span class="n">lower_bound</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">pi</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">lb</span> <span class="o">&gt;</span> <span class="n">lb_best</span><span class="p">:</span>
+                    <span class="n">q_best</span> <span class="o">=</span> <span class="n">q</span>
+                    <span class="n">pi_best</span> <span class="o">=</span> <span class="n">pi</span>
+                    <span class="n">mu_best</span> <span class="o">=</span> <span class="n">mu</span>
+                    <span class="n">sigma_best</span> <span class="o">=</span> <span class="n">sigma</span>
+                    <span class="n">lb_best</span> <span class="o">=</span> <span class="n">lb</span>
+
+                <span class="k">if</span> <span class="n">prev_lb</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">((</span><span class="n">lb</span> <span class="o">-</span> <span class="n">prev_lb</span><span class="p">)</span> <span class="o">/</span> <span class="n">prev_lb</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">rtol</span><span class="p">:</span>
+                    <span class="k">break</span>
+
+                <span class="n">prev_lb</span> <span class="o">=</span> <span class="n">lb</span>
+        <span class="k">except</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">LinAlgError</span><span class="p">:</span>
+            <span class="c1"># Singularity. One of the components collapsed</span>
+            <span class="c1"># onto a specific data point. Start again ...</span>
+            <span class="k">pass</span>
+
+    <span class="k">return</span> <span class="n">pi_best</span><span class="p">,</span> <span class="n">mu_best</span><span class="p">,</span> <span class="n">sigma_best</span><span class="p">,</span> <span class="n">q_best</span><span class="p">,</span> <span class="n">lb_best</span>
+
+<span class="n">pi_best</span><span class="p">,</span> <span class="n">mu_best</span><span class="p">,</span> <span class="n">sigma_best</span><span class="p">,</span> <span class="n">q_best</span><span class="p">,</span> <span class="n">lb_best</span> <span class="o">=</span> <span class="n">train</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">C</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Lower bound = </span><span class="si">{</span><span class="n">lb_best</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+</code></pre></div>
+<pre><code>Lower bound = -3923.77
+</code></pre>
+<p>After convergence we can use the posterior probabilties of latent variables to plot the soft-assignment of data points to mixture components.</p>
+<div class="highlight"><pre><code><span class="n">plot_data</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">q_best</span><span class="p">)</span>
+<span class="n">plot_densities</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="n">mu_best</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">sigma_best</span><span class="p">)</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2019-11-21/output_17_0.png" /></p>
+<h3 id="optimal-number-of-components">Optimal number of components</h3>
+<p>Usually, we do not know the optimal number of mixture components a priori. But we can get a hint when plotting the lower bound vs. the number of mixture components.</p>
+<div class="highlight"><pre><code><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="n">Cs</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>
+<span class="n">lbs</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">C</span> <span class="ow">in</span> <span class="n">Cs</span><span class="p">:</span>
+    <span class="n">lb</span> <span class="o">=</span> <span class="n">train</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">C</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">lbs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lb</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">Cs</span><span class="p">,</span> <span class="n">lbs</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Number of mixture components&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Lower bound&#39;</span><span class="p">);</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2019-11-21/output_19_0.png" /></p>
+<p>There is a strong increase in the lower bound value until $C = 3$ and then the lower bound more or less doesn't increase any more. With more components there are of course more options to overfit but the simplest model that reaches a relatively high lower bound value is a GMM with 3 components. This is exactly the number of components used to generate the data.</p>
+<p>A more principled approach to determine the optimal number of components requires a Bayesian treatment of model parameters. In this case the lower bound would also take into account model complexity and we would see decreasing lower bound values for $C \gt 3$ and a maximum at $C = 3$. For details see section 10.2.4 in [1].</p>
+<h3 id="implementation-with-scikit-learn">Implementation with scikit-learn</h3>
+<p>The low-level implementation above was just for illustration purposes. Scikit-learn already comes with a <code>GaussianMixture</code> class that can be readily used.</p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.mixture</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianMixture</span>
+
+<span class="n">gmm</span> <span class="o">=</span> <span class="n">GaussianMixture</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">n_init</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">gmm</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+<span class="n">plot_data</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">gmm</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">X</span><span class="p">))</span>
+<span class="n">plot_densities</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="n">gmm</span><span class="o">.</span><span class="n">means_</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">gmm</span><span class="o">.</span><span class="n">covariances_</span><span class="p">)</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2019-11-21/output_21_0.png" /></p>
+<p>The results are very similar. The differences come from different random initializations. Also, plotting the lower bound vs. the number of mixture components reproduces our previous findings.</p>
+<div class="highlight"><pre><code><span class="n">Cs</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>
+<span class="n">lbs</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">C</span> <span class="ow">in</span> <span class="n">Cs</span><span class="p">:</span>
+    <span class="n">gmm</span> <span class="o">=</span> <span class="n">GaussianMixture</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="n">C</span><span class="p">,</span> <span class="n">n_init</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">gmm</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+    <span class="n">lbs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gmm</span><span class="o">.</span><span class="n">lower_bound_</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">Cs</span><span class="p">,</span> <span class="n">lbs</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Number of mixture components&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Lower bound (normalized)&#39;</span><span class="p">);</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2019-11-21/output_23_0.png" /></p>
+<p>The lower bound values obtained via <code>gmm.lower_bound_</code> are normalized i.e. divided by $N = 1000$ in this example.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>Inference of latent variables and estimation of parameters in GMMs is an example of exact inference. The exact posterior can be obtained in the E-step and analytical solutions exist for parameter MLE in the M-step. But for many models of practical interest, exact inference is not possible and approximate inference methods must be used. <em>Variational inference</em> is one of them and will be covered in <a href="/2019/12/17/latent-variable-models-part-2/">part 2</a>, together with a <em>variational autoencoder</em> as application example. </p>
+<h2 id="references">References</h2>
+<p>[1] Christopher M. Bishop. <a href="http://www.springer.com/de/book/9780387310732">Pattern Recognition and Machine Learning</a> (<a href="https://www.microsoft.com/en-us/research/uploads/prod/2006/01/Bishop-Pattern-Recognition-and-Machine-Learning-2006.pdf">PDF</a>), Chapter 9.<br />
+[2] Kevin P. Murphy. <a href="https://mitpress.mit.edu/books/machine-learning-0">Machine Learning, A Probabilistic Perspective</a>, Chapter 11.</p>
+    </div>
+
+    <nav class="post-nav">
+        
+        <a href="/2019/09/04/super-resolution/" class="post-nav-link post-nav-older">
+            <span class="post-nav-label">&larr; Older</span>
+            <span class="post-nav-title">Single image super-resolution with deep neural networks</span>
+        </a>
+        
+        
+        <a href="/2019/12/17/latent-variable-models-part-2/" class="post-nav-link post-nav-newer">
+            <span class="post-nav-label">Newer &rarr;</span>
+            <span class="post-nav-title">Latent variable models, part 2</span>
+        </a>
+        
+    </nav>
+
+    
+    <section class="comments">
+        <h2>Comments</h2>
+        <div id="disqus_thread"></div>
+    </section>
+    
+</article>
+
+        </div>
+    </main>
+
+    
+    <footer class="footer">
+        <div class="container">
+            
+<ul class="footer-social-links">
+    <li>
+        <a href="https://linkedin.com/in/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+    <rect x="2" y="9" width="4" height="12"/>
+    <circle cx="4" cy="4" r="2"/>
+</svg>
+
+            linkedin.com/in/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/gradion-ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/gradion-ai
+        </a>
+    </li>
+    <li>
+        <a href="https://gradion.ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
+    <path d="M9 22v-4h6v4"/>
+    <path d="M8 6h.01"/><path d="M16 6h.01"/>
+    <path d="M12 6h.01"/>
+    <path d="M12 10h.01"/><path d="M12 14h.01"/>
+    <path d="M16 10h.01"/><path d="M16 14h.01"/>
+    <path d="M8 10h.01"/><path d="M8 14h.01"/>
+</svg>
+
+            gradion.ai
+        </a>
+    </li>
+    <li>
+        <a href="/llms.txt">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 8V4H8"/>
+    <rect width="16" height="12" x="4" y="8" rx="2"/>
+    <path d="M2 14h2"/>
+    <path d="M20 14h2"/>
+    <path d="M15 13v2"/>
+    <path d="M9 13v2"/>
+</svg>
+
+            llms.txt
+        </a>
+    </li>
+    <li>
+        <a href="/feed.xml">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 11a9 9 0 0 1 9 9"/>
+    <path d="M4 4a16 16 0 0 1 16 16"/>
+    <circle cx="5" cy="19" r="1"/>
+</svg>
+
+            feed.xml
+        </a>
+    </li>
+</ul>
+
+            <p class="footer-copyright">// Martin Krasser, 2026</p>
+        </div>
+    </footer>
+
+    <script>
+    document.querySelectorAll('a[href^="http"]').forEach(link => {
+        if (!link.href.startsWith(location.origin)) {
+            link.target = '_blank';
+            link.rel = 'noopener';
+        }
+    });
+    </script>
+    
+
+<script>
+var disqus_config = function () {
+    this.page.url = 'https://krasserm.github.io/2019/11/21/latent-variable-models-part-1/';
+    this.page.identifier = '/2019/11/21/latent-variable-models-part-1/';
+};
+(function() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://krasserm.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+</body>
+</html>

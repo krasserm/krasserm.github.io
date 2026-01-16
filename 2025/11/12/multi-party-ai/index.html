@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#0a0e14">
+    <title>From single-user to multi-party conversational AI - Martin Krasser</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/pygments.css">
+    <link rel="alternate" type="application/atom+xml" title="Martin Krasser Feed" href="/feed.xml">
+    
+<script>
+MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="/" class="nav-brand">Martin Krasser</a>
+            <ul class="nav-links">
+                
+                <li><a href="/about/">About</a></li>
+                
+                <li><a href="/">Blog</a></li>
+                
+                <li><a href="/industry/">Industry</a></li>
+                
+                <li><a href="/open-source/">Open Source</a></li>
+                
+                <li><a href="/citations/">Citations</a></li>
+                
+                <li><a href="/stories/">Stories</a></li>
+                
+                <li><a href="/contact/">Contact</a></li>
+                
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="container">
+            
+<article class="post">
+    <header class="post-header">
+        <h1 class="post-title">From single-user to multi-party conversational AI</h1>
+        
+        <p class="post-meta">
+            <time datetime="2025-11-12">
+                November 12, 2025
+            </time>
+            
+            <span class="post-author">by Martin Krasser</span>
+            
+        </p>
+    </header>
+
+    <div class="post-content">
+        <p>This article was originally posted <a href="https://gradion-ai.github.io/agents-nanny/2025/11/12/from-single-user-to-multi-party-conversational-ai/">here</a>.</p>
+<hr />
+<p>Single-user AI agents excel at responding to direct queries in one-on-one interactions. A user sends the agent a self-contained query with sufficient context, and the agent processes it directly. Even in group chats, the typical pattern remains the same: users mention the agent with a direct query. This interaction model treats multi-user environments as collections of individual exchanges rather than true multi-party conversations.</p>
+<p>Multi-party conversational AI systems, on the other hand, must derive agent queries from more complex exchanges between multiple participants. This requires detecting meaningful patterns while knowing when to stay silent. For example, when a conversation stalls on a decision, the system detects that and suggests resolutions based on available agent capabilities. Single-user agents respond to every input, but multi-party AI must engage only when specific patterns emerge.</p>
+<!-- more -->
+
+<h2 id="architectural-approach">Architectural Approach</h2>
+<p>Modifying existing single-user agents through fine-tuning or prompting does not scale. The solution lies in enabling single-user agents to participate in multi-party conversations without requiring modification to the agents themselves. This requires a separate integration layer between group chat and downstream agents.</p>
+<p>This layer detects patterns in group conversations and transforms them into self-contained queries that single-user agents can process. The layer monitors the conversation, identifies when specific engagement criteria are met, and translates the relevant context into actionable agent requests. For example, when a factual contradiction emerges, it initiates a fact check and informs the group of the result.</p>
+<p>Engagement criteria vary significantly across applications and should evolve based on group feedback. The layer must support flexible definition of custom criteria in natural language, processed by a reasoning model. It must also provide a feedback mechanism to update the criteria. It acts as a specialized adapter ("group reasoner") between group chat and downstream AI agents, implementing group engagement logic through pattern detection and query transformation.</p>
+<p><img alt="Group reasoner" src="https://gradion-ai.github.io/agents-nanny/multi-party-ai/reasoner-light.png#only-light" /></p>
+<h2 id="reference-implementations">Reference Implementations</h2>
+<p>Reference implementations of this architectural pattern are provided by the open-source projects Group Sense, Group Genie, and Hybrid Groups.</p>
+<p><a href="https://gradion-ai.github.io/group-sense/">Group Sense</a> provides the group reasoner component. It detects patterns in group chat messages and transforms them into queries for AI systems. The library supports both shared, single-threaded reasoning and concurrent reasoning across group members. Concurrent reasoners process group context redundantly but scale better to larger, highly active groups.</p>
+<p><a href="https://gradion-ai.github.io/group-genie/">Group Genie</a> combines the group reasoner with an agent integration layer. It enables single-user AI agents to participate in group chat conversations without requiring modification to the agents themselves. It routes generated queries to agents and responses to dynamically determined recipients. Agents can be built on any technology stack and are integrated through a simple interface.</p>
+<p><a href="https://gradion-ai.github.io/hybrid-groups/">Hybrid Groups</a> demonstrates this approach in production environments by integrating Group Genie into Slack and GitHub. A group session corresponds to a thread in Slack or an issue or a pull request in GitHub. The Slack integration supports custom definition of engagement criteria per channel.</p>
+<h2 id="additional-challenges">Additional Challenges</h2>
+<p>Pattern detection, query transformation, and recipient determination address core requirements for multi-party conversational AI, but additional challenges remain. Agents must be able to act on behalf of individual group members, particularly when following member-specific instructions rather than general group requests.</p>
+<p>Beyond these implementation concerns, additional research areas are relevant. Further aspects are covered in this selected list of papers:</p>
+<ul>
+<li><a href="https://arxiv.org/abs/2509.16325">Overhearing LLM Agents: A Survey, Taxonomy, and Roadmap</a>: AI agents that monitor ambient conversations unobtrusively and provide contextual assistance without interrupting the flow of discussion.</li>
+<li><a href="https://arxiv.org/abs/2505.18845">Multi-Party Conversational Agents: A Survey</a>: Modeling the mental state of participants, understanding group dialogue content, and predicting conversation flow.</li>
+<li><a href="https://arxiv.org/abs/2401.04883">Multi-User Chat Assistant (MUCA)</a>: Group conversational AI that determines what to say, when to respond, and who to address through three coordinated modules.</li>
+<li><a href="https://arxiv.org/abs/2310.20479">Multi-User MultiWOZ: Task-Oriented Dialogues among Multiple Users</a>: A method for supporting task-oriented dialogues where multiple users collaboratively make decisions with an agent, including multi-user contextual query rewriting to convert user chats into consumable system queries.</li>
+</ul>
+    </div>
+
+    <nav class="post-nav">
+        
+        <a href="/2025/08/06/agent-authorization/" class="post-nav-link post-nav-older">
+            <span class="post-nav-label">&larr; Older</span>
+            <span class="post-nav-title">Agent authorization without the pain</span>
+        </a>
+        
+        
+        <a href="/2025/12/16/code-actions/" class="post-nav-link post-nav-newer">
+            <span class="post-nav-label">Newer &rarr;</span>
+            <span class="post-nav-title">Code Actions as Tools</span>
+        </a>
+        
+    </nav>
+
+    
+    <section class="comments">
+        <h2>Comments</h2>
+        <div id="disqus_thread"></div>
+    </section>
+    
+</article>
+
+        </div>
+    </main>
+
+    
+    <footer class="footer">
+        <div class="container">
+            
+<ul class="footer-social-links">
+    <li>
+        <a href="https://linkedin.com/in/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+    <rect x="2" y="9" width="4" height="12"/>
+    <circle cx="4" cy="4" r="2"/>
+</svg>
+
+            linkedin.com/in/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/gradion-ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/gradion-ai
+        </a>
+    </li>
+    <li>
+        <a href="https://gradion.ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
+    <path d="M9 22v-4h6v4"/>
+    <path d="M8 6h.01"/><path d="M16 6h.01"/>
+    <path d="M12 6h.01"/>
+    <path d="M12 10h.01"/><path d="M12 14h.01"/>
+    <path d="M16 10h.01"/><path d="M16 14h.01"/>
+    <path d="M8 10h.01"/><path d="M8 14h.01"/>
+</svg>
+
+            gradion.ai
+        </a>
+    </li>
+    <li>
+        <a href="/llms.txt">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 8V4H8"/>
+    <rect width="16" height="12" x="4" y="8" rx="2"/>
+    <path d="M2 14h2"/>
+    <path d="M20 14h2"/>
+    <path d="M15 13v2"/>
+    <path d="M9 13v2"/>
+</svg>
+
+            llms.txt
+        </a>
+    </li>
+    <li>
+        <a href="/feed.xml">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 11a9 9 0 0 1 9 9"/>
+    <path d="M4 4a16 16 0 0 1 16 16"/>
+    <circle cx="5" cy="19" r="1"/>
+</svg>
+
+            feed.xml
+        </a>
+    </li>
+</ul>
+
+            <p class="footer-copyright">// Martin Krasser, 2026</p>
+        </div>
+    </footer>
+
+    <script>
+    document.querySelectorAll('a[href^="http"]').forEach(link => {
+        if (!link.href.startsWith(location.origin)) {
+            link.target = '_blank';
+            link.rel = 'noopener';
+        }
+    });
+    </script>
+    
+
+<script>
+var disqus_config = function () {
+    this.page.url = 'https://krasserm.github.io/2025/11/12/multi-party-ai/';
+    this.page.identifier = '/2025/11/12/multi-party-ai/';
+};
+(function() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://krasserm.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+</body>
+</html>

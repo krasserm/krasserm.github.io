@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#0a0e14">
+    <title>Bayesian optimization - Martin Krasser</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/pygments.css">
+    <link rel="alternate" type="application/atom+xml" title="Martin Krasser Feed" href="/feed.xml">
+    
+<script>
+MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="/" class="nav-brand">Martin Krasser</a>
+            <ul class="nav-links">
+                
+                <li><a href="/about/">About</a></li>
+                
+                <li><a href="/">Blog</a></li>
+                
+                <li><a href="/industry/">Industry</a></li>
+                
+                <li><a href="/open-source/">Open Source</a></li>
+                
+                <li><a href="/citations/">Citations</a></li>
+                
+                <li><a href="/stories/">Stories</a></li>
+                
+                <li><a href="/contact/">Contact</a></li>
+                
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="container">
+            
+<article class="post">
+    <header class="post-header">
+        <h1 class="post-title">Bayesian optimization</h1>
+        
+        <p class="post-meta">
+            <time datetime="2018-03-21">
+                March 21, 2018
+            </time>
+            
+            <span class="post-author">by Martin Krasser</span>
+            
+        </p>
+    </header>
+
+    <div class="post-content">
+        <p><a href="https://colab.research.google.com/github/krasserm/bayesian-machine-learning/blob/dev/bayesian-optimization/bayesian_optimization.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a> </p>
+<p><em>Sources:</em></p>
+<ul>
+<li><em><a href="http://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/dev/bayesian-optimization/bayesian_optimization.ipynb">Notebook</a></em></li>
+<li><em><a href="https://github.com/krasserm/bayesian-machine-learning">Repository</a></em></li>
+</ul>
+<h2 id="introduction">Introduction</h2>
+<p>Many optimization problems in machine learning are black box optimization problems where the objective function $f(\mathbf{x})$ is a black box function<sup>[1][2]</sup>. We do not have an analytical expression for $f$ nor do we know its derivatives. Evaluation of the function is restricted to sampling at a point $\mathbf{x}$ and getting a possibly noisy response. </p>
+<p>If $f$ is cheap to evaluate we could sample at many points e.g. via grid search, random search or numeric gradient estimation. However, if function evaluation is expensive e.g. tuning hyperparameters of  a deep neural network, probe drilling for oil at given geographic coordinates or evaluating the effectiveness of a drug candidate taken from a chemical search space then it is important to minimize the number of samples drawn from the black box function $f$.</p>
+<p>This is the domain where Bayesian optimization techniques are most useful. They attempt to find the global optimimum in a minimum number of steps. Bayesian optimization incorporates prior belief about $f$ and updates the prior with samples drawn from $f$ to get a posterior that better approximates $f$. The model used for approximating the objective function is called <em>surrogate model</em>. Bayesian optimization also uses an <em>acquisition function</em> that directs sampling to areas where an improvement over the current best observation is likely.</p>
+<h3 id="surrogate-model">Surrogate model</h3>
+<p>A popular surrogate model for Bayesian optimization are <a href="https://en.wikipedia.org/wiki/Gaussian_process">Gaussian processes</a> (GPs). I wrote about Gaussian processes in a <a href="/2018/03/19/gaussian-processes/">previous post</a>. If you are not familiar with GPs I recommend reading it first. GPs define a prior over functions and we can use them to incorporate prior beliefs about the objective function (smoothness, ...). The GP posterior is cheap to evaluate and is used to propose points in the search space where sampling is likely to yield an improvement. </p>
+<h3 id="acquisition-functions">Acquisition functions</h3>
+<p>Proposing sampling points in the search space is done by acquisition functions. They trade off exploitation and exploration. Exploitation means sampling where the surrogate model predicts a high objective and exploration means sampling at locations where the prediction uncertainty is high. Both correspond to high acquisition function values and the goal is to maximize the acquisition function to determine the next sampling point. </p>
+<p>More formally, the objective function $f$ will be sampled at $\mathbf{x}_t = \operatorname{argmax}_{\mathbf{x}} u(\mathbf{x} \lvert \mathcal{D}_{1:t-1})$ where $u$ is the acquisition function and $\mathcal{D}_{1:t-1} = \{(\mathbf{x}_1, y_1),...,(\mathbf{x}_{t-1}, y_{t-1})\}$ are the $t-1$ samples drawn from $f$ so far. Popular acquisition functions are <em>maximum probability of improvement</em> (MPI), <em>expected improvement</em> (EI) and <em>upper confidence bound</em> (UCB)<sup>[1]</sup>. In the following, we will use the expected improvement (EI) which is most widely used and described further below. </p>
+<h3 id="optimization-algorithm">Optimization algorithm</h3>
+<p>The Bayesian optimization procedure is as follows. For $t = 1,2,...$ repeat:</p>
+<ul>
+<li>Find the next sampling point $\mathbf{x}_{t}$ by optimizing the acquisition function over the GP: $\mathbf{x}_t = \operatorname{argmax}_{\mathbf{x}} u(\mathbf{x} \lvert \mathcal{D}_{1:t-1})$</li>
+<li>Obtain a possibly noisy sample $y_t = f(\mathbf{x}_t) + \epsilon_t$ from the objective function $f$.</li>
+<li>Add the sample to previous samples $\mathcal{D}_{1:t} = \{\mathcal{D}_{1:t-1}, (\mathbf{x}_t,y_t)\}$ and update the GP.</li>
+</ul>
+<h3 id="expected-improvement">Expected improvement</h3>
+<p>Expected improvement is defined as</p>
+<p>$$\operatorname{EI}(\mathbf{x}) = \mathbb{E}\max(f(\mathbf{x}) - f(\mathbf{x}^+), 0)\tag{1}$$</p>
+<p>where $f(\mathbf{x}^+)$ is the value of the best sample so far and $\mathbf{x}^+$ is the location of that sample i.e. $\mathbf{x}^+ = \operatorname{argmax}_{\mathbf{x}_i \in \mathbf{x}_{1:t}} f(\mathbf{x}_i)$. The expected improvement can be evaluated analytically under the GP model<sup>[3]</sup>:</p>
+<p>$$
+\operatorname{EI}(\mathbf{x}) =
+\begin{cases}
+(\mu(\mathbf{x}) - f(\mathbf{x}^+) - \xi)\Phi(Z) + \sigma(\mathbf{x})\phi(Z)  &\text{if}\ \sigma(\mathbf{x}) > 0 \\
+0 & \text{if}\ \sigma(\mathbf{x}) = 0
+\end{cases}\tag{2}
+$$</p>
+<p>where</p>
+<p>$$
+Z =
+\begin{cases}
+\frac{\mu(\mathbf{x}) - f(\mathbf{x}^+) - \xi}{\sigma(\mathbf{x})} &\text{if}\ \sigma(\mathbf{x}) > 0 \\
+0 & \text{if}\ \sigma(\mathbf{x}) = 0
+\end{cases}
+$$</p>
+<p>where $\mu(\mathbf{x})$ and $\sigma(\mathbf{x})$ are the mean and the standard deviation of the GP posterior predictive at $\mathbf{x}$, respectively. $\Phi$ and $\phi$ are the CDF and PDF of the standard normal distribution, respectively. The first summation term in Equation (2) is the exploitation term and second summation term is the exploration term.</p>
+<p>Parameter $\xi$ in Equation (2) determines the amount of exploration during optimization and higher $\xi$ values lead to more exploration. In other words, with increasing $\xi$ values, the importance of improvements predicted by the GP posterior mean $\mu(\mathbf{x})$ decreases relative to the importance of potential improvements in regions of high prediction uncertainty, represented by large $\sigma(\mathbf{x})$ values. A recommended default value for $\xi$ is $0.01$.</p>
+<p>With this minimum of theory we can start implementing Bayesian optimization. The next section shows a basic implementation with plain NumPy and SciPy, later sections demonstrate how to use existing libraries. Finally, Bayesian optimization is used to tune the hyperparameters of a tree-based regression model.</p>
+<h2 id="implementation-with-numpy-and-scipy">Implementation with NumPy and SciPy</h2>
+<p>In this section, we will implement the acquisition function and its optimization in plain NumPy and SciPy and use scikit-learn for the Gaussian process implementation. Although we have an analytical expression of the optimization objective <code>f</code> in the following example, we treat is as black box and iteratively approximate it with a Gaussian process during Bayesian optimization. Furthermore, samples drawn from the objective function are noisy and the noise level is given by the <code>noise</code> variable. Optimization is done within given <code>bounds</code>. We also assume that there exist two initial samples in <code>X_init</code> and <code>Y_init</code>.</p>
+<div class="highlight"><pre><code><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
+
+<span class="n">bounds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">]])</span>
+<span class="n">noise</span> <span class="o">=</span> <span class="mf">0.2</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">noise</span><span class="o">=</span><span class="n">noise</span><span class="p">):</span>
+    <span class="k">return</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">X</span><span class="p">)</span> <span class="o">-</span> <span class="n">X</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">0.7</span><span class="o">*</span><span class="n">X</span> <span class="o">+</span> <span class="n">noise</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+<span class="n">X_init</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="o">-</span><span class="mf">0.9</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.1</span><span class="p">]])</span>
+<span class="n">Y_init</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">X_init</span><span class="p">)</span>
+</code></pre></div>
+<p>The following plot shows the noise-free objective function, the amount of noise by plotting a large number of samples and the two initial samples.</p>
+<div class="highlight"><pre><code><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="c1"># Dense grid of points within bounds</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">bounds</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="mf">0.01</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># Noise-free objective function values at X </span>
+<span class="n">Y</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">X</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="c1"># Plot optimization objective with noise level </span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="s1">&#39;y--&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Noise-free objective&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">f</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="s1">&#39;bx&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Noisy samples&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">X_init</span><span class="p">,</span> <span class="n">Y_init</span><span class="p">,</span> <span class="s1">&#39;kx&#39;</span><span class="p">,</span> <span class="n">mew</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Initial samples&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">();</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2018-03-21/output_4_0.png" /></p>
+<p>Goal is to find the global optimum on the left in a small number of steps. The next step is to implement the acquisition function defined in Equation (2) as <code>expected_improvement</code> function. </p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">norm</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">expected_improvement</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">X_sample</span><span class="p">,</span> <span class="n">Y_sample</span><span class="p">,</span> <span class="n">gpr</span><span class="p">,</span> <span class="n">xi</span><span class="o">=</span><span class="mf">0.01</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Computes the EI at points X based on existing samples X_sample</span>
+<span class="sd">    and Y_sample using a Gaussian process surrogate model.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        X: Points at which EI shall be computed (m x d).</span>
+<span class="sd">        X_sample: Sample locations (n x d).</span>
+<span class="sd">        Y_sample: Sample values (n x 1).</span>
+<span class="sd">        gpr: A GaussianProcessRegressor fitted to samples.</span>
+<span class="sd">        xi: Exploitation-exploration trade-off parameter.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Expected improvements at points X.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="n">gpr</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">return_std</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">mu_sample</span> <span class="o">=</span> <span class="n">gpr</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_sample</span><span class="p">)</span>
+
+    <span class="n">sigma</span> <span class="o">=</span> <span class="n">sigma</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Needed for noise-based model,</span>
+    <span class="c1"># otherwise use np.max(Y_sample).</span>
+    <span class="c1"># See also section 2.4 in [1]</span>
+    <span class="n">mu_sample_opt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">mu_sample</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">divide</span><span class="o">=</span><span class="s1">&#39;warn&#39;</span><span class="p">):</span>
+        <span class="n">imp</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">-</span> <span class="n">mu_sample_opt</span> <span class="o">-</span> <span class="n">xi</span>
+        <span class="n">Z</span> <span class="o">=</span> <span class="n">imp</span> <span class="o">/</span> <span class="n">sigma</span>
+        <span class="n">ei</span> <span class="o">=</span> <span class="n">imp</span> <span class="o">*</span> <span class="n">norm</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">Z</span><span class="p">)</span> <span class="o">+</span> <span class="n">sigma</span> <span class="o">*</span> <span class="n">norm</span><span class="o">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">Z</span><span class="p">)</span>
+        <span class="n">ei</span><span class="p">[</span><span class="n">sigma</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+    <span class="k">return</span> <span class="n">ei</span>
+</code></pre></div>
+<p>We also need a function that proposes the next sampling point by computing the location of the acquisition function maximum. Optimization is restarted <code>n_restarts</code> times to avoid local optima.</p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">scipy.optimize</span><span class="w"> </span><span class="kn">import</span> <span class="n">minimize</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">propose_location</span><span class="p">(</span><span class="n">acquisition</span><span class="p">,</span> <span class="n">X_sample</span><span class="p">,</span> <span class="n">Y_sample</span><span class="p">,</span> <span class="n">gpr</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">n_restarts</span><span class="o">=</span><span class="mi">25</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Proposes the next sampling point by optimizing the acquisition function.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        acquisition: Acquisition function.</span>
+<span class="sd">        X_sample: Sample locations (n x d).</span>
+<span class="sd">        Y_sample: Sample values (n x 1).</span>
+<span class="sd">        gpr: A GaussianProcessRegressor fitted to samples.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Location of the acquisition function maximum.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">dim</span> <span class="o">=</span> <span class="n">X_sample</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">min_val</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">min_x</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">min_obj</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
+        <span class="c1"># Minimization objective is the negative acquisition function</span>
+        <span class="k">return</span> <span class="o">-</span><span class="n">acquisition</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dim</span><span class="p">),</span> <span class="n">X_sample</span><span class="p">,</span> <span class="n">Y_sample</span><span class="p">,</span> <span class="n">gpr</span><span class="p">)</span>
+
+    <span class="c1"># Find the best optimum by starting from n_restart different random points.</span>
+    <span class="k">for</span> <span class="n">x0</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">bounds</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">n_restarts</span><span class="p">,</span> <span class="n">dim</span><span class="p">)):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span><span class="n">min_obj</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="n">x0</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;L-BFGS-B&#39;</span><span class="p">)</span>        
+        <span class="k">if</span> <span class="n">res</span><span class="o">.</span><span class="n">fun</span> <span class="o">&lt;</span> <span class="n">min_val</span><span class="p">:</span>
+            <span class="n">min_val</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">fun</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">min_x</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">x</span>           
+
+    <span class="k">return</span> <span class="n">min_x</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</code></pre></div>
+<p>Now we have all components needed to run Bayesian optimization with the <a href="#Optimization-algorithm">algorithm</a> outlined above. The Gaussian process in the following example is configured with a <a href="http://scikit-learn.org/stable/modules/gaussian_process.html#matern-kernel">Matérn kernel</a> which is a generalization of the squared exponential kernel or RBF kernel. The known noise level is configured with the <code>alpha</code> parameter. </p>
+<p>Bayesian optimization runs for 10 iterations. In each iteration, a row with two plots is produced. The left plot shows the noise-free objective function, the surrogate function which is the GP posterior predictive mean, the 95% confidence interval of the mean and the noisy samples obtained from the objective function so far. The right plot shows the acquisition function. The vertical dashed line in both plots shows the proposed sampling point for the next iteration which corresponds to the maximum of the acquisition function.</p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.gaussian_process</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianProcessRegressor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.gaussian_process.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConstantKernel</span><span class="p">,</span> <span class="n">Matern</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bayesian_optimization_util</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_approximation</span><span class="p">,</span> <span class="n">plot_acquisition</span>
+
+<span class="c1"># Gaussian process with Mat??rn kernel as surrogate model</span>
+<span class="n">m52</span> <span class="o">=</span> <span class="n">ConstantKernel</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">Matern</span><span class="p">(</span><span class="n">length_scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">nu</span><span class="o">=</span><span class="mf">2.5</span><span class="p">)</span>
+<span class="n">gpr</span> <span class="o">=</span> <span class="n">GaussianProcessRegressor</span><span class="p">(</span><span class="n">kernel</span><span class="o">=</span><span class="n">m52</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">noise</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># Initialize samples</span>
+<span class="n">X_sample</span> <span class="o">=</span> <span class="n">X_init</span>
+<span class="n">Y_sample</span> <span class="o">=</span> <span class="n">Y_init</span>
+
+<span class="c1"># Number of iterations</span>
+<span class="n">n_iter</span> <span class="o">=</span> <span class="mi">10</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="n">n_iter</span> <span class="o">*</span> <span class="mi">3</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">hspace</span><span class="o">=</span><span class="mf">0.4</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_iter</span><span class="p">):</span>
+    <span class="c1"># Update Gaussian process with existing samples</span>
+    <span class="n">gpr</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_sample</span><span class="p">,</span> <span class="n">Y_sample</span><span class="p">)</span>
+
+    <span class="c1"># Obtain next sampling point from the acquisition function (expected_improvement)</span>
+    <span class="n">X_next</span> <span class="o">=</span> <span class="n">propose_location</span><span class="p">(</span><span class="n">expected_improvement</span><span class="p">,</span> <span class="n">X_sample</span><span class="p">,</span> <span class="n">Y_sample</span><span class="p">,</span> <span class="n">gpr</span><span class="p">,</span> <span class="n">bounds</span><span class="p">)</span>
+
+    <span class="c1"># Obtain next noisy sample from the objective function</span>
+    <span class="n">Y_next</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">X_next</span><span class="p">,</span> <span class="n">noise</span><span class="p">)</span>
+
+    <span class="c1"># Plot samples, surrogate function, noise-free objective and next sampling location</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="n">n_iter</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">plot_approximation</span><span class="p">(</span><span class="n">gpr</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">X_sample</span><span class="p">,</span> <span class="n">Y_sample</span><span class="p">,</span> <span class="n">X_next</span><span class="p">,</span> <span class="n">show_legend</span><span class="o">=</span><span class="n">i</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Iteration </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="n">n_iter</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">plot_acquisition</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">expected_improvement</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">X_sample</span><span class="p">,</span> <span class="n">Y_sample</span><span class="p">,</span> <span class="n">gpr</span><span class="p">),</span> <span class="n">X_next</span><span class="p">,</span> <span class="n">show_legend</span><span class="o">=</span><span class="n">i</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># Add sample to previous samples</span>
+    <span class="n">X_sample</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">X_sample</span><span class="p">,</span> <span class="n">X_next</span><span class="p">))</span>
+    <span class="n">Y_sample</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">Y_sample</span><span class="p">,</span> <span class="n">Y_next</span><span class="p">))</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2018-03-21/output_10_0.png" /></p>
+<p>Note how the two initial samples initially drive search into the direction of the local maximum on the right side but exploration allows the algorithm to escape from that local optimum and find the global optimum on the left side. Also note how sampling point proposals often fall within regions of high uncertainty (exploration) and are not only driven by the highest surrogate function values (exploitation).</p>
+<p>A convergence plot reveals how many iterations are needed the find a maximum and if the sampling point proposals stay around that maximum i.e. converge to small proposal differences between consecutive steps. </p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">bayesian_optimization_util</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_convergence</span>
+
+<span class="n">plot_convergence</span><span class="p">(</span><span class="n">X_sample</span><span class="p">,</span> <span class="n">Y_sample</span><span class="p">)</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2018-03-21/output_12_0.png" /></p>
+<h2 id="bayesian-optimization-libraries">Bayesian optimization libraries</h2>
+<p>There are numerous Bayesian optimization libraries out there and giving a comprehensive overview is not the goal of this article. Instead, I'll pick two that I used in the past and show the minimum setup needed to get the previous example running.</p>
+<h3 id="scikit-optimize">Scikit-optimize</h3>
+<p><a href="https://scikit-optimize.github.io/">Scikit-optimize</a> is a library for sequential model-based optimization that is based on <a href="http://scikit-learn.org/">scikit-learn</a>. It also supports Bayesian optimization using Gaussian processes. The API is designed around minimization, hence, we have to provide negative objective function values.  The results obtained here slightly differ from previous results because of non-deterministic optimization behavior and different noisy samples drawn from the objective function.</p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">clone</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skopt</span><span class="w"> </span><span class="kn">import</span> <span class="n">gp_minimize</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skopt.learning</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianProcessRegressor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skopt.learning.gaussian_process.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConstantKernel</span><span class="p">,</span> <span class="n">Matern</span>
+
+<span class="c1"># Use custom kernel and estimator to match previous example</span>
+<span class="n">m52</span> <span class="o">=</span> <span class="n">ConstantKernel</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">Matern</span><span class="p">(</span><span class="n">length_scale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">nu</span><span class="o">=</span><span class="mf">2.5</span><span class="p">)</span>
+<span class="n">gpr</span> <span class="o">=</span> <span class="n">GaussianProcessRegressor</span><span class="p">(</span><span class="n">kernel</span><span class="o">=</span><span class="n">m52</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">noise</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="n">r</span> <span class="o">=</span> <span class="n">gp_minimize</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="o">-</span><span class="n">f</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x</span><span class="p">))[</span><span class="mi">0</span><span class="p">],</span> 
+                <span class="n">bounds</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+                <span class="n">base_estimator</span><span class="o">=</span><span class="n">gpr</span><span class="p">,</span>
+                <span class="n">acq_func</span><span class="o">=</span><span class="s1">&#39;EI&#39;</span><span class="p">,</span>      <span class="c1"># expected improvement</span>
+                <span class="n">xi</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>            <span class="c1"># exploitation-exploration trade-off</span>
+                <span class="n">n_calls</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>         <span class="c1"># number of iterations</span>
+                <span class="n">n_random_starts</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>  <span class="c1"># initial samples are provided</span>
+                <span class="n">x0</span><span class="o">=</span><span class="n">X_init</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="c1"># initial samples</span>
+                <span class="n">y0</span><span class="o">=-</span><span class="n">Y_init</span><span class="o">.</span><span class="n">ravel</span><span class="p">())</span>
+
+<span class="c1"># Fit GP model to samples for plotting results</span>
+<span class="n">gpr</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">x_iters</span><span class="p">,</span> <span class="o">-</span><span class="n">r</span><span class="o">.</span><span class="n">func_vals</span><span class="p">)</span>
+
+<span class="c1"># Plot the fitted model and the noisy samples</span>
+<span class="n">plot_approximation</span><span class="p">(</span><span class="n">gpr</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">x_iters</span><span class="p">,</span> <span class="o">-</span><span class="n">r</span><span class="o">.</span><span class="n">func_vals</span><span class="p">,</span> <span class="n">show_legend</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2018-03-21/output_14_0.png" /></p>
+<div class="highlight"><pre><code><span class="n">plot_convergence</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">x_iters</span><span class="p">),</span> <span class="o">-</span><span class="n">r</span><span class="o">.</span><span class="n">func_vals</span><span class="p">)</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2018-03-21/output_15_0.png" /></p>
+<h2 id="gpyopt">GPyOpt</h2>
+<p><a href="http://sheffieldml.github.io/GPyOpt/">GPyOpt</a> is a Bayesian optimization library based on <a href="https://sheffieldml.github.io/GPy/">GPy</a>. The abstraction level of the API is comparable to that of scikit-optimize. The <code>BayesianOptimization</code> API provides a <code>maximize</code> parameter to configure whether the objective function shall be maximized or minimized (default). In version 1.2.1, this seems to be ignored when providing initial samples, so we have to negate their target values manually in the following example. Also, the built-in <code>plot_acquisition</code> and <code>plot_convergence</code> methods display the minimization result in any case. Again, the results obtained here slightly differ from previous results because of non-deterministic optimization behavior and different noisy samples drawn from the objective function. </p>
+<div class="highlight"><pre><code><span class="kn">import</span><span class="w"> </span><span class="nn">GPy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">GPyOpt</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">GPyOpt.methods</span><span class="w"> </span><span class="kn">import</span> <span class="n">BayesianOptimization</span>
+
+<span class="n">kernel</span> <span class="o">=</span> <span class="n">GPy</span><span class="o">.</span><span class="n">kern</span><span class="o">.</span><span class="n">Matern52</span><span class="p">(</span><span class="n">input_dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">variance</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">lengthscale</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="n">bds</span> <span class="o">=</span> <span class="p">[{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;X&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;continuous&#39;</span><span class="p">,</span> <span class="s1">&#39;domain&#39;</span><span class="p">:</span> <span class="n">bounds</span><span class="o">.</span><span class="n">ravel</span><span class="p">()}]</span>
+
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">BayesianOptimization</span><span class="p">(</span><span class="n">f</span><span class="o">=</span><span class="n">f</span><span class="p">,</span> 
+                                 <span class="n">domain</span><span class="o">=</span><span class="n">bds</span><span class="p">,</span>
+                                 <span class="n">model_type</span><span class="o">=</span><span class="s1">&#39;GP&#39;</span><span class="p">,</span>
+                                 <span class="n">kernel</span><span class="o">=</span><span class="n">kernel</span><span class="p">,</span>
+                                 <span class="n">acquisition_type</span> <span class="o">=</span><span class="s1">&#39;EI&#39;</span><span class="p">,</span>
+                                 <span class="n">acquisition_jitter</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span>
+                                 <span class="n">X</span><span class="o">=</span><span class="n">X_init</span><span class="p">,</span>
+                                 <span class="n">Y</span><span class="o">=-</span><span class="n">Y_init</span><span class="p">,</span>
+                                 <span class="n">noise_var</span> <span class="o">=</span> <span class="n">noise</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span>
+                                 <span class="n">exact_feval</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                                 <span class="n">normalize_Y</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                                 <span class="n">maximize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">optimizer</span><span class="o">.</span><span class="n">run_optimization</span><span class="p">(</span><span class="n">max_iter</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">optimizer</span><span class="o">.</span><span class="n">plot_acquisition</span><span class="p">()</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2018-03-21/output_17_0.png" /></p>
+<div class="highlight"><pre><code><span class="n">optimizer</span><span class="o">.</span><span class="n">plot_convergence</span><span class="p">()</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2018-03-21/output_18_0.png" /></p>
+<h2 id="application">Application</h2>
+<p>This section demonstrates how to optimize the hyperparameters of an <code>XGBRegressor</code> with GPyOpt and how Bayesian optimization performance compares to random search. <code>XGBRegressor</code> is part of <a href="https://xgboost.readthedocs.io/">XGBoost</a>, a flexible and scalable gradient boosting library. <code>XGBRegressor</code> implements the scikit-learn estimator API and can be applied to regression problems. Regression is performed on a small <a href="http://scikit-learn.org/stable/modules/generated/sklearn.datasets.load_diabetes.html#sklearn.datasets.load_diabetes">toy dataset</a> that is part of scikit-learn.</p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn</span><span class="w"> </span><span class="kn">import</span> <span class="n">datasets</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">RandomizedSearchCV</span><span class="p">,</span> <span class="n">cross_val_score</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">uniform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">xgboost</span><span class="w"> </span><span class="kn">import</span> <span class="n">XGBRegressor</span>
+
+<span class="c1"># Load the diabetes dataset (for regression)</span>
+<span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">load_diabetes</span><span class="p">(</span><span class="n">return_X_y</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Instantiate an XGBRegressor with default hyperparameter settings</span>
+<span class="n">xgb</span> <span class="o">=</span> <span class="n">XGBRegressor</span><span class="p">()</span>
+
+<span class="c1"># and compute a baseline to beat with hyperparameter optimization </span>
+<span class="n">baseline</span> <span class="o">=</span> <span class="n">cross_val_score</span><span class="p">(</span><span class="n">xgb</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">scoring</span><span class="o">=</span><span class="s1">&#39;neg_mean_squared_error&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+</code></pre></div>
+<h3 id="hyperparameter-tuning-with-random-search">Hyperparameter tuning with random search</h3>
+<p>For hyperparameter tuning with random search, we use <code>RandomSearchCV</code> of scikit-learn and compute a cross-validation score for each randomly selected point in hyperparameter space. Results will be discussed below.</p>
+<div class="highlight"><pre><code><span class="c1"># Hyperparameters to tune and their ranges</span>
+<span class="n">param_dist</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;learning_rate&quot;</span><span class="p">:</span> <span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+              <span class="s2">&quot;gamma&quot;</span><span class="p">:</span> <span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+              <span class="s2">&quot;max_depth&quot;</span><span class="p">:</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">50</span><span class="p">),</span>
+              <span class="s2">&quot;n_estimators&quot;</span><span class="p">:</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">300</span><span class="p">),</span>
+              <span class="s2">&quot;min_child_weight&quot;</span><span class="p">:</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">10</span><span class="p">)}</span>
+
+<span class="n">rs</span> <span class="o">=</span> <span class="n">RandomizedSearchCV</span><span class="p">(</span><span class="n">xgb</span><span class="p">,</span> <span class="n">param_distributions</span><span class="o">=</span><span class="n">param_dist</span><span class="p">,</span> 
+                        <span class="n">scoring</span><span class="o">=</span><span class="s1">&#39;neg_mean_squared_error&#39;</span><span class="p">,</span> <span class="n">n_iter</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
+
+<span class="c1"># Run random search for 25 iterations</span>
+<span class="n">rs</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">);</span>
+</code></pre></div>
+<h3 id="hyperparameter-tuning-with-bayesian-optimization">Hyperparameter tuning with Bayesian optimization</h3>
+<p>To tune hyperparameters with Bayesian optimization we implement an objective function <code>cv_score</code> that takes hyperparameters as input and returns a cross-validation score. Here, we assume that cross-validation at a given point in hyperparameter space is deterministic and therefore set the <code>exact_feval</code> parameter of <code>BayesianOptimization</code> to <code>True</code>. Depending on model fitting and cross-validation details this might not be the case but we ignore that here.</p>
+<div class="highlight"><pre><code><span class="n">bds</span> <span class="o">=</span> <span class="p">[{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;learning_rate&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;continuous&#39;</span><span class="p">,</span> <span class="s1">&#39;domain&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)},</span>
+        <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;gamma&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;continuous&#39;</span><span class="p">,</span> <span class="s1">&#39;domain&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">)},</span>
+        <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;max_depth&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;discrete&#39;</span><span class="p">,</span> <span class="s1">&#39;domain&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">50</span><span class="p">)},</span>
+        <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;n_estimators&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;discrete&#39;</span><span class="p">,</span> <span class="s1">&#39;domain&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">300</span><span class="p">)},</span>
+        <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;min_child_weight&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;discrete&#39;</span><span class="p">,</span> <span class="s1">&#39;domain&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">)}]</span>
+
+<span class="c1"># Optimization objective </span>
+<span class="k">def</span><span class="w"> </span><span class="nf">cv_score</span><span class="p">(</span><span class="n">parameters</span><span class="p">):</span>
+    <span class="n">parameters</span> <span class="o">=</span> <span class="n">parameters</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">score</span> <span class="o">=</span> <span class="n">cross_val_score</span><span class="p">(</span>
+                <span class="n">XGBRegressor</span><span class="p">(</span><span class="n">learning_rate</span><span class="o">=</span><span class="n">parameters</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                              <span class="n">gamma</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">parameters</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+                              <span class="n">max_depth</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">parameters</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span>
+                              <span class="n">n_estimators</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">parameters</span><span class="p">[</span><span class="mi">3</span><span class="p">]),</span>
+                              <span class="n">min_child_weight</span> <span class="o">=</span> <span class="n">parameters</span><span class="p">[</span><span class="mi">4</span><span class="p">]),</span> 
+                <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">scoring</span><span class="o">=</span><span class="s1">&#39;neg_mean_squared_error&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="n">score</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">score</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">score</span>
+
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">BayesianOptimization</span><span class="p">(</span><span class="n">f</span><span class="o">=</span><span class="n">cv_score</span><span class="p">,</span> 
+                                 <span class="n">domain</span><span class="o">=</span><span class="n">bds</span><span class="p">,</span>
+                                 <span class="n">model_type</span><span class="o">=</span><span class="s1">&#39;GP&#39;</span><span class="p">,</span>
+                                 <span class="n">acquisition_type</span> <span class="o">=</span><span class="s1">&#39;EI&#39;</span><span class="p">,</span>
+                                 <span class="n">acquisition_jitter</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
+                                 <span class="n">exact_feval</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> 
+                                 <span class="n">maximize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Only 20 iterations because we have 5 initial random points</span>
+<span class="n">optimizer</span><span class="o">.</span><span class="n">run_optimization</span><span class="p">(</span><span class="n">max_iter</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="results">Results</h3>
+<p>On average, Bayesian optimization finds a better optimium in a smaller number of steps than random search and beats the baseline in almost every run. This trend becomes even more prominent in higher-dimensional search spaces. Here, the search space is 5-dimensional which is rather low to substantially profit from Bayesian optimization. One advantage of random search is that it is trivial to parallelize. Parallelization of Bayesian optimization is much harder and subject to research (see [4], for example).</p>
+<div class="highlight"><pre><code><span class="n">y_rs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="o">.</span><span class="n">accumulate</span><span class="p">(</span><span class="n">rs</span><span class="o">.</span><span class="n">cv_results_</span><span class="p">[</span><span class="s1">&#39;mean_test_score&#39;</span><span class="p">])</span>
+<span class="n">y_bo</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="o">.</span><span class="n">accumulate</span><span class="p">(</span><span class="o">-</span><span class="n">optimizer</span><span class="o">.</span><span class="n">Y</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Baseline neg. MSE = </span><span class="si">{</span><span class="n">baseline</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Random search neg. MSE = </span><span class="si">{</span><span class="n">y_rs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Bayesian optimization neg. MSE = </span><span class="si">{</span><span class="n">y_bo</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">y_rs</span><span class="p">,</span> <span class="s1">&#39;ro-&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Random search&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">y_bo</span><span class="p">,</span> <span class="s1">&#39;bo-&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Bayesian optimization&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Iteration&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Neg. MSE&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="o">-</span><span class="mi">5000</span><span class="p">,</span> <span class="o">-</span><span class="mi">3000</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Value of the best sampled CV score&#39;</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">();</span>
+</code></pre></div>
+<pre><code>Baseline neg. MSE = -3498.95
+Random search neg. MSE = -3678.77
+Bayesian optimization neg. MSE = -3185.50
+</code></pre>
+<p><img alt="png" src="/img/2018-03-21/output_26_1.png" /></p>
+<h2 id="references">References</h2>
+<p>[1] Eric Brochu, Vlad M. Cora, Nando de Freitas, <a href="https://arxiv.org/abs/1012.2599">A Tutorial on Bayesian Optimization of Expensive Cost Functions</a>.<br />
+[2] Jonas Mockus, <a href="https://link.springer.com/article/10.1007/BF01099263">Application of Bayesian approach to numerical methods of global and stochastic optimization</a>.<br />
+[3] Donald R. JonesMatthias SchonlauWilliam J. Welch, <a href="https://link.springer.com/article/10.1023/A:1008306431147">Efficient Global Optimization of Expensive Black-Box Functions</a>.<br />
+[4] Jialei Wang, Scott C. Clark, Eric Liu, Peter I. Frazier, <a href="https://arxiv.org/abs/1602.05149">Parallel Bayesian Global Optimization of Expensive Functions</a>.</p>
+    </div>
+
+    <nav class="post-nav">
+        
+        <a href="/2018/03/19/gaussian-processes/" class="post-nav-link post-nav-older">
+            <span class="post-nav-label">&larr; Older</span>
+            <span class="post-nav-title">Gaussian processes</span>
+        </a>
+        
+        
+        <a href="/2018/04/03/variational-inference/" class="post-nav-link post-nav-newer">
+            <span class="post-nav-label">Newer &rarr;</span>
+            <span class="post-nav-title">From expectation maximization to stochastic variational inference</span>
+        </a>
+        
+    </nav>
+
+    
+    <section class="comments">
+        <h2>Comments</h2>
+        <div id="disqus_thread"></div>
+    </section>
+    
+</article>
+
+        </div>
+    </main>
+
+    
+    <footer class="footer">
+        <div class="container">
+            
+<ul class="footer-social-links">
+    <li>
+        <a href="https://linkedin.com/in/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+    <rect x="2" y="9" width="4" height="12"/>
+    <circle cx="4" cy="4" r="2"/>
+</svg>
+
+            linkedin.com/in/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/gradion-ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/gradion-ai
+        </a>
+    </li>
+    <li>
+        <a href="https://gradion.ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
+    <path d="M9 22v-4h6v4"/>
+    <path d="M8 6h.01"/><path d="M16 6h.01"/>
+    <path d="M12 6h.01"/>
+    <path d="M12 10h.01"/><path d="M12 14h.01"/>
+    <path d="M16 10h.01"/><path d="M16 14h.01"/>
+    <path d="M8 10h.01"/><path d="M8 14h.01"/>
+</svg>
+
+            gradion.ai
+        </a>
+    </li>
+    <li>
+        <a href="/llms.txt">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 8V4H8"/>
+    <rect width="16" height="12" x="4" y="8" rx="2"/>
+    <path d="M2 14h2"/>
+    <path d="M20 14h2"/>
+    <path d="M15 13v2"/>
+    <path d="M9 13v2"/>
+</svg>
+
+            llms.txt
+        </a>
+    </li>
+    <li>
+        <a href="/feed.xml">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 11a9 9 0 0 1 9 9"/>
+    <path d="M4 4a16 16 0 0 1 16 16"/>
+    <circle cx="5" cy="19" r="1"/>
+</svg>
+
+            feed.xml
+        </a>
+    </li>
+</ul>
+
+            <p class="footer-copyright">// Martin Krasser, 2026</p>
+        </div>
+    </footer>
+
+    <script>
+    document.querySelectorAll('a[href^="http"]').forEach(link => {
+        if (!link.href.startsWith(location.origin)) {
+            link.target = '_blank';
+            link.rel = 'noopener';
+        }
+    });
+    </script>
+    
+
+<script>
+var disqus_config = function () {
+    this.page.url = 'https://krasserm.github.io/2018/03/21/bayesian-optimization/';
+    this.page.identifier = '/2018/03/21/bayesian-optimization/';
+};
+(function() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://krasserm.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+</body>
+</html>

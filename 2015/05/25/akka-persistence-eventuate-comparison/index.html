@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#0a0e14">
+    <title>A comparison of Akka Persistence with Eventuate - Martin Krasser</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/pygments.css">
+    <link rel="alternate" type="application/atom+xml" title="Martin Krasser Feed" href="/feed.xml">
+    
+<script>
+MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="/" class="nav-brand">Martin Krasser</a>
+            <ul class="nav-links">
+                
+                <li><a href="/about/">About</a></li>
+                
+                <li><a href="/">Blog</a></li>
+                
+                <li><a href="/industry/">Industry</a></li>
+                
+                <li><a href="/open-source/">Open Source</a></li>
+                
+                <li><a href="/citations/">Citations</a></li>
+                
+                <li><a href="/stories/">Stories</a></li>
+                
+                <li><a href="/contact/">Contact</a></li>
+                
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="container">
+            
+<article class="post">
+    <header class="post-header">
+        <h1 class="post-title">A comparison of Akka Persistence with Eventuate</h1>
+        
+        <p class="post-meta">
+            <time datetime="2015-05-25">
+                May 25, 2015
+            </time>
+            
+            <span class="post-author">by Martin Krasser</span>
+            
+        </p>
+    </header>
+
+    <div class="post-content">
+        <hr/>
+
+<p><strong>23.10.2015</strong>: Several updates in all sections to cover recent questions and developments.</p>
+<hr/>
+
+<p>The following is an attempt to describe the similarities and differences between <a href="http://doc.akka.io/docs/akka/2.4.0/scala/persistence.html">Akka Persistence</a> and <a href="http://rbmhtechnology.github.io/eventuate/">Eventuate</a>. Both are Akka-based <a href="http://martinfowler.com/eaaDev/EventSourcing.html">event-sourcing</a> and <a href="http://martinfowler.com/bliki/CQRS.html">CQRS</a> tools written in Scala, making different distributed system compromises. For an introduction to these tools, please take a look at their online documentation.</p>
+<p>I’m the original author of both, Akka Persistence and Eventuate, currently focusing exclusively on the development of Eventuate. Of course, I’m totally biased ;) Seriously, if I have goofed something, please let me know.</p>
+<h2 id="command-side">Command side</h2>
+<p>In Akka Persistence, the command side (C of CQRS) is represented by <code>PersistentActor</code>s (PAs), in Eventuate by <code>EventsourcedActor</code>s (EAs). Their internal state represents an application’s write model. </p>
+<p>PAs and EAs validate new commands against the write model and if validation succeeds, generate and persist one or more events which are then handled to update internal state. After a crash or a normal application re-start, internal state is recovered by replaying persisted events from the event log, optionally starting from a snapshot. PAs and EAs also support sending messages with at-least-once delivery semantics to other actors. Akka Persistence provides the <code>AtLeastOnceDelivery</code> trait for that purpose, Eventuate the <code>ConfirmedDelivery</code> trait.</p>
+<p>From this perspective PAs and EAs are quite similar. A major difference is that PAs must be singletons whereas EAs can be replicated and updated concurrently. If an Akka Persistence application accidentally creates and updates two PA instances with the same <code>persistenceId</code>, the underlying event log will be corrupted, either by overwriting existing events or by appending conflicting events. Akka Persistence event logs are designed for having only a single writer and cannot be shared. </p>
+<p>In Eventuate, EAs can share an event log. Events emitted by one EA can be consumed by other EAs, based on predefined and customizable event routing rules. In other words, EAs can collaborate by exchanging events over a shared event log. This collaboration can be, for example, a distributed business process executed by EAs of different type, or state replication where EAs of the same type reconstruct and update internal state at multiple locations. These locations can even be globally distributed. Event replication between locations is asynchronous and reliable.</p>
+<h2 id="event-relations">Event relations</h2>
+<p>In Akka Persistence, events have a total order per PA but events emitted by different PAs are not related. Even if an event emitted by one PA actually happened before an event emitted by another PA, this relationship is not tracked by Akka Persistence. For example, if PA<sub>1</sub> persists an event e<sub>1</sub>, then sends a command to PA<sub>2</sub> which in turn persists another event e<sub>2</sub> during handling of that command, e<sub>1</sub> obviously happened before e<sub>2</sub> but applications cannot determine this relationship by comparing e<sub>1</sub> with e<sub>2</sub>.</p>
+<p>Eventuate additionally tracks the happened-before relationship (= potential causality) of events. For example, if EA<sub>1</sub> persists an event e<sub>1</sub> and EA<sub>2</sub> persists an event e<sub>2</sub> after having consumed e<sub>1</sub>, then e<sub>1</sub> happened before e<sub>2</sub> which is also tracked. Happened-before relationships are tracked with <a href="http://rbmhtechnology.github.io/eventuate/architecture.html#vector-clocks">vector clocks</a> and applications can determine whether any two events have a happened-before relationship or are concurrent by comparing their vector timestamps.</p>
+<p>Tracking the happened-before relationship of events is a prerequisite for running multiple replicas of an EA. An EA that consumes events from its replicas must be able to determine whether its last internal state update happened before or is concurrent to (and potentially in conflict with) the consumed events. </p>
+<p>If the last internal state update happened before a consumed event, that event can be handled as regular update. If it is concurrent to the consumed event, the event might be a conflicting event and must be handled accordingly. If an EA’s internal state is a <a href="http://en.wikipedia.org/wiki/Conflict-free_replicated_data_type">CRDT</a>, for example, the conflict can be resolved automatically (see also Eventuate’s <a href="http://rbmhtechnology.github.io/eventuate/user-guide.html#operation-based-crdts">operation-based CRDTs</a>). If internal state is not a CRDT, Eventuate provides further means to <a href="http://rbmhtechnology.github.io/eventuate/user-guide.html#tracking-conflicting-versions">track</a> and <a href="http://rbmhtechnology.github.io/eventuate/user-guide.html#resolving-conflicting-versions">resolve</a> conflicts, either automatically or interactively.</p>
+<h2 id="event-logs">Event logs</h2>
+<p>As already mentioned, in Akka Persistence each PA has its own private event log. Depending on the storage backend, an event log is either stored redundantly on several nodes (e.g. synchronously replicated for stronger durability guarantees) or stored locally. In either case, Akka Persistence requires a strongly consistent view on an event log. </p>
+<p>For example, a PA that crashed and recovers on another node must be able to read all previously written events in correct order, otherwise recovery may be incomplete and the PA may later overwrite existing events or append new events to the log that are in conflict with existing but unread events. Therefore, only storage backends that support strong consistency can be used for Akka Persistence.</p>
+<p>The write availability of an Akka Persistence application is constrained by the write availability of the underlying storage backend. According to the <a href="http://en.wikipedia.org/wiki/CAP_theorem">CAP theorem</a>, write availability of a strongly consistent, distributed storage backed is limited. Consequently, the command side of an Akka Persistence application chooses CP from CAP. </p>
+<p>These constraints make it difficult to globally distribute an Akka Persistence application as strong consistency and total event ordering also require global coordination. Eventuate goes one step further here: it requires strong consistency and total event ordering only within a so called <em>location</em>. A location can be a data center, a (micro-)service, a node in a cluster or a process on a single node, to mention a few examples.</p>
+<p>An Eventuate application that only consists of a single location implements the same consistency model as an Akka Persistence application. However, Eventuate applications usually consist of multiple locations. Events generated at individual locations are asynchronously and reliably replicated to other locations. Inter-location event replication is Eventuate-specific and preserves causal event storage order. Storage backends at different locations do not communicate directly with each other. Therefore, different storage backends can be used at different locations.</p>
+<p>An Eventuate <a href="http://rbmhtechnology.github.io/eventuate/architecture.html#event-logs">event log</a> that is replicated across locations is called a <em>replicated event log</em>, its representation at a given location is called a <em>local event log</em>. EAs deployed at different locations can exchange events by sharing a replicated event log. This allows for EA state replication across locations. EAs and their underlying event logs remain writeable even during inter-location network partitions. From this perspective, a multi-location Eventuate application chooses AP from CAP. Writes during a network partition at different locations may cause conflicts which can be resolved as described previously.</p>
+<p>By introducing partition-tolerant locations, a global total ordering of events is not possible any more. The strongest partial ordering that is possible under these constraints is causal ordering i.e. an ordering that preserves the happened-before relation of events. In Eventuate, every location guarantees the delivery of events in causal order to their local EAs (and views, see <a href="#query-side">next section</a>). The delivery order of concurrent events may differ at individual locations but is repeatable within a given location.</p>
+<h2 id="query-side">Query side</h2>
+<p>In Akka Persistence, the query side (Q of CQRS) can be implemented with <code>PersistentView</code>s (PVs). A PV is currently limited to consume events from only one PA. This limitation has been <a href="https://groups.google.com/forum/#!msg/akka-user/MNDc9cVG1To/blqgyC7sIRgJ">intensively discussed</a> on the Akka mailing list. A proposed solution, available since Akka 2.4, is <a href="http://doc.akka.io/docs/akka/2.4.0/scala/persistence-query.html">Akka Persistence Query</a>: storage plugins may provide support for aggregating events from multiple PAs and serve the result as <a href="http://doc.akka.io/docs/akka-stream-and-http-experimental/1.0/scala.html">Akka Streams</a> <code>Source</code>.</p>
+<p>In Eventuate, the query side can be implemented with <code>EventsourcedView</code>s (EVs). An EV can consume events from all EAs that share an event log, even if they are globally distributed. Events are always consumed in correct causal order. An application can either have a single replicated event log or several event logs, organized around topics, for example. Future extensions will allow EVs to consume events from multiple event logs. An Akka Streams API in Eventuate is also planned.</p>
+<h2 id="storage-plugins">Storage plugins</h2>
+<p>From a storage plugin perspective, events in Akka persistence are primarily organized around <code>persistenceId</code> i.e. around PA instances having their own private event log. Aggregating events from several PAs requires either the creation of an additional index in the storage backend or an on-the-fly event stream composition when serving a query. In Eventuate, events from several EAs are stored in the same shared event log. During recovery, EAs that don’t have an <code>aggregateId</code> defined, consume all events from the event log while those with a defined <code>aggregateId</code> only consume events with that <code>aggregateId</code> as routing destination. This requires Eventuate storage plugins to maintain a separate index from which events can be replayed by <code>aggregateId</code>.</p>
+<p>Akka Persistence has a public storage plugin API for journals and snapshot stores with many implementations <a href="http://akka.io/community/">contributed by the community</a>. Eventuate will also define a public storage plugin API in the future. At the moment, applications can choose between a <a href="http://rbmhtechnology.github.io/eventuate/reference/event-log.html#leveldb-storage-backend">LevelDB storage backend</a> and a <a href="http://rbmhtechnology.github.io/eventuate/reference/event-log.html#cassandra-storage-backend">Cassandra storage backend</a>.</p>
+<h2 id="throughput">Throughput</h2>
+<p>Both, PAs in Akka Persistence and EAs in Eventuate can choose whether to keep internal state in sync with the event log. This is relevant for applications that need to validate new commands against internal state before persisting new events. To prevent validation against stale state, new commands must be delayed until a currently running event write operation successfully completed. PAs support this with a <code>persist</code> method (in contrast to <code>persistAsync</code>), EAs with a <code>stateSync</code> boolean property.</p>
+<p>A consequence of synchronizing internal state with an event log is decreased throughput. Synchronizing internal state has a stronger impact in Akka Persistence than in Eventuate because of the details how event batch writes are implemented. In Akka Persistence, events are batched on PA level, but only when using <code>persistAsync</code>. In Eventuate there’s a separate batching layer between EAs and the storage plugin, so that events emitted by different EA instances, even if they sync their internal state with the event log, can be batched for writing. </p>
+<p>Comparing the write throughput of two single PA and EA instances, they are approximately the same in Akka Persistence and Eventuate (assuming a comparable storage plugin). However, in Eventuate, the overall write throughput can increase with an increasing number of EA instances, whereas the write throughput in Akka Persistence can not. This is especially relevant for applications that follow a one PA/EA per <a href="http://martinfowler.com/bliki/DDD_Aggregate.html">aggregate</a> design with thousands to millions active (= writable) instances. Looking at the Akka Persistence code, I think it shouldn’t be too much effort moving the batching logic of PA down to a separate batching layer.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>Eventuate supports the same consistency model as Akka Persistence but additionally allows relaxation to causal consistency. This relaxation is necessary for EA high-availability and partition tolerance (AP of CAP). Eventuate also supports reliable actor collaboration based on causally ordered, de-duplicated event streams. From these perspectives, Eventuate is a functional superset of Akka Persistence. </p>
+<p>Choosing availability over consistency requires that conflict detection and resolution (either automated or interactive) must be a primary concern. Eventuate supports that by providing operation-based CRDTs as well as utilities and APIs for tracking and resolving conflicting versions of application state.</p>
+<p>Handling conflicts rather than preventing them is important for the resilience of distributed systems. Being able to remain operable within a location that is temporarily partitioned from other locations also makes Eventuate an interesting option for offline use cases. </p>
+<p>Eventuate is still a young project. It started as a prototype in late 2014 and was <a href="https://github.com/RBMHTechnology/eventuate">open-sourced</a> in 2015. It is actively developed in context of the <a href="http://www.redbullmediahouse.com/">Red Bull Media House</a> (RBMH) <a href="http://rbmhtechnology.github.io/">Open Source Initiative</a> and primarily driven by internal RBMH projects.</p>
+    </div>
+
+    <nav class="post-nav">
+        
+        <a href="/2015/01/13/event-sourcing-at-global-scale/" class="post-nav-link post-nav-older">
+            <span class="post-nav-label">&larr; Older</span>
+            <span class="post-nav-title">Event sourcing at global scale</span>
+        </a>
+        
+        
+        <a href="/2016/10/19/operation-based-crdt-framework/" class="post-nav-link post-nav-newer">
+            <span class="post-nav-label">Newer &rarr;</span>
+            <span class="post-nav-title">A service framework for operation-based CRDTs</span>
+        </a>
+        
+    </nav>
+
+    
+    <section class="comments">
+        <h2>Comments</h2>
+        <div id="disqus_thread"></div>
+    </section>
+    
+</article>
+
+        </div>
+    </main>
+
+    
+    <footer class="footer">
+        <div class="container">
+            
+<ul class="footer-social-links">
+    <li>
+        <a href="https://linkedin.com/in/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+    <rect x="2" y="9" width="4" height="12"/>
+    <circle cx="4" cy="4" r="2"/>
+</svg>
+
+            linkedin.com/in/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/gradion-ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/gradion-ai
+        </a>
+    </li>
+    <li>
+        <a href="https://gradion.ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
+    <path d="M9 22v-4h6v4"/>
+    <path d="M8 6h.01"/><path d="M16 6h.01"/>
+    <path d="M12 6h.01"/>
+    <path d="M12 10h.01"/><path d="M12 14h.01"/>
+    <path d="M16 10h.01"/><path d="M16 14h.01"/>
+    <path d="M8 10h.01"/><path d="M8 14h.01"/>
+</svg>
+
+            gradion.ai
+        </a>
+    </li>
+    <li>
+        <a href="/llms.txt">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 8V4H8"/>
+    <rect width="16" height="12" x="4" y="8" rx="2"/>
+    <path d="M2 14h2"/>
+    <path d="M20 14h2"/>
+    <path d="M15 13v2"/>
+    <path d="M9 13v2"/>
+</svg>
+
+            llms.txt
+        </a>
+    </li>
+    <li>
+        <a href="/feed.xml">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 11a9 9 0 0 1 9 9"/>
+    <path d="M4 4a16 16 0 0 1 16 16"/>
+    <circle cx="5" cy="19" r="1"/>
+</svg>
+
+            feed.xml
+        </a>
+    </li>
+</ul>
+
+            <p class="footer-copyright">// Martin Krasser, 2026</p>
+        </div>
+    </footer>
+
+    <script>
+    document.querySelectorAll('a[href^="http"]').forEach(link => {
+        if (!link.href.startsWith(location.origin)) {
+            link.target = '_blank';
+            link.rel = 'noopener';
+        }
+    });
+    </script>
+    
+
+<script>
+var disqus_config = function () {
+    this.page.url = 'https://krasserm.github.io/2015/05/25/akka-persistence-eventuate-comparison/';
+    this.page.identifier = '/2015/05/25/akka-persistence-eventuate-comparison/';
+};
+(function() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://krasserm.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+</body>
+</html>

@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#0a0e14">
+    <title>Deep feature consistent variational autoencoder - Martin Krasser</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/pygments.css">
+    <link rel="alternate" type="application/atom+xml" title="Martin Krasser Feed" href="/feed.xml">
+    
+<script>
+MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="/" class="nav-brand">Martin Krasser</a>
+            <ul class="nav-links">
+                
+                <li><a href="/about/">About</a></li>
+                
+                <li><a href="/">Blog</a></li>
+                
+                <li><a href="/industry/">Industry</a></li>
+                
+                <li><a href="/open-source/">Open Source</a></li>
+                
+                <li><a href="/citations/">Citations</a></li>
+                
+                <li><a href="/stories/">Stories</a></li>
+                
+                <li><a href="/contact/">Contact</a></li>
+                
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="container">
+            
+<article class="post">
+    <header class="post-header">
+        <h1 class="post-title">Deep feature consistent variational autoencoder</h1>
+        
+        <p class="post-meta">
+            <time datetime="2018-07-27">
+                July 27, 2018
+            </time>
+            
+            <span class="post-author">by Martin Krasser</span>
+            
+        </p>
+    </header>
+
+    <div class="post-content">
+        <p><em>Sources:</em></p>
+<ul>
+<li><em><a href="http://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/dev/autoencoder-applications/variational_autoencoder_dfc.ipynb">Notebook</a></em></li>
+<li><em><a href="https://github.com/krasserm/bayesian-machine-learning">Repository</a></em></li>
+</ul>
+<h2 id="introduction">Introduction</h2>
+<p>This article introduces the <em>deep feature consistent variational autoencoder</em><sup>[1]</sup> (DFC VAE) and provides a Keras implementation to demonstrate the advantages over a plain <em>variational auto-encoder</em><sup>[2]</sup> (VAE).</p>
+<p>A plain VAE is trained with a loss function that makes pixel-by-pixel comparisons between the original image and the reconstructured image. This often leads to generated images that are rather blurry. DFC VAEs on the other hand are trained with a loss function that first feeds the original and reconstructed image into a pre-trained convolutional neural network (CNN) to extract higher level features and then compares the these features to compute a so-called <em>perceptual loss</em>. </p>
+<p>The core idea of the perceptual loss is to seek consistency between the hidden representations of two images. Images that are perceived to be similar should also have a small perceptual loss even if they significantly differ in a pixel-by-pixel comparison (due to translation, rotation, ...). This results in generated images that look more naturally and are less blurry. The CNN used for feature extraction is called <em>perceptual model</em> in this article.</p>
+<h3 id="plain-vae">Plain VAE</h3>
+<p>In a <a href="/2018/04/03/variational-inference/">previous article</a> I introduced the variational autencoder (VAE) and how it can be trained with a variational lower bound $\mathcal{L}$ as optimization objective using stochastic gradient ascent methods. In context of stochastic gradient descent its negative value is used as loss function $L_{vae}$ which is a sum of a reconstruction loss $L_{rec}$ and a regularization term $L_{kl}$:</p>
+<p>$$
+\begin{align*}
+L_{vae} &= L_{rec} + L_{kl} \\
+L_{rec} &= - \mathbb{E}_{q(\mathbf{t} \lvert \mathbf{x})} \left[\log p(\mathbf{x} \lvert \mathbf{t})\right] \\
+L_{kl} &= \mathrm{KL}(q(\mathbf{t} \lvert \mathbf{x}) \mid\mid p(\mathbf{t}))
+\end{align*}
+$$</p>
+<p>$L_{rec}$ is the expected reconstruction error of an image $\mathbf{x}$, $\mathbf{t}$ is a latent vector and $p(\mathbf{x} \lvert \mathbf{t})$ is the <em>probabilistic decoder</em> of the VAE. When trained with images from the MNIST dataset, it makes sense to define the probabilistic decoder $p(\mathbf{x} \lvert \mathbf{t})$ as multivariate Bernoulli distribution. The corresponding decoder neural network computes the single parameter $\mathbf{k}$ of this distribution from a latent vector. The values of $\mathbf{k}$ are the expected pixel values of a reconstructed image. The reconstruction loss can be obtained by computing the binary cross-entropy between the original image and the reconstructed image which is a pixel-by-pixel comparison (Fig. 1).</p>
+<p>$L_{kl}$ is the <a href="https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence">KL divergence</a> between the variational distribution $q(\mathbf{t} \lvert \mathbf{x})$ and the prior $p(\mathbf{t})$ over latent variables. $q(\mathbf{t} \lvert \mathbf{x})$ is the <em>probabilistic encoder</em> of the VAE. The probabilistic encoder $q(\mathbf{t} \lvert \mathbf{x})$ is a multivariate Gaussian distribution whose mean and variance is computed by an encoder neural network from an input image. Prior $p(\mathbf{t})$ is chosen to be a mutlivariate standard normal distribution. $L_{kl}$ acts as a regularization term ensuring that $q(\mathbf{t} \lvert \mathbf{x})$ doesn't diverge too much from prior $p(\mathbf{t})$.</p>
+<p><img alt="vae" src="/img/2018-07-27/vae-4.png" /></p>
+<p><em>Fig. 1: Plain variational autoencoder</em></p>
+<h3 id="dfc-vae">DFC VAE</h3>
+<p>A plain VAE can be converted to a DFC VAE by replacing the pixel-by-pixel reconstruction loss $L_{rec}$ with a feature perceptual loss $L_{p}$ during training. At each layer of the perceptual model, the hidden representations of the original and the reconstructed image are taken and their squared Euclidean distance is calculated. This gives a perceptual loss component $L_{p}^i$ at each layer $i$. The overall perceptual loss $L_{p}$ is a weighted sum of the losses computed at each layer (Fig. 2)</p>
+<p>$$
+\begin{align*}
+L_{p} &= \sum_{i} w_i L_{p}^i \\
+L_{p}^i &= \left\lVert \Phi(\mathbf{x})^i - \Phi(\mathbf{\bar x})^i \right\rVert ^2
+\end{align*}
+$$</p>
+<p>where $\Phi(\mathbf{x})^i$ and $\Phi(\mathbf{\bar x})^i$ are the representations of the original image $\mathbf{x}$ and the reconstructed image $\mathbf{\bar x}$ at layer $i$ of the perceptual model $\Phi$. Weights $w_i$ are hyperparameters in the following implementation. For DFC VAE training the sum of the perceptual loss the regularization term is used:</p>
+<p>$$
+L_{vae_{dfc}} = L_{p} + L_{kl}
+$$</p>
+<p><img alt="vae" src="/img/2018-07-27/vae-dfc-4.png" /></p>
+<p><em>Fig. 2. Deep feature consistent variational autoencoder</em></p>
+<h2 id="training">Training</h2>
+<p>In contrast to the original paper we will use the MNIST handwritten digits dataset for training and for demonstrating how a perceptual loss improves over a pixel-by-pixel reconstruction loss. We can therefore reuse the VAE <a href="https://github.com/krasserm/bayesian-machine-learning/blob/dev/autoencoder-applications/variational_autoencoder_opt_util.py#L15-L36">encoder</a> and <a href="https://github.com/krasserm/bayesian-machine-learning/blob/dev/autoencoder-applications/variational_autoencoder_opt_util.py#L38-L53">decoder</a> architectures from the already mentioned <a href="/2018/04/03/variational-inference/">previous article</a>. The perceptual model is a <a href="https://github.com/krasserm/bayesian-machine-learning/blob/6962f02168fd82cd01ed6dfe3937e98b10a58b02/variational_autoencoder_opt_util.py#L91-L105">small CNN</a> (Fig. 3) that has already been trained in <a href="http://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/dev/variational_autoencoder_opt.ipynb#Optimization-objectives">another context</a> to classify MNIST images.</p>
+<p><img alt="pm" src="/img/2018-07-27/classifier-3.png" /></p>
+<p><em>Fig. 3: Perceptual model used for DFC VAE training</em></p>
+<p>Depending on the value of the <code>use_pretrained</code> variable either pre-trained weights for the plain VAE and DFC VAE are loaded (default) or they are trained from scratch. The dimensionality of the latent space is 5 by default.</p>
+<div class="highlight"><pre><code><span class="c1"># True if pre-trained weights for the VAEs shall be</span>
+<span class="c1"># loaded, False for training the VAEs from scratch.</span>
+<span class="n">use_pretrained</span> <span class="o">=</span> <span class="kc">True</span>
+
+<span class="c1"># Dimensionality of latent space. Do not change to </span>
+<span class="c1"># a value other than 5 if use_pretrained = True,</span>
+<span class="c1"># otherwise create_vae (below) will raise an error.</span>
+<span class="n">latent_dim</span> <span class="o">=</span> <span class="mi">5</span>
+</code></pre></div>
+<p>The perceptual model is never trained here but always loaded as pre-trained model. For computing the perceptual loss the representations of the first and third hidden layer (<code>conv2d_6</code> and <code>conv2d_7</code>) are used and weighted with <code>1.0</code> each:</p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">keras.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_model</span>
+
+<span class="c1"># Load pre-trained preceptual model. A simple CNN for</span>
+<span class="c1"># classifying MNIST handwritten digits.</span>
+<span class="n">pm</span> <span class="o">=</span> <span class="n">load_model</span><span class="p">(</span><span class="s1">&#39;models/vae-opt/classifier.h5&#39;</span><span class="p">)</span>
+
+<span class="c1"># Names and weights of perceptual model layers </span>
+<span class="c1"># selected for calculating the perceptual loss.</span>
+<span class="n">selected_pm_layers</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;conv2d_6&#39;</span><span class="p">,</span> <span class="s1">&#39;conv2d_7&#39;</span><span class="p">]</span>
+<span class="n">selected_pm_layer_weights</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]</span>
+</code></pre></div>
+<pre><code>Using TensorFlow backend.
+</code></pre>
+<p>Since we will use the same encoder and decoder architecture for the plain VAE and the DFC VAE we can define a generic <code>create_vae</code> function for creating both models. During training they also use the same KL divergence loss operation, corresponding to the regularization term, which is also returned by <code>create_vae</code>.</p>
+<div class="highlight"><pre><code><span class="kn">import</span><span class="w"> </span><span class="nn">variational_autoencoder_opt_util</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">vae_util</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">keras</span><span class="w"> </span><span class="kn">import</span> <span class="n">backend</span> <span class="k">as</span> <span class="n">K</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">keras</span><span class="w"> </span><span class="kn">import</span> <span class="n">layers</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">keras.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">create_vae</span><span class="p">(</span><span class="n">latent_dim</span><span class="p">,</span> <span class="n">return_kl_loss_op</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Creates a VAE able to auto-encode MNIST images and optionally its associated KL divergence loss operation.&#39;&#39;&#39;</span>
+
+    <span class="k">if</span> <span class="n">use_pretrained</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">latent_dim</span> <span class="o">==</span> <span class="mi">5</span><span class="p">,</span> <span class="s1">&#39;latent_dim must be 5 if pre-trained VAEs are used&#39;</span>
+
+    <span class="n">encoder</span> <span class="o">=</span> <span class="n">vae_util</span><span class="o">.</span><span class="n">create_encoder</span><span class="p">(</span><span class="n">latent_dim</span><span class="p">)</span>
+    <span class="n">decoder</span> <span class="o">=</span> <span class="n">vae_util</span><span class="o">.</span><span class="n">create_decoder</span><span class="p">(</span><span class="n">latent_dim</span><span class="p">)</span>
+    <span class="n">sampler</span> <span class="o">=</span> <span class="n">vae_util</span><span class="o">.</span><span class="n">create_sampler</span><span class="p">()</span>
+
+    <span class="n">x</span> <span class="o">=</span> <span class="n">layers</span><span class="o">.</span><span class="n">Input</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">28</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;image&#39;</span><span class="p">)</span>
+    <span class="n">t_mean</span><span class="p">,</span> <span class="n">t_log_var</span> <span class="o">=</span> <span class="n">encoder</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">([</span><span class="n">t_mean</span><span class="p">,</span> <span class="n">t_log_var</span><span class="p">])</span>
+    <span class="n">t_decoded</span> <span class="o">=</span> <span class="n">decoder</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+
+    <span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">t_decoded</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;vae&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">return_kl_loss_op</span><span class="p">:</span>
+        <span class="n">kl_loss</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">K</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">t_log_var</span> \
+                                 <span class="o">-</span> <span class="n">K</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">t_mean</span><span class="p">)</span> \
+                                 <span class="o">-</span> <span class="n">K</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">t_log_var</span><span class="p">),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">model</span><span class="p">,</span> <span class="n">kl_loss</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">model</span>
+
+
+<span class="c1"># Create plain VAE model and associated KL divergence loss operation</span>
+<span class="n">vae</span><span class="p">,</span> <span class="n">vae_kl_loss</span> <span class="o">=</span> <span class="n">create_vae</span><span class="p">(</span><span class="n">latent_dim</span><span class="p">,</span> <span class="n">return_kl_loss_op</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Create DFC VAE model and associated KL divergence loss operation</span>
+<span class="n">vae_dfc</span><span class="p">,</span> <span class="n">vae_dfc_kl_loss</span> <span class="o">=</span> <span class="n">create_vae</span><span class="p">(</span><span class="n">latent_dim</span><span class="p">,</span> <span class="n">return_kl_loss_op</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+<p>The only difference between the plain VAE and the DFC VAE is that the plain VAE uses <code>reconstruction_loss</code> during training and the DFC VAE uses <code>perceptual_loss</code>. These losses are combined with the KL divergence loss in the <code>vae_loss</code> and <code>vae_dfc_loss</code> functions respectively:</p>
+<div class="highlight"><pre><code><span class="k">def</span><span class="w"> </span><span class="nf">vae_loss</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">t_decoded</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Total loss for the plain VAE&#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">K</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">reconstruction_loss</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">t_decoded</span><span class="p">)</span> <span class="o">+</span> <span class="n">vae_kl_loss</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">vae_dfc_loss</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">t_decoded</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Total loss for the DFC VAE&#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">K</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">perceptual_loss</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">t_decoded</span><span class="p">)</span> <span class="o">+</span> <span class="n">vae_dfc_kl_loss</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">reconstruction_loss</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">t_decoded</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Reconstruction loss for the plain VAE&#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">K</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">K</span><span class="o">.</span><span class="n">binary_crossentropy</span><span class="p">(</span>
+        <span class="n">K</span><span class="o">.</span><span class="n">batch_flatten</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> 
+        <span class="n">K</span><span class="o">.</span><span class="n">batch_flatten</span><span class="p">(</span><span class="n">t_decoded</span><span class="p">)),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">perceptual_loss</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">t_decoded</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Perceptual loss for the DFC VAE&#39;&#39;&#39;</span>
+    <span class="n">outputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">pm</span><span class="o">.</span><span class="n">get_layer</span><span class="p">(</span><span class="n">l</span><span class="p">)</span><span class="o">.</span><span class="n">output</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">selected_pm_layers</span><span class="p">]</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="n">pm</span><span class="o">.</span><span class="n">input</span><span class="p">,</span> <span class="n">outputs</span><span class="p">)</span>
+
+    <span class="n">h1_list</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">h2_list</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">t_decoded</span><span class="p">)</span>
+
+    <span class="n">rc_loss</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+    <span class="k">for</span> <span class="n">h1</span><span class="p">,</span> <span class="n">h2</span><span class="p">,</span> <span class="n">weight</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">h1_list</span><span class="p">,</span> <span class="n">h2_list</span><span class="p">,</span> <span class="n">selected_pm_layer_weights</span><span class="p">):</span>
+        <span class="n">h1</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">batch_flatten</span><span class="p">(</span><span class="n">h1</span><span class="p">)</span>
+        <span class="n">h2</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">batch_flatten</span><span class="p">(</span><span class="n">h2</span><span class="p">)</span>
+        <span class="n">rc_loss</span> <span class="o">=</span> <span class="n">rc_loss</span> <span class="o">+</span> <span class="n">weight</span> <span class="o">*</span> <span class="n">K</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">K</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">h1</span> <span class="o">-</span> <span class="n">h2</span><span class="p">),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">rc_loss</span>
+</code></pre></div>
+<p>After loading the MNIST dataset and normalizing pixel values to interval $[0,1]$ we have now everything we need to train the two autoencoders. This takes a few minutes per model on a GPU. The default setting however is to load the pre-trained weights for the auto-encoders instead of training them.</p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">variational_autoencoder_dfc_util</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_mnist_data</span>
+
+<span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">_</span><span class="p">),</span> <span class="p">(</span><span class="n">x_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span> <span class="o">=</span> <span class="n">load_mnist_data</span><span class="p">(</span><span class="n">normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+<div class="highlight"><pre><code><span class="k">if</span> <span class="n">use_pretrained</span><span class="p">:</span>
+    <span class="n">vae</span><span class="o">.</span><span class="n">load_weights</span><span class="p">(</span><span class="s1">&#39;models/vae-dfc/vae_weights.h5&#39;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">vae</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="s1">&#39;rmsprop&#39;</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="n">vae_loss</span><span class="p">)</span>
+    <span class="n">vae</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">x_train</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">validation_data</span><span class="o">=</span><span class="p">(</span><span class="n">x_test</span><span class="p">,</span> <span class="n">x_test</span><span class="p">),</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</code></pre></div>
+<div class="highlight"><pre><code><span class="k">if</span> <span class="n">use_pretrained</span><span class="p">:</span>
+    <span class="n">vae_dfc</span><span class="o">.</span><span class="n">load_weights</span><span class="p">(</span><span class="s1">&#39;models/vae-dfc/vae_dfc_weights.h5&#39;</span><span class="p">)</span>    
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">vae_dfc</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="s1">&#39;rmsprop&#39;</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="n">vae_dfc_loss</span><span class="p">)</span>
+    <span class="n">vae_dfc</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">x_train</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">validation_data</span><span class="o">=</span><span class="p">(</span><span class="n">x_test</span><span class="p">,</span> <span class="n">x_test</span><span class="p">),</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="experiments">Experiments</h2>
+<h3 id="analyze-blur-of-generated-images">Analyze blur of generated images</h3>
+<p>The introduction stated that images generated by a DFC VAE tend to be less blurry than images generated by a plain VAE with the same architecture. The following example shows 10 manually selected images from the MNIST test set and their reconstructions by the plain VAE and the DFC VAE. If you run this notebook with <code>use_pretrained = False</code> then 10 randomly selected images from the MNIST test set are used instead. The remainder of this article assumes that <code>use_pretrained = True</code>.</p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">variational_autoencoder_dfc_util</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_image_rows</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">encode</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">images</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Encodes images with the encoder of the given autoencoder model&#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">get_layer</span><span class="p">(</span><span class="s1">&#39;encoder&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">images</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">decode</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">codes</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Decodes latent vectors with the decoder of the given autoencoder model&#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">get_layer</span><span class="p">(</span><span class="s1">&#39;decoder&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">codes</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">encode_decode</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">images</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Encodes and decodes an image with the given autoencoder model&#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">decode</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">encode</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">images</span><span class="p">))</span>
+
+
+<span class="k">if</span> <span class="n">use_pretrained</span><span class="p">:</span>
+    <span class="c1"># Manually selected indices corresponding to digits 0-9 in the test set</span>
+    <span class="n">selected_idx</span> <span class="o">=</span> <span class="p">[</span><span class="mi">5531</span><span class="p">,</span> <span class="mi">2553</span><span class="p">,</span> <span class="mi">1432</span><span class="p">,</span> <span class="mi">4526</span><span class="p">,</span> <span class="mi">9960</span><span class="p">,</span> <span class="mi">6860</span><span class="p">,</span> <span class="mi">6987</span><span class="p">,</span> <span class="mi">3720</span><span class="p">,</span> <span class="mi">5003</span><span class="p">,</span> <span class="mi">9472</span><span class="p">]</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="c1"># Randomly selected indices </span>
+    <span class="n">selected_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">x_test</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="mi">10</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="n">selected</span> <span class="o">=</span> <span class="n">x_test</span><span class="p">[</span><span class="n">selected_idx</span><span class="p">]</span>
+<span class="n">selected_dec_vae</span> <span class="o">=</span> <span class="n">encode_decode</span><span class="p">(</span><span class="n">vae</span><span class="p">,</span> <span class="n">selected</span><span class="p">)</span>
+<span class="n">selected_dec_vae_dfc</span> <span class="o">=</span> <span class="n">encode_decode</span><span class="p">(</span><span class="n">vae_dfc</span><span class="p">,</span> <span class="n">selected</span><span class="p">)</span>
+
+<span class="n">plot_image_rows</span><span class="p">([</span><span class="n">selected</span><span class="p">,</span> <span class="n">selected_dec_vae</span><span class="p">,</span> <span class="n">selected_dec_vae_dfc</span><span class="p">],</span> 
+                <span class="p">[</span><span class="s1">&#39;Original images&#39;</span><span class="p">,</span> 
+                 <span class="s1">&#39;Images generated by plain VAE&#39;</span><span class="p">,</span> 
+                 <span class="s1">&#39;Images generated by DFC VAE&#39;</span><span class="p">])</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2018-07-27/output_22_0.png" /></p>
+<p><img alt="png" src="/img/2018-07-27/output_22_1.png" /></p>
+<p><img alt="png" src="/img/2018-07-27/output_22_2.png" /></p>
+<p>One can clearly see that the images generated by the DFC VAE are less blurry than the images generated by the plain VAE. A similar trend can also be seen for other samples. To quantify blur we compute the Laplacian variance for each image to have a single measure of focus<sup>[3]</sup> (see also <a href="https://www.pyimagesearch.com/2015/09/07/blur-detection-with-opencv/">Blur detection with OpenCV</a>). </p>
+<div class="highlight"><pre><code><span class="kn">import</span><span class="w"> </span><span class="nn">cv2</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">laplacian_variance</span><span class="p">(</span><span class="n">images</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">cv2</span><span class="o">.</span><span class="n">Laplacian</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">CV_32F</span><span class="p">)</span><span class="o">.</span><span class="n">var</span><span class="p">()</span> <span class="k">for</span> <span class="n">image</span> <span class="ow">in</span> <span class="n">images</span><span class="p">]</span>
+</code></pre></div>
+<p>The Laplacian variance increases with increased focus of an image or decreases with increased blur. Furthermore, images with a smaller amount of edges tend to have a smaller Laplacian variance (the <a href="https://en.wikipedia.org/wiki/Discrete_Laplace_operator#Image_Processing">Laplacian kernel</a> is often used for edge detection in images). Therefore we first have to analyze the Laplacian variances for digit classes 0-9 in the MNIST test set before we can compare blur differences in generated images:</p>
+<div class="highlight"><pre><code><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
+
+<span class="n">laplacian_variances</span> <span class="o">=</span> <span class="p">[</span><span class="n">laplacian_variance</span><span class="p">(</span><span class="n">x_test</span><span class="p">[</span><span class="n">y_test</span> <span class="o">==</span> <span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">)]</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">boxplot</span><span class="p">(</span><span class="n">laplacian_variances</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">));</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Digit class&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Laplacian variance&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Laplacian variance statistics per digit class&#39;</span><span class="p">);</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2018-07-27/output_26_0.png" /></p>
+<p>In a first approximation we can say that the Laplacian variance statistics for all digit classes are comparable except for class 1. It is no surprise that the average Laplacian variance of images showing a 1 is lower compared to other images as the amount of detectable edges is lower there as well. This also explain the (less prominent) difference between digit classes 7 and 8. </p>
+<p>The following histogram shows the frequency of Laplacian variances for all images in the MNIST test set except for digit class 1. The frequencies for the original images as well as for the images reconstructed by the plain VAE and the DFC VAE are shown in different colors.</p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">variational_autoencoder_dfc_util</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_laplacian_variances</span>
+
+<span class="n">x_dec_vae</span> <span class="o">=</span> <span class="n">encode_decode</span><span class="p">(</span><span class="n">vae</span><span class="p">,</span> <span class="n">x_test</span><span class="p">)</span>
+<span class="n">x_dec_vae_dfc</span> <span class="o">=</span> <span class="n">encode_decode</span><span class="p">(</span><span class="n">vae_dfc</span><span class="p">,</span> <span class="n">x_test</span><span class="p">)</span>
+
+<span class="n">not_ones</span> <span class="o">=</span> <span class="n">y_test</span> <span class="o">!=</span> <span class="mi">1</span>
+
+<span class="n">lvs_1</span> <span class="o">=</span> <span class="n">laplacian_variance</span><span class="p">(</span><span class="n">x_test</span><span class="p">[</span><span class="n">not_ones</span><span class="p">])</span>
+<span class="n">lvs_2</span> <span class="o">=</span> <span class="n">laplacian_variance</span><span class="p">(</span><span class="n">x_dec_vae</span><span class="p">[</span><span class="n">not_ones</span><span class="p">])</span>
+<span class="n">lvs_3</span> <span class="o">=</span> <span class="n">laplacian_variance</span><span class="p">(</span><span class="n">x_dec_vae_dfc</span><span class="p">[</span><span class="n">not_ones</span><span class="p">])</span>
+
+<span class="n">plot_laplacian_variances</span><span class="p">(</span><span class="n">lvs_1</span><span class="p">,</span> <span class="n">lvs_2</span><span class="p">,</span> <span class="n">lvs_3</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Laplacian variance of digit images (class != 1)&#39;</span><span class="p">)</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2018-07-27/output_28_0.png" /></p>
+<p>On average, the original images have the highest Laplacian variance (highest focus or least blur) whereas the reconstructed images are more blurry. But the images reconstructed by the DFC VAE are significantly less blurry than those reconstructed by the plain VAE. The statistical significance of this difference can verified with a <a href="https://en.wikipedia.org/wiki/Student%27s_t-test">t-test</a> for paired samples (the same test images are used by both autoencoders):</p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">ttest_rel</span>
+
+<span class="n">res</span> <span class="o">=</span> <span class="n">ttest_rel</span><span class="p">(</span><span class="n">lvs_1</span><span class="p">,</span> <span class="n">lvs_2</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;T-score = </span><span class="si">{</span><span class="n">res</span><span class="o">.</span><span class="n">statistic</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">, p-value = </span><span class="si">{</span><span class="n">res</span><span class="o">.</span><span class="n">pvalue</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+</code></pre></div>
+<pre><code>T-score = 364.80, p-value = 0.00
+</code></pre>
+<p>The <a href="https://en.wikipedia.org/wiki/T-statistic">T-score</a> is very large and the <a href="https://en.wikipedia.org/wiki/P-value">p-value</a> is essentially zero i.e. definitely lower than 0.05. We can therefore conclude that images generated by the DFC VAE are significantly less blurry than those generated by the plain VAE. For images of class 1, the difference is less clear when looking at the histogram but still significant as the p-value is essentially zero here as well:</p>
+<div class="highlight"><pre><code><span class="n">ones</span> <span class="o">=</span> <span class="n">y_test</span> <span class="o">==</span> <span class="mi">1</span>
+
+<span class="n">lvs_1</span> <span class="o">=</span> <span class="n">laplacian_variance</span><span class="p">(</span><span class="n">x_test</span><span class="p">[</span><span class="n">ones</span><span class="p">])</span>
+<span class="n">lvs_2</span> <span class="o">=</span> <span class="n">laplacian_variance</span><span class="p">(</span><span class="n">x_dec_vae</span><span class="p">[</span><span class="n">ones</span><span class="p">])</span>
+<span class="n">lvs_3</span> <span class="o">=</span> <span class="n">laplacian_variance</span><span class="p">(</span><span class="n">x_dec_vae_dfc</span><span class="p">[</span><span class="n">ones</span><span class="p">])</span>
+
+<span class="n">plot_laplacian_variances</span><span class="p">(</span><span class="n">lvs_1</span><span class="p">,</span> <span class="n">lvs_2</span><span class="p">,</span> <span class="n">lvs_3</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Laplacian variance of digit images (class == 1)&#39;</span><span class="p">)</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2018-07-27/output_32_0.png" /></p>
+<div class="highlight"><pre><code><span class="n">res</span> <span class="o">=</span> <span class="n">ttest_rel</span><span class="p">(</span><span class="n">lvs_1</span><span class="p">,</span> <span class="n">lvs_2</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;T-score = </span><span class="si">{</span><span class="n">res</span><span class="o">.</span><span class="n">statistic</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">, p-value = </span><span class="si">{</span><span class="n">res</span><span class="o">.</span><span class="n">pvalue</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+</code></pre></div>
+<pre><code>T-score = 78.94, p-value = 0.00
+</code></pre>
+<p>Although the distributions for class 1 are more skewed, usage of the t-test can still be justified as the sample size is large enough (1135 class 1 images in the MNIST test set).</p>
+<h3 id="linear-interpolation-between-images">Linear interpolation between images</h3>
+<p>Linear interpolation between two images is done in latent space. A finite number of points are sampled at equal distances on a straight line between the latent representations of the input images and then decoded back into pixel space:</p>
+<div class="highlight"><pre><code><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">linear_interpolation</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">x_from</span><span class="p">,</span> <span class="n">x_to</span><span class="p">,</span> <span class="n">steps</span><span class="p">):</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">steps</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="n">t_from</span> <span class="o">=</span> <span class="n">encode</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x_from</span><span class="p">]))[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">t_to</span> <span class="o">=</span> <span class="n">encode</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x_to</span><span class="p">]))[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">diff</span> <span class="o">=</span> <span class="n">t_to</span> <span class="o">-</span> <span class="n">t_from</span>
+    <span class="n">inter</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">t_from</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">inter</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">t_from</span> <span class="o">+</span> <span class="n">i</span> <span class="o">/</span> <span class="n">steps</span> <span class="o">*</span> <span class="n">diff</span>
+
+    <span class="k">return</span> <span class="n">decode</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">inter</span><span class="p">)</span>
+</code></pre></div>
+<p>Let's use the <code>linear_interpolation</code> function to interpolate between digits 1 and 5 and compare results generated by the plain VAE and the DFC VAE:</p>
+<div class="highlight"><pre><code><span class="k">def</span><span class="w"> </span><span class="nf">plot_linear_interpolations</span><span class="p">(</span><span class="n">x_from</span><span class="p">,</span> <span class="n">x_to</span><span class="p">,</span> <span class="n">steps</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+    <span class="n">plot_image_rows</span><span class="p">([</span><span class="n">linear_interpolation</span><span class="p">(</span><span class="n">vae</span><span class="p">,</span> <span class="n">x_from</span><span class="p">,</span> <span class="n">x_to</span><span class="p">,</span> <span class="n">steps</span><span class="p">),</span> 
+                     <span class="n">linear_interpolation</span><span class="p">(</span><span class="n">vae_dfc</span><span class="p">,</span> <span class="n">x_from</span><span class="p">,</span> <span class="n">x_to</span><span class="p">,</span> <span class="n">steps</span><span class="p">)],</span> 
+                    <span class="p">[</span><span class="s1">&#39;Linear interpolation with plain VAE&#39;</span><span class="p">,</span> 
+                     <span class="s1">&#39;Linear interpolation with DFC VAE&#39;</span><span class="p">])</span>
+
+<span class="n">plot_linear_interpolations</span><span class="p">(</span><span class="n">selected</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">selected</span><span class="p">[</span><span class="mi">5</span><span class="p">])</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2018-07-27/output_38_0.png" /></p>
+<p><img alt="png" src="/img/2018-07-27/output_38_1.png" /></p>
+<p>In addition to generating less blurry images, the interpolation done by the DFC VAE is also less surprising as it doesn't generate intermediate digits of values other than 1 and 5. It just distorts the vertical bar representing a 1 more and more to finally become a 5. On the other hand, the plain VAE generates the intermediate digits 8 and 3. The situation is similar for an interpolation between digits 1 and 3:</p>
+<div class="highlight"><pre><code><span class="n">plot_linear_interpolations</span><span class="p">(</span><span class="n">selected</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">selected</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2018-07-27/output_40_0.png" /></p>
+<p><img alt="png" src="/img/2018-07-27/output_40_1.png" /></p>
+<p>This doesn't mean that the interpolation with the DFC VAE never creates intermediate digits of other value. For example, an interpolation between digits 3 and 7 creates an intermediate 8 but the overall quality of the interpolation is still much better (less blurry) compared to the plain VAE.</p>
+<div class="highlight"><pre><code><span class="n">plot_linear_interpolations</span><span class="p">(</span><span class="n">selected</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">selected</span><span class="p">[</span><span class="mi">7</span><span class="p">])</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2018-07-27/output_42_0.png" /></p>
+<p><img alt="png" src="/img/2018-07-27/output_42_1.png" /></p>
+<h2 id="other-implementations">Other implementations</h2>
+<p>The original paper<sup>[1]</sup> uses a different DFC VAE architecture and a training dataset with 202,599 face images (<a href="http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html">CelebA</a>). Their perceptual model is a 19-layer VGGNet<sup>[4]</sup> trained on ImageNet. A <a href="http://torch.ch/">Torch</a> implementation together with a pre-trained model is available <a href="https://github.com/houxianxu/DFC-VAE">here</a>. A corresponding Tensorflow implementation is available at <a href="https://github.com/davidsandberg/facenet/wiki/Variational-autoencoder">davidsandberg/facenet</a>. In contrast to the original paper, the latter implementation uses a pre-trained FaceNet<sup>[5]</sup> model as perceptual model.</p>
+<h2 id="references">References</h2>
+<ul>
+<li>[1] Xianxu Hou, Linlin Shen, Ke Sun, Guoping Qiu <a href="https://arxiv.org/abs/1610.00291">Deep Feature Consistent Variational Autoencoder</a>.</li>
+<li>[2] Diederik P Kingma, Max Welling <a href="https://arxiv.org/abs/1312.6114">Auto-Encoding Variational Bayes</a>.  </li>
+<li>[3] Said Pertuz, Domenec Puig, Miguel Angel Garcia <a href="https://dl.acm.org/citation.cfm?id=2431007">Analysis of focus measure operators for shape-from-focus</a>.</li>
+<li>[4] Karen Simonyan, Andrew Zisserman <a href="https://arxiv.org/abs/1409.1556">Very Deep Convolutional Networks for Large-Scale Image Recognition</a>.</li>
+<li>[5] Florian Schroff, Dmitry Kalenichenko, James Philbin <a href="https://arxiv.org/abs/1503.03832">FaceNet: A Unified Embedding for Face Recognition and Clustering</a>.</li>
+</ul>
+    </div>
+
+    <nav class="post-nav">
+        
+        <a href="/2018/04/07/latent-space-optimization/" class="post-nav-link post-nav-older">
+            <span class="post-nav-label">&larr; Older</span>
+            <span class="post-nav-title">Conditional generation via Bayesian optimization in latent space</span>
+        </a>
+        
+        
+        <a href="/2018/11/10/weightnorm-implementation-options/" class="post-nav-link post-nav-newer">
+            <span class="post-nav-label">Newer &rarr;</span>
+            <span class="post-nav-title">Weight normalization options for Keras and Tensorflow</span>
+        </a>
+        
+    </nav>
+
+    
+    <section class="comments">
+        <h2>Comments</h2>
+        <div id="disqus_thread"></div>
+    </section>
+    
+</article>
+
+        </div>
+    </main>
+
+    
+    <footer class="footer">
+        <div class="container">
+            
+<ul class="footer-social-links">
+    <li>
+        <a href="https://linkedin.com/in/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+    <rect x="2" y="9" width="4" height="12"/>
+    <circle cx="4" cy="4" r="2"/>
+</svg>
+
+            linkedin.com/in/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/gradion-ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/gradion-ai
+        </a>
+    </li>
+    <li>
+        <a href="https://gradion.ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
+    <path d="M9 22v-4h6v4"/>
+    <path d="M8 6h.01"/><path d="M16 6h.01"/>
+    <path d="M12 6h.01"/>
+    <path d="M12 10h.01"/><path d="M12 14h.01"/>
+    <path d="M16 10h.01"/><path d="M16 14h.01"/>
+    <path d="M8 10h.01"/><path d="M8 14h.01"/>
+</svg>
+
+            gradion.ai
+        </a>
+    </li>
+    <li>
+        <a href="/llms.txt">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 8V4H8"/>
+    <rect width="16" height="12" x="4" y="8" rx="2"/>
+    <path d="M2 14h2"/>
+    <path d="M20 14h2"/>
+    <path d="M15 13v2"/>
+    <path d="M9 13v2"/>
+</svg>
+
+            llms.txt
+        </a>
+    </li>
+    <li>
+        <a href="/feed.xml">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 11a9 9 0 0 1 9 9"/>
+    <path d="M4 4a16 16 0 0 1 16 16"/>
+    <circle cx="5" cy="19" r="1"/>
+</svg>
+
+            feed.xml
+        </a>
+    </li>
+</ul>
+
+            <p class="footer-copyright">// Martin Krasser, 2026</p>
+        </div>
+    </footer>
+
+    <script>
+    document.querySelectorAll('a[href^="http"]').forEach(link => {
+        if (!link.href.startsWith(location.origin)) {
+            link.target = '_blank';
+            link.rel = 'noopener';
+        }
+    });
+    </script>
+    
+
+<script>
+var disqus_config = function () {
+    this.page.url = 'https://krasserm.github.io/2018/07/27/dfc-vae/';
+    this.page.identifier = '/2018/07/27/dfc-vae/';
+};
+(function() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://krasserm.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+</body>
+</html>

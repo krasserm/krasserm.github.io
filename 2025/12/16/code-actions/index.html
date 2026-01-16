@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#0a0e14">
+    <title>Code Actions as Tools - Martin Krasser</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/pygments.css">
+    <link rel="alternate" type="application/atom+xml" title="Martin Krasser Feed" href="/feed.xml">
+    
+<script>
+MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="/" class="nav-brand">Martin Krasser</a>
+            <ul class="nav-links">
+                
+                <li><a href="/about/">About</a></li>
+                
+                <li><a href="/">Blog</a></li>
+                
+                <li><a href="/industry/">Industry</a></li>
+                
+                <li><a href="/open-source/">Open Source</a></li>
+                
+                <li><a href="/citations/">Citations</a></li>
+                
+                <li><a href="/stories/">Stories</a></li>
+                
+                <li><a href="/contact/">Contact</a></li>
+                
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="container">
+            
+<article class="post">
+    <header class="post-header">
+        <h1 class="post-title">Code Actions as Tools</h1>
+        
+        <p class="post-subtitle">Evolving Tool Libraries for Agents</p>
+        
+        <p class="post-meta">
+            <time datetime="2025-12-16">
+                December 16, 2025
+            </time>
+            
+            <span class="post-author">by Martin Krasser</span>
+            
+        </p>
+    </header>
+
+    <div class="post-content">
+        <p>This article was originally posted <a href="https://gradion-ai.github.io/agents-nanny/2025/12/16/code-actions-as-tools-evolving-tool-libraries-for-agents/">here</a>.</p>
+<hr />
+<p>Programmatic tool calling is gaining traction in agent development. Instead of emitting one JSON tool call at a time, agents generate executable "code actions" that call tools in a sandboxed environment. This pattern is inspired by Apple's <a href="https://machinelearning.apple.com/research/codeact">CodeAct</a> and appears in many agentic systems. More <a href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/programmatic-tool-calling">recent</a> <a href="https://blog.cloudflare.com/code-mode/">implementations</a> increasingly focus on programmatic calling of MCP tools.</p>
+<p>These solutions typically generate Python or TypeScript APIs for MCP tools, let an agent write code actions that call these APIs, execute the code in a sandboxed environment, and feed results back to the agent. This improves performance compared to JSON-based approaches, but it often misses an important point: a generated code action can itself become a tool, available for reuse in later code actions.</p>
+<p>This article fills that gap by presenting an approach for building reusable tools from code actions. When following certain design principles, code actions can be saved in a way that supports efficient discovery, inspection, and reuse in later code actions. This is demonstrated by example using a <a href="https://gradion-ai.github.io/ipybox/ccplugin/">Claude Code plugin</a> that bundles a code action skill, and the <a href="https://gradion-ai.github.io/ipybox/">ipybox</a> MCP server for local, sandboxed code execution.</p>
+<p><strong>Update 2026-01-07:</strong> An alternative implementation of this approach is the <a href="https://gradion-ai.github.io/freeact/">freeact</a> code action agent.</p>
+<h2 id="code-actions-as-reusable-tools">Code Actions as Reusable Tools</h2>
+<p>Most programmatic tool calling implementations treat code actions as ephemeral: generated, executed, then discarded. But a working code action represents a tested solution. An agent iterates on it based on execution feedback until it produces the desired outcome. If it is then saved in a discoverable format with a callable API, that code action becomes a tool that future code actions can import and compose with other tools.</p>
+<p>Code actions can also be modified after they have been stored, whether to fix bugs discovered during execution or to add new functionality. The agent thus serves two roles: a domain-specific agent performing the task at hand, and a toolsmith evolving its own capabilities.</p>
+<p>The key difference from JSON tool calling is mutability. In a JSON-based approach, tools are static: defined at development time and immutable at runtime. With code actions as tools, an agent's tool library can evolve at runtime: tools can be added, modified, or composed based on what the agent learns while working.</p>
+<h2 id="example-composing-github-mcp-server-tools">Example: Composing GitHub MCP Server Tools</h2>
+<p>The approach is demonstrated using tools from the GitHub MCP server. The task is to retrieve the latest commits from a user's most-starred repositories. This requires composing two tools: <code>search_repositories</code> to find repositories, and <code>list_commits</code> to fetch commits for each repository.</p>
+<blockquote>
+<p><strong>Setup:</strong> For environment setup, plugin installation, and a step-by-step walkthrough of the GitHub example in Claude Code, refer to the <a href="https://gradion-ai.github.io/ipybox/ccplugin/">plugin documentation</a>. The subsections below provide an overview of the core ideas.</p>
+</blockquote>
+<h3 id="generating-tool-apis">Generating Tool APIs</h3>
+<p>To generate a Python API for the GitHub MCP server tools, register the server with ipybox by providing its connection details:</p>
+<div class="highlight"><pre><code># -------------
+# User prompt
+# -------------
+
+Register this MCP server at ipybox under name github
+{
+  &quot;url&quot;: &quot;https://api.githubcopilot.com/mcp/&quot;,
+  &quot;headers&quot;: {
+    &quot;Authorization&quot;: &quot;Bearer ${GITHUB_API_KEY}&quot;
+  }
+}
+</code></pre></div>
+<p>ipybox then generates one module per tool, such as <a href="https://github.com/gradion-ai/ipybox/blob/main/docs/generated/mcptools/github/search_repositories_orig.py"><code>search_repositories</code></a> or <a href="https://github.com/gradion-ai/ipybox/blob/main/docs/generated/mcptools/github/list_commits.py"><code>list_commits</code></a>. Each generated module exposes a <code>run()</code> function to invoke the MCP tool, and a typed input parameter model:</p>
+<div class="highlight"><pre><code><span class="c1"># -------------------------</span>
+<span class="c1"># search_repositories API</span>
+<span class="c1"># -------------------------</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Params</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">query</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">sort</span><span class="p">:</span> <span class="n">Sort</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">order</span><span class="p">:</span> <span class="n">Order</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">perPage</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">Params</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="c1"># Invokes the MCP tool and returns the result</span>
+    <span class="o">...</span>
+</code></pre></div>
+<h3 id="augmenting-tools-with-output-types">Augmenting Tools with Output Types</h3>
+<p>Many MCP servers, including GitHub's, do not provide output schemas. GitHub MCP tools return JSON strings with undocumented structure. Without knowing that structure in advance, an agent cannot reliably write code that processes outputs inside a code action. The agent would have to call the tool first, bring the raw output back into its context to inspect it, and only then write processing code. That undermines the goal of handling intermediate results inside the execution environment.</p>
+<p>To address this, we ask the agent to generate an output parser for <code>search_repositories</code>:</p>
+<div class="highlight"><pre><code># -------------
+# User prompt
+# -------------
+
+Use the codeact skill to generate an output parser for search_repositories
+</code></pre></div>
+<p>The agent calls the tool's <code>run()</code> function with sample inputs, inspects representative responses, and then augments the tool API with a structured output type plus a <code>run_parsed()</code> function:</p>
+<div class="highlight"><pre><code><span class="c1"># --------------------------------------</span>
+<span class="c1"># search_repositories API augmentation</span>
+<span class="c1"># --------------------------------------</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Repository</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">stargazers_count</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="c1"># ... other fields extracted from actual responses</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ParseResult</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">repositories</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Repository</span><span class="p">]</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">run_parsed</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">Params</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ParseResult</span><span class="p">:</span>
+    <span class="c1"># Import parser logic from a separate, generated module</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">mcpparse.github.search_repositories</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse</span>
+    <span class="k">return</span> <span class="n">parse</span><span class="p">(</span><span class="n">run</span><span class="p">(</span><span class="n">params</span><span class="p">))</span>
+</code></pre></div>
+<p>Importantly, output parsers are stored separately from the original tool API. This keeps the tool interface clean and avoids mixing <a href="https://github.com/gradion-ai/ipybox/blob/main/docs/generated/mcpparse/github/search_repositories.py">parsing implementation details</a> into the interface definition.</p>
+<p>Once generated, the <a href="https://github.com/gradion-ai/ipybox/blob/main/docs/generated/mcptools/github/search_repositories.py">augmented tool API</a> is immediately usable in code actions. For tools that do provide output schemas, ipybox generates structured output types during tool API generation, making this augmentation step unnecessary.</p>
+<h3 id="composing-tools-in-a-code-action">Composing Tools in a Code Action</h3>
+<p>With typed outputs available, the agent can now compose tools within a single code action. For a task like</p>
+<div class="highlight"><pre><code># -------------
+# User prompt
+# -------------
+
+Use the codeact skill to get the latest 5 commits of the 3 github repos
+of torvalds with the most stars. For each repo, output name, stars and
+the first line of commit messages, and the link to the commit
+</code></pre></div>
+<p>the agent generates a code action that combines the <code>search_repositories</code> and <code>list_commits</code> tools.</p>
+<div class="highlight"><pre><code><span class="c1"># -------------</span>
+<span class="c1"># Code action</span>
+<span class="c1"># -------------</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">mcptools.github</span><span class="w"> </span><span class="kn">import</span> <span class="n">search_repositories</span><span class="p">,</span> <span class="n">list_commits</span>
+
+<span class="c1"># Search returns typed Repository objects</span>
+<span class="n">repos</span> <span class="o">=</span> <span class="n">search_repositories</span><span class="o">.</span><span class="n">run_parsed</span><span class="p">(</span>
+    <span class="n">search_repositories</span><span class="o">.</span><span class="n">Params</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="s2">&quot;user:torvalds&quot;</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="s2">&quot;stars&quot;</span><span class="p">,</span> <span class="n">perPage</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="c1"># Iterate and call list_commits for each repo, all within one code action</span>
+<span class="k">for</span> <span class="n">repo</span> <span class="ow">in</span> <span class="n">repos</span><span class="o">.</span><span class="n">repositories</span><span class="p">:</span>
+    <span class="n">commits</span> <span class="o">=</span> <span class="n">list_commits</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+        <span class="n">list_commits</span><span class="o">.</span><span class="n">Params</span><span class="p">(</span><span class="n">owner</span><span class="o">=</span><span class="s2">&quot;torvalds&quot;</span><span class="p">,</span> <span class="n">repo</span><span class="o">=</span><span class="n">repo</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">perPage</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="c1"># Printed results are returned to the agent</span>
+    <span class="k">for</span> <span class="n">commit</span> <span class="ow">in</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">commits</span><span class="p">):</span>
+        <span class="n">first_line</span> <span class="o">=</span> <span class="n">commit</span><span class="p">[</span><span class="s2">&quot;commit&quot;</span><span class="p">][</span><span class="s2">&quot;message&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">repo</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">first_line</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p>This single code action makes four tool calls (one <code>search_repositories</code>, then three <code>list_commits</code>). With JSON-based tool calling, the same workflow requires four separate inference passes, with intermediate results accumulating in the context window.</p>
+<p>For brevity, the above example parses <code>list_commits</code> output inline. In practice, you should generate an output parser for it as well.</p>
+<h3 id="saving-code-actions-for-reuse">Saving Code Actions for Reuse</h3>
+<p>Once a code action works, it can be saved as a parameterized tool for later reuse:</p>
+<div class="highlight"><pre><code># -------------
+# User prompt
+# -------------
+
+Save this as code action under github category with name commits_of_top_repos. 
+Make username, top_n_repos and last_n_commits parameters.
+</code></pre></div>
+<p>A key design choice here is to separate interface from implementation. The interface is defined in a <a href="https://github.com/gradion-ai/ipybox/blob/main/docs/generated/gentools/github/commits_of_top_repos/api.py"><code>commits_of_top_repos.api</code></a> module, the implementation in <a href="https://github.com/gradion-ai/ipybox/blob/main/docs/generated/gentools/github/commits_of_top_repos/impl.py"><code>commits_of_top_repos.impl</code></a>. The plugin's code action skill instructs the agent to follow this structure.</p>
+<p>The API module defines a parameterized <code>run()</code> function, output types, and a tool description via a docstring:</p>
+<div class="highlight"><pre><code><span class="c1"># -------------------------</span>
+<span class="c1"># commits_of_top_repos API</span>
+<span class="c1"># -------------------------</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">CommitInfo</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">sha</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">url</span><span class="p">:</span> <span class="nb">str</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">RepoCommits</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">stars</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">commits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CommitInfo</span><span class="p">]</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="n">username</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">top_n_repos</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">last_n_commits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">RepoCommits</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get latest commits from a user&#39;s top repositories by stars.&quot;&quot;&quot;</span>
+    <span class="o">...</span>
+</code></pre></div>
+<p>During tool discovery, only the API needs inspection. The implementation stays hidden. This saves tokens during discovery and reduces distraction by keeping non-essential implementation details out of the agent's context.</p>
+<p>New code actions can then import and reuse the saved tool directly:</p>
+<div class="highlight"><pre><code><span class="c1"># -------------</span>
+<span class="c1"># Code action</span>
+<span class="c1"># -------------</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">gentools.github.commits_of_top_repos</span><span class="w"> </span><span class="kn">import</span> <span class="n">run</span>
+
+<span class="c1"># Reuse the saved code action as a tool</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="s2">&quot;torvalds&quot;</span><span class="p">,</span> <span class="n">top_n_repos</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">last_n_commits</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="tool-discovery">Tool Discovery</h2>
+<p>As the number of MCP tool APIs and saved code actions grows, loading them all into the agent's context window upfront becomes impractical. Even a moderately sized tool collection can consume a large fraction of the available context, leaving less room for the actual task.</p>
+<p>Progressive tool discovery addresses this by deferring tool loading until it is needed. Tools are organized in a package hierarchy on the filesystem that an agent can explore. When a task arrives, the agent searches the filesystem for relevant tools and inspects the APIs of promising candidates. This approach trades some discovery overhead for substantial context savings.</p>
+<p>The plugin's discovery mechanism is intentionally simple. More sophisticated options are possible, such as hybrid vector and keyword search over tool descriptions, but filesystem-based discovery is a practical starting point. It can scale to hundreds of tools without introducing additional infrastructure dependencies.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>Programmatic tool calling brings performance gains over JSON-based approaches, but it reaches its full potential when code actions become first-class tools. In a JSON-based approach, tools are static: defined at development time and immutable at runtime. With code actions as tools, an agent's tool library can evolve at runtime: tools can be added, modified, or composed based on what the agent learns while working. For efficient tool discovery and use, it is important to save code actions with typed interfaces separated from implementations. Agents can then inspect signatures and docstrings without loading implementation details.</p>
+    </div>
+
+    <nav class="post-nav">
+        
+        <a href="/2025/11/12/multi-party-ai/" class="post-nav-link post-nav-older">
+            <span class="post-nav-label">&larr; Older</span>
+            <span class="post-nav-title">From single-user to multi-party conversational AI</span>
+        </a>
+        
+        
+    </nav>
+
+    
+    <section class="comments">
+        <h2>Comments</h2>
+        <div id="disqus_thread"></div>
+    </section>
+    
+</article>
+
+        </div>
+    </main>
+
+    
+    <footer class="footer">
+        <div class="container">
+            
+<ul class="footer-social-links">
+    <li>
+        <a href="https://linkedin.com/in/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+    <rect x="2" y="9" width="4" height="12"/>
+    <circle cx="4" cy="4" r="2"/>
+</svg>
+
+            linkedin.com/in/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/gradion-ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/gradion-ai
+        </a>
+    </li>
+    <li>
+        <a href="https://gradion.ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
+    <path d="M9 22v-4h6v4"/>
+    <path d="M8 6h.01"/><path d="M16 6h.01"/>
+    <path d="M12 6h.01"/>
+    <path d="M12 10h.01"/><path d="M12 14h.01"/>
+    <path d="M16 10h.01"/><path d="M16 14h.01"/>
+    <path d="M8 10h.01"/><path d="M8 14h.01"/>
+</svg>
+
+            gradion.ai
+        </a>
+    </li>
+    <li>
+        <a href="/llms.txt">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 8V4H8"/>
+    <rect width="16" height="12" x="4" y="8" rx="2"/>
+    <path d="M2 14h2"/>
+    <path d="M20 14h2"/>
+    <path d="M15 13v2"/>
+    <path d="M9 13v2"/>
+</svg>
+
+            llms.txt
+        </a>
+    </li>
+    <li>
+        <a href="/feed.xml">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 11a9 9 0 0 1 9 9"/>
+    <path d="M4 4a16 16 0 0 1 16 16"/>
+    <circle cx="5" cy="19" r="1"/>
+</svg>
+
+            feed.xml
+        </a>
+    </li>
+</ul>
+
+            <p class="footer-copyright">// Martin Krasser, 2026</p>
+        </div>
+    </footer>
+
+    <script>
+    document.querySelectorAll('a[href^="http"]').forEach(link => {
+        if (!link.href.startsWith(location.origin)) {
+            link.target = '_blank';
+            link.rel = 'noopener';
+        }
+    });
+    </script>
+    
+
+<script>
+var disqus_config = function () {
+    this.page.url = 'https://krasserm.github.io/2025/12/16/code-actions/';
+    this.page.identifier = '/2025/12/16/code-actions/';
+};
+(function() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://krasserm.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+</body>
+</html>

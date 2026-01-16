@@ -1,0 +1,193 @@
+/* Standalone light theme for PDF printing - replaces site CSS */
+
+/* Reset problematic properties */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 11pt;
+    line-height: 1.5;
+    color: #1f2328;
+    background: #ffffff;
+    padding: 2cm;
+}
+
+/* Hide navigation and footer */
+.nav, .footer {
+    display: none !important;
+}
+
+/* Main content */
+.main {
+    padding: 0;
+}
+
+.container {
+    max-width: 100%;
+    padding: 0;
+}
+
+/* Page title */
+.page-title {
+    font-size: 24pt;
+    font-weight: 600;
+    color: #1f2328;
+    margin-bottom: 1em;
+    padding-bottom: 0.5em;
+    border-bottom: 2px solid #0969da;
+    padding-left: 0;
+}
+
+.page-title::before {
+    display: none;
+}
+
+/* Headings */
+h2 {
+    font-size: 14pt;
+    font-weight: 600;
+    color: #1f2328;
+    margin-top: 1.5em;
+    margin-bottom: 0.75em;
+    padding-bottom: 0.25em;
+    border-bottom: 1px solid #d0d7de;
+}
+
+/* Links */
+a {
+    color: #0969da;
+    text-decoration: none;
+}
+
+/* Paragraphs */
+p {
+    margin: 0.5em 0;
+    color: #424a53;
+}
+
+/* Experience list */
+.experience-list {
+    display: block;
+}
+
+.experience {
+    padding: 0.75em 0 0.75em 1.5em;
+    border-left: 2px solid #d0d7de;
+    margin-bottom: 0.5em;
+    position: relative;
+    page-break-inside: avoid;
+}
+
+.experience::before {
+    content: '';
+    position: absolute;
+    left: -5px;
+    top: 1em;
+    width: 8px;
+    height: 8px;
+    border: 2px solid #0969da;
+    background: #ffffff;
+    border-radius: 50%;
+}
+
+.experience-header {
+    display: block;
+}
+
+.experience-roles {
+    font-size: 12pt;
+    font-weight: 600;
+    color: #1f2328;
+    margin: 0 0 0.125em 0;
+    padding: 0;
+    border: none;
+}
+
+.experience-company {
+    font-size: 11pt;
+    color: #0550ae;
+    margin: 0 0 0.125em 0;
+}
+
+.experience-dates {
+    font-size: 9pt;
+    color: #6e7781;
+    margin: 0 0 0.5em 0;
+    font-family: monospace;
+}
+
+.experience-freelance {
+    color: #57606a;
+}
+
+.experience-title {
+    font-family: monospace;
+    font-size: 10pt;
+    font-weight: 400;
+    color: #57606a;
+    margin: 0.5em 0 0 0;
+}
+
+.experience-title::before {
+    content: '//';
+    color: #0969da;
+    margin-right: 0.5em;
+}
+
+.experience-title + .experience-description {
+    margin-top: 0.125em;
+}
+
+.experience-title + .experience-description p {
+    margin-top: 0;
+}
+
+.experience-description,
+.experience-story {
+    font-size: 10pt;
+    color: #424a53;
+}
+
+.experience-description p,
+.experience-story p {
+    margin: 0.25em 0;
+}
+
+/* Social links */
+.social-links {
+    list-style: none;
+    padding: 0;
+    margin: 1em 0;
+}
+
+.social-links li {
+    display: block;
+    margin-bottom: 0.25em;
+}
+
+.social-links a {
+    font-size: 10pt;
+    color: #0969da;
+    display: inline-block;
+}
+
+.social-links svg {
+    width: 14px;
+    height: 14px;
+    vertical-align: middle;
+    margin-right: 0.5em;
+}
+
+/* Page breaks */
+.page {
+    page-break-after: auto;
+}
+
+@page {
+    size: A4;
+    margin: 1.5cm;
+}

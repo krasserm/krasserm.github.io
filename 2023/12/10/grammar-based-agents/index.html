@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#0a0e14">
+    <title>Schema-guided generation in LangChain agents - Martin Krasser</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/pygments.css">
+    <link rel="alternate" type="application/atom+xml" title="Martin Krasser Feed" href="/feed.xml">
+    
+<script>
+MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="/" class="nav-brand">Martin Krasser</a>
+            <ul class="nav-links">
+                
+                <li><a href="/about/">About</a></li>
+                
+                <li><a href="/">Blog</a></li>
+                
+                <li><a href="/industry/">Industry</a></li>
+                
+                <li><a href="/open-source/">Open Source</a></li>
+                
+                <li><a href="/citations/">Citations</a></li>
+                
+                <li><a href="/stories/">Stories</a></li>
+                
+                <li><a href="/contact/">Contact</a></li>
+                
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="container">
+            
+<article class="post">
+    <header class="post-header">
+        <h1 class="post-title">Schema-guided generation in LangChain agents</h1>
+        
+        <p class="post-meta">
+            <time datetime="2023-12-10">
+                December 10, 2023
+            </time>
+            
+            <span class="post-author">by Martin Krasser</span>
+            
+        </p>
+    </header>
+
+    <div class="post-content">
+        <p><strong>Update 2024-05-31</strong>: This article covers early work in the <a href="https://github.com/krasserm/bot-with-plan">bot-with-plan</a> project and is now superseded by the following articles:</p>
+<ul>
+<li><a href="/2023/12/18/llm-json-mode/">Schema-guided generation with open LLMs</a></li>
+<li><a href="/2024/03/06/modular-agent/">Separation of planning concerns in LLM agents</a></li>
+<li><a href="/2024/05/31/planner-fine-tuning/">Planner fine-tuning on synthetic agent trajectories</a></li>
+</ul>
+<hr />
+<p><a href="https://github.com/krasserm/bot-with-plan/blob/wip-article-1/example_agent.ipynb">Notebook</a><br />
+<a href="https://github.com/krasserm/bot-with-plan/tree/wip-article-1">Repository</a></p>
+<p>LLM agents use large language models (LLMs) to decide which tools to use for interacting with their environment during multi-step task solving. Tool usage is done via function calling. The LLM is prompted or fine-tuned to generate JSON output representing one or more function calls. To ensure that the JSON output of an LLM follows a tool-specific schema one can use constrained decoding methods to control next token generation.</p>
+<p>Here, <a href="https://github.com/ggerganov/llama.cpp/pull/1773">grammar-based sampling</a> available in llama.cpp is used for constrained decoding. A JSON schema of available tools is converted to a grammar used for generating instances of that schema (= tool calls) during decoding. This is used for implementing a function calling interface for a Llama-2-70b model, an LLM with (limited) tool usage capabilities.</p>
+<p>The <a href="https://github.com/krasserm/bot-with-plan/tree/wip-article-1">implementation</a> uses LangChain interfaces and is compatible LangChain's <a href="https://python.langchain.com/docs/modules/agents/">agent framework</a>. In its current state, it is a simple prototype for demonstrating schema-guided generation in LangChain agents. It is general enough to be used with many other language models supported by llama.cpp, after some tweaks to the prompt templates.</p>
+<h2 id="agent">Agent</h2>
+<p>A Llama-2 agent with schema-guided generation of function calls can be created as follows. Further details are described in section <a href="#components">Components</a>.</p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">langchain.agents</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentExecutor</span>  
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">StructuredTool</span>  
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_experimental.chat_models.llm_wrapper</span><span class="w"> </span><span class="kn">import</span> <span class="n">Llama2Chat</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">gba.agent</span><span class="w"> </span><span class="kn">import</span> <span class="n">Agent</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gba.llm</span><span class="w"> </span><span class="kn">import</span> <span class="n">LlamaCppClient</span>  
+<span class="kn">from</span><span class="w"> </span><span class="nn">gba.math</span><span class="w"> </span><span class="kn">import</span> <span class="n">Llama2Math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">gba.tool</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToolCalling</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">example_tools</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">create_event</span><span class="p">,</span>  
+    <span class="n">search_images</span><span class="p">,</span>  
+    <span class="n">search_internet</span><span class="p">,</span>  
+<span class="p">)</span>
+
+<span class="c1"># Custom LangChain LLM implementation that interacts with a model </span>
+<span class="c1"># hosted on a llama.cpp server</span>
+<span class="n">llm</span> <span class="o">=</span> <span class="n">LlamaCppClient</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="s2">&quot;http://localhost:8080/completion&quot;</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>  
+
+<span class="c1"># Converts incoming messages into a Llama-2 compatible chat prompt </span>
+<span class="c1"># and implements the LangChain chat model interface</span>
+<span class="n">chat_model</span> <span class="o">=</span> <span class="n">Llama2Chat</span><span class="p">(</span><span class="n">llm</span><span class="o">=</span><span class="n">llm</span><span class="p">)</span>  
+
+<span class="c1"># Layers a tool calling protocol on top of chat_model resulting in</span>
+<span class="c1"># an interface similar to the ChatOpenAI function calling interface</span>
+<span class="n">tool_calling_model</span> <span class="o">=</span> <span class="n">ToolCalling</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">chat_model</span><span class="p">)</span>
+
+<span class="c1"># Proxy for a math LLM hosted on a llmama.cpp server. Backend of the</span>
+<span class="c1"># `calculate` tool.</span>
+<span class="n">math_llm</span> <span class="o">=</span> <span class="n">LlamaCppClient</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="s2">&quot;http://localhost:8088/completion&quot;</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">math_model</span> <span class="o">=</span> <span class="n">Llama2Math</span><span class="p">(</span><span class="n">llm</span><span class="o">=</span><span class="n">math_llm</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">calculate</span><span class="p">(</span><span class="n">expression</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A tool for evaluating mathematical expressions. Do not use variables in expression.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">math_model</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="n">expression</span><span class="p">)</span>
+
+<span class="c1"># List of tools created from Python functions and used by the agent  </span>
+<span class="n">tools</span> <span class="o">=</span> <span class="p">[</span>  
+    <span class="n">StructuredTool</span><span class="o">.</span><span class="n">from_function</span><span class="p">(</span><span class="n">search_internet</span><span class="p">),</span>  
+    <span class="n">StructuredTool</span><span class="o">.</span><span class="n">from_function</span><span class="p">(</span><span class="n">search_images</span><span class="p">),</span>  
+    <span class="n">StructuredTool</span><span class="o">.</span><span class="n">from_function</span><span class="p">(</span><span class="n">create_event</span><span class="p">),</span>  
+    <span class="n">StructuredTool</span><span class="o">.</span><span class="n">from_function</span><span class="p">(</span><span class="n">calculate</span><span class="p">),</span>  
+<span class="p">]</span>
+
+<span class="c1"># Custom LangChain agent implementation (similar to OpenAIFunctionsAgent)</span>
+<span class="n">agent_obj</span> <span class="o">=</span> <span class="n">Agent</span><span class="o">.</span><span class="n">from_llm_and_tools</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">tool_calling_model</span><span class="p">,</span> 
+    <span class="n">tools</span><span class="o">=</span><span class="n">tools</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># LangChain&#39;s AgentExecutor for running the agent loop</span>
+<span class="n">agent</span> <span class="o">=</span> <span class="n">AgentExecutor</span><span class="o">.</span><span class="n">from_agent_and_tools</span><span class="p">(</span>
+    <span class="n">agent</span><span class="o">=</span><span class="n">agent_obj</span><span class="p">,</span> 
+    <span class="n">tools</span><span class="o">=</span><span class="n">tools</span><span class="p">,</span> 
+    <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+<p>The <code>llm</code> is a proxy for a 4-bit quantized <a href="https://huggingface.co/TheBloke/Llama-2-70B-Chat-GGUF">Llama-2 70b chat model</a> hosted on a <a href="https://github.com/ggerganov/llama.cpp/blob/master/examples/server/README.md">llama.cpp server</a>. Tools in this example are mainly mockups except the <code>calulate</code> tool which uses another LLM to interpret and evaluate mathematical queries. Instructions for serving these LLMs are available <a href="https://github.com/krasserm/bot-with-plan/blob/wip-article-1/README.md#getting-started">here</a>.</p>
+<h3 id="tool-usage">Tool usage</h3>
+<p>Here's an example of a request that is decomposed by the agent into multiple steps, using a tool at each step. To increase the probability that the model generates an appropriate tool call at each step i.e. selects the right tool and arguments, an unconstrained thinking phase precedes the constrained tool call generation phase. This enables attention to generated thoughts during the tool call generation phase (details in section <a href="#toolcalling">ToolCalling</a>).</p>
+<div class="highlight"><pre><code><span class="n">agent</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">&quot;Who is Leonardo DiCaprio&#39;s current girlfriend and what is her age raised to the 0.24 power?&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p>````</p>
+<blockquote>
+<p>Entering new AgentExecutor chain...</p>
+</blockquote>
+<p>Thoughts: I need to call the tool 'search_internet' to find out who Leonardo DiCaprio's current girlfriend is and then calculate her age raised to the 0.24 power using the tool 'calculate'.
+Invoking: <code>search_internet</code> with <code>{'query': "Leonardo DiCaprio's current girlfriend"}</code>
+Leonardo di Caprio started dating Vittoria Ceretti in 2023. She was born in Italy and is 25 years old</p>
+<p>Thoughts: I need to call another tool to obtain more information, specifically the "calculate" tool, to calculate Vittoria Ceretti's age raised to the power of 0.24.
+Invoking: <code>calculate</code> with <code>{'expression': '25^0.24'}</code>
+Executing Llama2Math Python code:</p>
+<div class="highlight"><pre><code>result = pow(25, 0.24)
+</code></pre></div>
+<p>2.16524</p>
+<p>Thoughts: I have enough information to respond with a final answer to the user.
+Vittoria Ceretti, 2.16524</p>
+<blockquote>
+<p>Finished chain.
+````</p>
+</blockquote>
+<p>In the last step, the agent responds to the user directly with the final answer. The answer <code>Vittoria Ceretti, 2.16524</code> is short but correct (at the time of writing).</p>
+<h3 id="direct-response">Direct response</h3>
+<p>The agent may also decide to respond to the user immediately, without prior tool usage.</p>
+<div class="highlight"><pre><code><span class="n">agent</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">&quot;Tell me a joke&quot;</span><span class="p">)</span>
+</code></pre></div>
+<div class="highlight"><pre><code>&gt; Entering new AgentExecutor chain...
+
+Thoughts: I can directly respond to the user with a joke, here&#39;s one: &quot;Why don&#39;t scientists trust atoms? Because they make up everything!&quot;
+Why don&#39;t scientists trust atoms? Because they make up everything!
+
+&gt; Finished chain.
+</code></pre></div>
+<h3 id="external-memory">External memory</h3>
+<p>For maintaining conversational state with the user, the agent can be configured with external <code>memory</code>.</p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">langchain.memory</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConversationBufferMemory</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain.prompts</span><span class="w"> </span><span class="kn">import</span> <span class="n">MessagesPlaceholder</span>  
+
+<span class="n">chat_history</span> <span class="o">=</span> <span class="n">MessagesPlaceholder</span><span class="p">(</span><span class="n">variable_name</span><span class="o">=</span><span class="s2">&quot;chat_history&quot;</span><span class="p">)</span>  
+<span class="n">memory</span> <span class="o">=</span> <span class="n">ConversationBufferMemory</span><span class="p">(</span>
+    <span class="n">memory_key</span><span class="o">=</span><span class="s2">&quot;chat_history&quot;</span><span class="p">,</span> 
+    <span class="n">return_messages</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Agent that additionally maintains conversational state with the user</span>
+<span class="n">conversational_agent_obj</span> <span class="o">=</span> <span class="n">Agent</span><span class="o">.</span><span class="n">from_llm_and_tools</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">tool_calling_model</span><span class="p">,</span> 
+    <span class="n">tools</span><span class="o">=</span><span class="n">tools</span><span class="p">,</span> 
+    <span class="n">extra_prompt_messages</span><span class="o">=</span><span class="p">[</span><span class="n">chat_history</span><span class="p">],</span>
+<span class="p">)</span>  
+<span class="n">conversational_agent</span> <span class="o">=</span> <span class="n">AgentExecutor</span><span class="o">.</span><span class="n">from_agent_and_tools</span><span class="p">(</span>
+    <span class="n">agent</span><span class="o">=</span><span class="n">conversational_agent_obj</span><span class="p">,</span> 
+    <span class="n">tools</span><span class="o">=</span><span class="n">tools</span><span class="p">,</span> 
+    <span class="n">memory</span><span class="o">=</span><span class="n">memory</span><span class="p">,</span> 
+    <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+<p>Let's start the conversation by requesting an image of a brown dog.</p>
+<div class="highlight"><pre><code><span class="n">conversational_agent</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">&quot;find an image of a brown dog&quot;</span><span class="p">)</span>
+</code></pre></div>
+<div class="highlight"><pre><code>&gt; Entering new AgentExecutor chain...
+
+Thoughts: I need to call the tool search_images(query: str) to find an image of a brown dog.
+Invoking: `search_images` with `{&#39;query&#39;: &#39;brown dog&#39;}`
+[brown_dog_1.jpg](https://example.com/brown_dog_1.jpg)
+
+Thoughts: I have enough information to respond with a final answer, which is the URL of the image file &quot;brown_dog_1.jpg&quot;.
+Here is an image of a brown dog: &lt;https://example.com/brown_dog_1.jpg&gt;
+
+&gt; Finished chain.
+</code></pre></div>
+<p>The next request is in context of the previous one, and the agent updates the search query accordingly.</p>
+<div class="highlight"><pre><code><span class="n">conversational_agent</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">&quot;dog should be running too&quot;</span><span class="p">)</span>
+</code></pre></div>
+<div class="highlight"><pre><code>&gt; Entering new AgentExecutor chain...
+
+Thoughts: I need to call another tool to search for images of a running dog.
+Invoking: `search_images` with `{&#39;query&#39;: &#39;brown dog running&#39;}`
+[brown_dog_running_1.jpg](https://example.com/brown_dog_running_1.jpg)
+
+Thoughts: I have enough information to respond with a final answer, which is the URL of the image of a brown dog running.
+https://example.com/brown_dog_running_1.jpg
+
+&gt; Finished chain.
+</code></pre></div>
+<p>The agent was able to create the query <code>brown dog running</code> only because it had access to conversational state (<code>brown</code> is mentioned only in the first request).</p>
+<h2 id="components">Components</h2>
+<h3 id="llamacppclient"><code>LlamaCppClient</code></h3>
+<p><code>LlamaCppClient</code> is a proxy for a model hosted on a llama.cpp server. It implements LangChain's <code>LLM</code> interface and relies on the caller to provide a valid Llama-2 chat prompt.</p>
+<div class="highlight"><pre><code><span class="n">prompt</span> <span class="o">=</span> <span class="s2">&quot;&lt;s&gt;[INST] &lt;&lt;SYS&gt;&gt;</span><span class="se">\n</span><span class="s2">You are a helpful assistant</span><span class="se">\n</span><span class="s2">&lt;&lt;/SYS&gt;&gt;</span><span class="se">\n\n</span><span class="s2">Find an image of brown dog [/INST]&quot;</span>
+<span class="n">llm</span><span class="p">(</span><span class="n">prompt</span><span class="p">)</span>
+</code></pre></div>
+<div class="highlight"><pre><code>&quot;Sure, here&#39;s a cute image of a brown dog for you! 🐶💩\n\n[Image description: A photo of a brown dog with a wagging tail, sitting on a green grassy field. The dog has a playful expression and is looking directly at the camera.]\n\nI hope this image brings a smile to your face! Is there anything else I can assist you with? 😊&quot;
+</code></pre></div>
+<p>If a tool schema is provided, it is converted by <code>LlamaCppClient</code> to a grammar used for grammar-based sampling on the server side so that the output is a valid instance of that schema.</p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">gba.tool</span><span class="w"> </span><span class="kn">import</span> <span class="n">tool_to_schema</span>
+
+<span class="n">tool_schema</span> <span class="o">=</span> <span class="n">tool_to_schema</span><span class="p">(</span><span class="n">StructuredTool</span><span class="o">.</span><span class="n">from_function</span><span class="p">(</span><span class="n">search_images</span><span class="p">))</span>
+<span class="n">tool_schema</span>
+</code></pre></div>
+<div class="highlight"><pre><code>{&#39;type&#39;: &#39;object&#39;,
+ &#39;properties&#39;: {&#39;tool&#39;: {&#39;const&#39;: &#39;search_images&#39;},
+  &#39;arguments&#39;: {&#39;type&#39;: &#39;object&#39;,
+   &#39;properties&#39;: {&#39;query&#39;: {&#39;type&#39;: &#39;string&#39;}}}}}
+</code></pre></div>
+<div class="highlight"><pre><code><span class="n">llm</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="n">tool_schema</span><span class="p">)</span>
+</code></pre></div>
+<div class="highlight"><pre><code>&#39;{ &quot;arguments&quot;: { &quot;query&quot;: &quot;brown dog&quot; }, &quot;tool&quot;: &quot;search_images&quot; }&#39;
+</code></pre></div>
+<h3 id="llama2chat"><code>Llama2Chat</code></h3>
+<p><a href="https://python.langchain.com/docs/integrations/chat/llama2_chat">Llama2Chat</a> wraps <code>llm</code> and implements a chat model interface that applies the Llama-2 chat prompt to incoming messages (see also <a href="https://github.com/langchain-ai/langchain/pull/8295#issuecomment-1668988543">these</a> <a href="https://github.com/langchain-ai/langchain/pull/8295#issuecomment-1811914445">examples</a> for other chat prompt formats).</p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">langchain.schema.messages</span><span class="w"> </span><span class="kn">import</span> <span class="n">HumanMessage</span><span class="p">,</span> <span class="n">SystemMessage</span>
+
+<span class="n">messages</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">SystemMessage</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="s2">&quot;You are a helpful assistant&quot;</span><span class="p">),</span>
+    <span class="n">HumanMessage</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="s2">&quot;Find an image of brown dog&quot;</span><span class="p">),</span>
+<span class="p">]</span>
+<span class="n">chat_model</span><span class="o">.</span><span class="n">predict_messages</span><span class="p">(</span><span class="n">messages</span><span class="o">=</span><span class="n">messages</span><span class="p">)</span>
+</code></pre></div>
+<div class="highlight"><pre><code>AIMessage(content=&quot;Sure, here&#39;s a cute image of a brown dog for you! 🐶💩\n\n[Image description: A photo of a brown dog with a wagging tail, sitting on a green grassy field. The dog has a playful expression and is looking directly at the camera.]\n\nI hope this image brings a smile to your face! Is there anything else I can assist you with? 😊&quot;)
+</code></pre></div>
+<div class="highlight"><pre><code><span class="n">chat_model</span><span class="o">.</span><span class="n">predict_messages</span><span class="p">(</span><span class="n">messages</span><span class="o">=</span><span class="n">messages</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="n">tool_to_schema</span><span class="p">(</span><span class="n">StructuredTool</span><span class="o">.</span><span class="n">from_function</span><span class="p">(</span><span class="n">search_images</span><span class="p">)))</span>
+</code></pre></div>
+<div class="highlight"><pre><code>AIMessage(content=&#39;{ &quot;arguments&quot;: { &quot;query&quot;: &quot;brown dog&quot; }, &quot;tool&quot;: &quot;search_images&quot;}&#39;)
+</code></pre></div>
+<h3 id="toolcalling"><code>ToolCalling</code></h3>
+<p><code>ToolCalling</code> adds tool calling functionality to the wrapped <code>chat_model</code>, resulting in an interface very similar to the function calling interface of <code>ChatOpenAI</code>. It converts a list of provided tools to a <a href="https://json-schema.org/understanding-json-schema/reference/combining#oneof">oneOf</a> JSON schema and submits it to the wrapped chat model. It also constructs a system prompt internally that informs the backend LLM about the presence of these tools and adds a special <code>respond_to_user</code> tool used by the LLM for providing a final response.</p>
+<div class="highlight"><pre><code><span class="n">chat</span> <span class="o">=</span> <span class="p">[</span><span class="n">HumanMessage</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="s2">&quot;What is (2 * 5) raised to power of 0.8 divided by 2?&quot;</span><span class="p">)]</span>
+<span class="n">tool_calling_model</span><span class="o">.</span><span class="n">predict_messages</span><span class="p">(</span><span class="n">messages</span><span class="o">=</span><span class="n">chat</span><span class="p">,</span> <span class="n">tools</span><span class="o">=</span><span class="n">tools</span><span class="p">)</span>
+</code></pre></div>
+<div class="highlight"><pre><code>Thoughts: I need to call the calculate tool to evaluate the expression and obtain the result.
+AIMessage(content=&#39;&#39;, additional_kwargs={&#39;tool_call&#39;: {&#39;tool&#39;: &#39;calculate&#39;, &#39;arguments&#39;: {&#39;expression&#39;: &#39;(2 * 5) ** 0.8 / 2&#39;}}})
+</code></pre></div>
+<p>The wrapped <code>chat_model</code> first receives a message with an instruction to think about the current state and what to do next. This message doesn't contain a schema so that the model output is unconstrained. Then the model receives another message with an instruction to act i.e. respond with a tool call. This message contains the JSON schema of the provided tools so that the tool call can be generated with grammar-based sampling.</p>
+<h2 id="outlook">Outlook</h2>
+<p>This two-phase approach of unconstrained thinking and constrained tool call generation may also be the basis for using more specialized models e.g. one for the thinking phase and another one for the tool call generation phase. This is covered in articles that <a href="/2024/03/06/modular-agent/">separate planning from function calling</a> and <a href="/2024/05/31/planner-fine-tuning/">fine-tune the planner on a synthetic dataset</a>.</p>
+    </div>
+
+    <nav class="post-nav">
+        
+        <a href="/2023/04/03/visual-chatgpt-search/" class="post-nav-link post-nav-older">
+            <span class="post-nav-label">&larr; Older</span>
+            <span class="post-nav-title">Extending Visual ChatGPT with image search engines</span>
+        </a>
+        
+        
+        <a href="/2023/12/18/llm-json-mode/" class="post-nav-link post-nav-newer">
+            <span class="post-nav-label">Newer &rarr;</span>
+            <span class="post-nav-title">Schema-guided generation with open LLMs</span>
+        </a>
+        
+    </nav>
+
+    
+    <section class="comments">
+        <h2>Comments</h2>
+        <div id="disqus_thread"></div>
+    </section>
+    
+</article>
+
+        </div>
+    </main>
+
+    
+    <footer class="footer">
+        <div class="container">
+            
+<ul class="footer-social-links">
+    <li>
+        <a href="https://linkedin.com/in/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+    <rect x="2" y="9" width="4" height="12"/>
+    <circle cx="4" cy="4" r="2"/>
+</svg>
+
+            linkedin.com/in/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/gradion-ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/gradion-ai
+        </a>
+    </li>
+    <li>
+        <a href="https://gradion.ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
+    <path d="M9 22v-4h6v4"/>
+    <path d="M8 6h.01"/><path d="M16 6h.01"/>
+    <path d="M12 6h.01"/>
+    <path d="M12 10h.01"/><path d="M12 14h.01"/>
+    <path d="M16 10h.01"/><path d="M16 14h.01"/>
+    <path d="M8 10h.01"/><path d="M8 14h.01"/>
+</svg>
+
+            gradion.ai
+        </a>
+    </li>
+    <li>
+        <a href="/llms.txt">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 8V4H8"/>
+    <rect width="16" height="12" x="4" y="8" rx="2"/>
+    <path d="M2 14h2"/>
+    <path d="M20 14h2"/>
+    <path d="M15 13v2"/>
+    <path d="M9 13v2"/>
+</svg>
+
+            llms.txt
+        </a>
+    </li>
+    <li>
+        <a href="/feed.xml">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 11a9 9 0 0 1 9 9"/>
+    <path d="M4 4a16 16 0 0 1 16 16"/>
+    <circle cx="5" cy="19" r="1"/>
+</svg>
+
+            feed.xml
+        </a>
+    </li>
+</ul>
+
+            <p class="footer-copyright">// Martin Krasser, 2026</p>
+        </div>
+    </footer>
+
+    <script>
+    document.querySelectorAll('a[href^="http"]').forEach(link => {
+        if (!link.href.startsWith(location.origin)) {
+            link.target = '_blank';
+            link.rel = 'noopener';
+        }
+    });
+    </script>
+    
+
+<script>
+var disqus_config = function () {
+    this.page.url = 'https://krasserm.github.io/2023/12/10/grammar-based-agents/';
+    this.page.identifier = '/2023/12/10/grammar-based-agents/';
+};
+(function() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://krasserm.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+</body>
+</html>

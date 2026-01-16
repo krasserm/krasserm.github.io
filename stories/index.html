@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#0a0e14">
+    <title>Selected stories - Martin Krasser</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/pygments.css">
+    <link rel="alternate" type="application/atom+xml" title="Martin Krasser Feed" href="/feed.xml">
+    
+<script>
+MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="/" class="nav-brand">Martin Krasser</a>
+            <ul class="nav-links">
+                
+                <li><a href="/about/">About</a></li>
+                
+                <li><a href="/">Blog</a></li>
+                
+                <li><a href="/industry/">Industry</a></li>
+                
+                <li><a href="/open-source/">Open Source</a></li>
+                
+                <li><a href="/citations/">Citations</a></li>
+                
+                <li><a href="/stories/">Stories</a></li>
+                
+                <li><a href="/contact/">Contact</a></li>
+                
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="container">
+            
+<div class="page">
+    <h1 class="page-title">Selected stories</h1>
+    
+
+    <div class="post-content">
+        <p>The following are selected stories about my <a href="/open-source/">open source</a> work in <a href="#artificial-intelligence">artificial intelligence</a>, <a href="#distributed-systems">distributed systems</a>, <a href="#event-sourcing">event sourcing</a> and <a href="#system-integration">system integration</a>. Part of it was in the context of <a href="/industry/">industry projects</a>.</p>
+<h2 id="artificial-intelligence">Artificial intelligence</h2>
+<p>While most of my AI work at <a href="https://gradion.ai/">gradion.ai</a> happens in closed-source projects, I keep contributing to open source as well.</p>
+<p>One area of contribution is agents that act via <em>code actions</em> rather than JSON tool calls. Agents generate code to call tools programmatically. The advantage of this approach is that multiple tool calls can be combined in a single action using Python's control flow. Successful code actions can be reused as tools in later steps, enabling the agent to persist what worked well in executable form and enhancing their own tool library over time. I am experimenting with this approach in <a href="https://github.com/gradion-ai/freeact">freeact</a>, a lightweight, general-purpose code action agent. It also serves as a basis for later experiments, for example, creating user interfaces programmatically, specific for the current task and scenario. Code execution runs locally in a secure sandbox provided by <a href="https://github.com/gradion-ai/ipybox">ipybox</a>, a production-grade code execution sandbox for agents that act via Python code actions.</p>
+<p>Another area is multi-party conversational AI, an increasingly relevant field as AI agents become more prevalent in team environments. Most agents are designed for single-user interactions, and retraining them for group conversations does not scale. A non-invasive integration approach is needed. <a href="https://github.com/gradion-ai/group-sense">group-sense</a> addresses this by detecting patterns in group chat message streams and transforming them into self-contained queries for single-user agents, based on criteria defined in natural language. <a href="https://github.com/gradion-ai/group-genie">group-genie</a> builds on group-sense, adding an agent integration layer where agents act on behalf of individual group members with user-specific credentials, enabling secure access to private resources while collaborating in a team. <a href="https://github.com/gradion-ai/hybrid-groups">hybrid-groups</a> integrates group-genie into Slack and GitHub. All internal group communication at <a href="https://gradion.ai/">gradion.ai</a> uses this technology stack.</p>
+<p>Earlier in my machine learning journey, I implemented several research papers from scratch, either as an exercise or because I needed a custom implementation in a project. Many of these implementations have been adopted by other researchers and received scholarly citations. Examples include single image super-resolution models EDSR, WDSR and SRGAN in the <a href="https://github.com/krasserm/super-resolution">super-resolution</a> repository (<a href="https://scholar.google.com/scholar?q=%22github.com%2Fkrasserm%2Fsuper-resolution%22+OR+%22krasserm.github.io%2F2019%2F09%2F04%2Fsuper-resolution%22">citations</a>), selected components from several image captioning papers to implement an <em>image captioning transformer</em> in the <a href="https://github.com/krasserm/fairseq-image-captioning">fairseq-image-captioning</a> repository (<a href="https://scholar.google.com/scholar?q=%22https%3A%2F%2Fgithub.com%2Fkrasserm%2Ffairseq-image-captioning%22">citations</a>) and multimodal perception models Perceiver, Perceiver IO and Perceiver AR in the <a href="https://github.com/krasserm/perceiver-io">perceiver-io</a> repository (<a href="https://scholar.google.com/scholar?q=%22https%3A%2F%2Fgithub.com%2Fkrasserm%2Fperceiver-io%22">citations</a>). I especially enjoyed implementing <a href="https://arxiv.org/abs/2202.07765">Perceiver AR</a>, an auto-regressive sequence model with <a href="/2023/01/23/scaling-perceiver-ar/#perceiver-ar">cross-attention to long-range inputs</a> and <a href="/2022/12/13/rotary-position-embedding/">rotary position embeddings</a>. It was a great opportunity to build and <a href="https://github.com/krasserm/perceiver-io/blob/main/docs/training-examples.md#perceiver-ar">train</a> a GPT-like LLM from scratch.</p>
+<p>My work on Bayesian statistics and Bayesian methods for machine learning is collected in the <a href="https://github.com/krasserm/bayesian-machine-learning">bayesian-machine-learning</a> repository (<a href="https://scholar.google.com/scholar?q=%22krasserm%2Fbayesian-machine-learning%22+OR+%22krasserm.github.io%2F2018%2F03%2F21%2Fbayesian-optimization%22+OR+%22krasserm.github.io%2F2019%2F03%2F14%2Fbayesian-neural-networks%22+OR+%22krasserm.github.io%2F2020%2F11%2F04%2Fgaussian-processes%22">citations</a>). Each notebook in this repository covers a single topic and combines an introduction, mathematical basics and a simple implementation. A simple connection from theory to running code is something that I missed in available literature when I started to learn about Bayesian approaches. This repository is an attempt to improve on that and also helped me to better understand each topic. It is gratifying to see it useful for others, like in the comments on <a href="/2019/03/14/bayesian-neural-networks/">Variational inference in Bayesian neural networks</a> or <a href="/2018/03/21/bayesian-optimization/">Bayesian optimization</a>, for example, or <a href="https://github.com/krasserm/bayesian-machine-learning/issues/2">in the repository directly</a>.</p>
+<h2 id="distributed-systems">Distributed systems</h2>
+<p>From 2014 to 2017, I mainly worked on the global distribution of an <a href="https://www.redbullmediahouse.com/">international customer</a>'s in-house digital asset management platform. State replication across multiple datacenters, low-latency write access to replicated state and write-availability during inter-datacenter network partitions were important requirements from the very beginning. We decided to follow an event sourcing approach for persistence and developed an event replication mechanism that preserves the causal ordering of events in event streams. For replicated state, we used a causal consistency model which is the strongest form of consistency that is still compatible with AP of <a href="https://de.wikipedia.org/wiki/CAP-Theorem">CAP</a>. The implementation was based on both generic and domain-specific <a href="/2016/10/19/operation-based-crdt-framework/">operation-based CRDTs</a>. I was responsible for the complete distributed systems architecture and the development of the generic platform components. These components evolved into the <a href="https://github.com/RBMHTechnology/eventuate">Eventuate</a> open source project of which I'm the founder and lead developer. Eventuate has several production deployments.</p>
+<p>We also used Eventuate to build distributed systems composed of microservices that collaborate via events. With Eventuate, services can rely on consuming events from local event logs in correct causal order, without duplicates. They can also rely on the write-availability of local event logs during network partitions and the reliable delivery of written events to collaborators. Eventuate-based microservice systems are conceptually similar to those that can be built with <a href="http://kafka.apache.org/">Apache Kafka</a> and <a href="http://kafka.apache.org/10/documentation/streams/">Kafka Streams</a> but Eventuate additionally implements a causal consistency model for systems that are distributed across multiple datacenters.</p>
+<p>I already worked with globally distributed systems in 2004 where I developed a distributed computing solution for an international pharmaceutical company. In their drug discovery pipeline they used several computing services, deployed at different locations around the globe, for analyzing chemical structures regarding their biological activity. The developed solution integrated these computing services and enabled researchers to run them with a single mouse click from a chemical spreadsheet. The solution managed the reliable execution of compute jobs, persisted the results and delivered them back to the user. It ran in production for many years and was an integral part of the drug discovery pipeline of that company.</p>
+<h2 id="event-sourcing">Event sourcing</h2>
+<p>I use <a href="https://martinfowler.com/eaaDev/EventSourcing.html">event sourcing</a> since 2011 in my projects. I started to apply that approach during the development of an electronic health record for an international customer. Event sourcing proved to be the right choice in this project given the demanding read and write throughput requirements and the needed flexibility to integrate with other healthcare IT systems. I later generalized that work in the <a href="https://github.com/eligosource/eventsourced">Eventsourced</a> open source project that I developed in collaboration with <a href="http://www.eligotech.com/">Eligotech</a>. Eventsourced adds persistence to stateful <a href="https://akka.io/">Akka</a> actors by writing inbound messages to a journal and replaying them on actor restart. Eventsourced was used as persistence solution in Eligotech products.</p>
+<p>In 2013, Eventsourced attracted the interest of <a href="https://www.lightbend.com/">Lightbend</a> (formerly Typesafe) and we decided to start a collaboration to build <a href="https://doc.akka.io/docs/akka/current/persistence.html">Akka Persistence</a> which is now the official successor of Eventsourced. I was responsible for the complete development of Akka Persistence, from initial idea to production quality code. Akka Persistence has numerous production deployments today and is used as persistence mechanism in the <a href="https://www.lagomframework.com/">Lagom microservices framework</a>. I also developed the <a href="https://github.com/akka/akka-persistence-cassandra">Cassandra storage plugin</a> for Akka Persistence which is now the officially recommended plugin for using Akka Persistence in production.</p>
+<p>In 2014, I started to further develop the idea of Akka Persistence in the <a href="https://github.com/RBMHTechnology/eventuate">Eventuate</a> open source project. Among other features, Eventuate additionally supports the replication of persistent actors, up to <a href="/2015/01/13/event-sourcing-at-global-scale/">global scale</a>. The replication mechanism supports a causal consistency model which is the strongest form of consistency that is still compatible with AP of CAP. The concepts of Eventuate are closely related to those of operation-based CRDTs which is further described in <a href="/2016/10/19/operation-based-crdt-framework/">this blog post</a> (see also section <a href="#distributed-systems">Distributed Systems</a>).</p>
+<h2 id="system-integration">System integration</h2>
+<p>In 2006, I started to work on a project at <a href="https://icw-global.com/">ICW</a> in which we integrated hospital information systems of several customers using IHE standards. Technical basis for the integration solutions was the <a href="http://camel.apache.org/">Apache Camel</a> integration framework for which I developed integration components that implement actor interfaces of several <a href="https://www.ihe.net/">IHE</a> profiles and a DSL for processing  <a href="http://www.hl7.org/">HL7</a> messages and <a href="http://hl7.de/themen/hl7-cda-clinical-document-architecture/">CDA</a> documents (see also <a href="https://dzone.com/articles/introduction-open-ehealth">this article</a> for an introduction). In 2009, these extensions have been open sourced as <a href="http://oehf.github.io/ipf/">Open eHealth Integration Platform</a> (IPF) of which I'm the founder and initial lead developer. IPF has many production deployments in international customer projects today and is still actively developed by ICW, the sponsor of the open source project. IPF is a central component of ICW's <em>eHealth Suite</em> and provides connectivity to a wide range of healthcare information systems. Its standard compliance has been certified in several <a href="https://www.ihe.net/connectathon.aspx">IHE Connectathons</a>. During my work on IPF I also became an Apache Camel committer.</p>
+<p>To meet the increasing scalability requirements in some IPF projects I started to investigate alternatives to Apache Camel's routing engine. I decided to use <a href="https://akka.io/">Akka</a> actors for message routing and processing which proved to be a better basis for scaling IPF applications under load. The result of these efforts was the <a href="https://doc.akka.io/docs/akka/2.5.4/scala/camel.html">akka-camel</a> module that I contributed to Akka in 2011. It implements a generic integration layer between Akka actors and Apache Camel components, including the IHE components of IPF.</p>
+<p>I also developed other routing engine alternatives that follow a pure functional programming approach. A first attempt was <a href="https://github.com/krasserm/scalaz-camel">scalaz-camel</a> which is now superseded by the <a href="https://github.com/krasserm/streamz">Streamz</a> project which I actively developed with other contributors over many years. It allows application developers to integrate Apache Camel components into <a href="https://github.com/functional-streams-for-scala/fs2">FS2</a> applications with a high-level integration DSL. It also supports that DSL on top of <a href="https://doc.akka.io/docs/akka/current/stream/index.html">Akka Streams</a>. Streamz is meanwhile the official replacement for akka-camel and part of the <a href="https://github.com/akka/alpakka">Alpakka</a> ecosystem.</p>
+    </div>
+</div>
+
+        </div>
+    </main>
+
+    
+    <footer class="footer">
+        <div class="container">
+            
+<ul class="footer-social-links">
+    <li>
+        <a href="https://linkedin.com/in/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+    <rect x="2" y="9" width="4" height="12"/>
+    <circle cx="4" cy="4" r="2"/>
+</svg>
+
+            linkedin.com/in/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/gradion-ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/gradion-ai
+        </a>
+    </li>
+    <li>
+        <a href="https://gradion.ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
+    <path d="M9 22v-4h6v4"/>
+    <path d="M8 6h.01"/><path d="M16 6h.01"/>
+    <path d="M12 6h.01"/>
+    <path d="M12 10h.01"/><path d="M12 14h.01"/>
+    <path d="M16 10h.01"/><path d="M16 14h.01"/>
+    <path d="M8 10h.01"/><path d="M8 14h.01"/>
+</svg>
+
+            gradion.ai
+        </a>
+    </li>
+    <li>
+        <a href="/llms.txt">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 8V4H8"/>
+    <rect width="16" height="12" x="4" y="8" rx="2"/>
+    <path d="M2 14h2"/>
+    <path d="M20 14h2"/>
+    <path d="M15 13v2"/>
+    <path d="M9 13v2"/>
+</svg>
+
+            llms.txt
+        </a>
+    </li>
+    <li>
+        <a href="/feed.xml">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 11a9 9 0 0 1 9 9"/>
+    <path d="M4 4a16 16 0 0 1 16 16"/>
+    <circle cx="5" cy="19" r="1"/>
+</svg>
+
+            feed.xml
+        </a>
+    </li>
+</ul>
+
+            <p class="footer-copyright">// Martin Krasser, 2026</p>
+        </div>
+    </footer>
+
+    <script>
+    document.querySelectorAll('a[href^="http"]').forEach(link => {
+        if (!link.href.startsWith(location.origin)) {
+            link.target = '_blank';
+            link.rel = 'noopener';
+        }
+    });
+    </script>
+    
+</body>
+</html>

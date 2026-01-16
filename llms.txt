@@ -1,0 +1,20 @@
+# Martin Krasser
+
+> Freelance AI engineer and architect. Freelance AI engineer and architect with a proven track-record in agentic systems, machine learning, distributed systems, and system integration. 20+ years of experience in architecting, developing and operating production software systems at scale. Extensive industry experience in both technical and leadership roles. Active open source contributor.
+
+## Pages
+
+- [Industry Experience](https://krasserm.github.io/industry/index.md): Professional work history and projects
+- [Open Source Projects](https://krasserm.github.io/open-source/index.md): Open source contributions and personal projects
+- [Conference Talks](https://krasserm.github.io/talks/index.md): Presentations at conferences and meetups
+- [Course Certificates](https://krasserm.github.io/courses/index.md): Online courses and certifications
+- [Citations](https://krasserm.github.io/citations/index.md): Academic citations of blog posts and projects
+- [Stories](https://krasserm.github.io/stories/index.md): Selected stories about open source work
+- [Resume](https://krasserm.github.io/resume/index.md): Bio, industry experience, and education
+- [Blog Index](https://krasserm.github.io/blog.md): Complete list of blog posts with links to markdown versions
+
+## Optional
+
+- [GitHub (Personal)](https://github.com/krasserm): Personal GitHub profile
+- [GitHub (Gradion AI)](https://github.com/gradion-ai): Gradion AI GitHub organization
+- [LinkedIn](https://linkedin.com/in/krasserm): LinkedIn profile

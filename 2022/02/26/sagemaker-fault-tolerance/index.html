@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#0a0e14">
+    <title>Using AWS SageMaker with minimal dependencies, part 2 - Martin Krasser</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/pygments.css">
+    <link rel="alternate" type="application/atom+xml" title="Martin Krasser Feed" href="/feed.xml">
+    
+<script>
+MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="/" class="nav-brand">Martin Krasser</a>
+            <ul class="nav-links">
+                
+                <li><a href="/about/">About</a></li>
+                
+                <li><a href="/">Blog</a></li>
+                
+                <li><a href="/industry/">Industry</a></li>
+                
+                <li><a href="/open-source/">Open Source</a></li>
+                
+                <li><a href="/citations/">Citations</a></li>
+                
+                <li><a href="/stories/">Stories</a></li>
+                
+                <li><a href="/contact/">Contact</a></li>
+                
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="container">
+            
+<article class="post">
+    <header class="post-header">
+        <h1 class="post-title">Using AWS SageMaker with minimal dependencies, part 2</h1>
+        
+        <p class="post-subtitle">Fault-tolerant model training on spot instances</p>
+        
+        <p class="post-meta">
+            <time datetime="2022-02-26">
+                February 26, 2022
+            </time>
+            
+            <span class="post-author">by Martin Krasser</span>
+            
+        </p>
+    </header>
+
+    <div class="post-content">
+        <p>In a <a href="/2022/01/21/sagemaker-multi-node/">previous article</a> I introduced distributed training with PyTorch Lightning on 
+SageMaker. Training was done with <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-on-demand-instances.html">on-demand instances</a>
+and these can be expected to be available until training completes. The <a href="https://github.com/krasserm/sagemaker-tutorial/blob/wip-part-1/app/train.py">training script</a>
+therefore did not implement a fault-tolerance mechanism.</p>
+<p><a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-spot-instances.html">Spot instances</a>, on the other hand, can
+be reclaimed by AWS at any time when more compute capacity is needed. In other words, model training running on spot
+instances can be interrupted at any time. This behaviour or contract makes spot instances much cheaper than on-demand
+instances.</p>
+<p>To avoid re-training from scratch after an interruption, a training script must be made fault-tolerant. A common
+approach is to save checkpoints at regular intervals from which training can be resumed when spot capacity becomes
+available again.</p>
+<p>This article demonstrates how to implement this approach for a PyTorch Lightning application by extending the example
+application from the <a href="/2022/01/21/sagemaker-multi-node/">previous article</a>. The implementation can be easily reused for 
+other applications so that you can reliably train your own models at lower spot instance prices.</p>
+<p>Source code and instructions for running the examples are <a href="https://github.com/krasserm/sagemaker-tutorial/tree/wip-part-2">available on Github</a>.
+Extensions made to the codebase for this article are summarized in <a href="https://github.com/krasserm/sagemaker-tutorial/commit/d4ce8769a2cd2aaeacd6ab9cbb69907f64c18d2f">this diff</a>.</p>
+<h2 id="spot-instance-training-basics">Spot instance training basics</h2>
+<p>When a spot instance is reclaimed by AWS during a training job, SageMaker interrupts training i.e. kills all training
+processes and restarts training when sufficient spot capacity becomes available again (see <a href="https://docs.aws.amazon.com/sagemaker/latest/dg/model-managed-spot-training.html">managed spot training</a>
+for details). During restart, a training script has the option to resume from a previously saved checkpoint.</p>
+<p>A common choice is to save checkpoints every epoch. When writing these checkpoints to a SageMaker-specific local
+checkpoint directory (<code>/opt/ml/checkpoints</code> by default), SageMaker automatically copies these checkpoints to a
+user-defined S3 location. When training is restarted, SageMaker copies the checkpoint back to the local checkpoint
+directory so that it can be loaded by the training script.</p>
+<h2 id="training-script-extensions">Training script extensions</h2>
+<p>In the previous article, the training script
+wrote checkpoints to a SageMaker-specific output directory defined by the <code>SM_OUTPUT_DATA_DIR</code> environment variable.
+Content of this directory is copied to S3 when training completes (successfully or not) but is not copied back when
+training is restarted. Also, checkpoints have only been written when the validation loss improved over a previously
+saved checkpoint.</p>
+<p>For checkpointing every epoch and synchronizing checkpoints with S3 in both directions the following extensions are
+needed. To additionally write a <code>last.ckpt</code> every epoch, the model checkpoint callback in <a href="https://github.com/krasserm/sagemaker-tutorial/blob/wip-part-2/app/trainer.yaml">trainer.yaml</a>
+is configured with <code>save_last: true</code>.</p>
+<div class="highlight"><pre><code><span class="c1">#</span>
+<span class="c1"># File: app/trainer.yaml</span>
+<span class="c1">#</span>
+
+<span class="nt">trainer</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">callbacks</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">class_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pytorch_lightning.callbacks.model_checkpoint.ModelCheckpoint</span>
+<span class="w">    </span><span class="nt">init_args</span><span class="p">:</span>
+<span class="w">      </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+<span class="w">      </span><span class="l l-Scalar l-Scalar-Plain">save_last</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+<span class="nn">...</span>
+</code></pre></div>
+<p>To write checkpoints to a SageMaker-specific local checkpoint directory, the <a href="https://github.com/krasserm/sagemaker-tutorial/blob/wip-part-2/app/train.py">training script</a> sets the checkpoint
+callback's <code>dirpath</code> to a directory defined by environment variable <code>SM_CHECKPOINT_DIR</code>.</p>
+<div class="highlight"><pre><code><span class="c1">#</span>
+<span class="c1"># File: app/train.py</span>
+<span class="c1">#</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pytorch_lightning.utilities.cli</span><span class="w"> </span><span class="kn">import</span> <span class="n">LightningCLI</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="o">...</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">CLI</span><span class="p">(</span><span class="n">LightningCLI</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sm_checkpoint_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;SM_CHECKPOINT_DIR&quot;</span><span class="p">)</span>
+        <span class="o">...</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">last_checkpoint_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sm_checkpoint_dir</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sm_checkpoint_dir</span><span class="p">,</span> <span class="s1">&#39;last.ckpt&#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">model_checkpoint_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">callback_config</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;trainer&quot;</span><span class="p">][</span><span class="s2">&quot;callbacks&quot;</span><span class="p">]:</span>
+            <span class="n">class_path</span> <span class="o">=</span> <span class="n">callback_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;class_path&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;ModelCheckpoint&quot;</span> <span class="ow">in</span> <span class="n">class_path</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">callback_config</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">before_instantiate_classes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sm_checkpoint_dir</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Update checkpoint callback to write to </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sm_checkpoint_dir</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model_checkpoint_config</span><span class="p">[</span><span class="s1">&#39;init_args&#39;</span><span class="p">][</span><span class="s1">&#39;dirpath&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sm_checkpoint_dir</span>
+
+        <span class="o">...</span>
+</code></pre></div>
+<p>When training is restarted, SageMaker copies previously saved checkpoints to the local checkpoint directory so that
+they can be loaded by the training script. When a <code>last.ckpt</code> file exists in the checkpoint directory, training is
+resumed from this checkpoint, otherwise, training is started from scratch.</p>
+<div class="highlight"><pre><code><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">cli</span> <span class="o">=</span> <span class="n">CLI</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>  <span class="c1"># instantiate trainer, model and data module</span>
+
+    <span class="k">if</span> <span class="n">cli</span><span class="o">.</span><span class="n">last_checkpoint_path</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">cli</span><span class="o">.</span><span class="n">last_checkpoint_path</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Resume training from checkpoint </span><span class="si">{</span><span class="n">cli</span><span class="o">.</span><span class="n">last_checkpoint_path</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">cli</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">cli</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">cli</span><span class="o">.</span><span class="n">datamodule</span><span class="p">,</span> <span class="n">ckpt_path</span><span class="o">=</span><span class="n">cli</span><span class="o">.</span><span class="n">last_checkpoint_path</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Start training from scratch&#39;</span><span class="p">)</span>
+        <span class="n">cli</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">cli</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">cli</span><span class="o">.</span><span class="n">datamodule</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="spot-instance-training">Spot instance training</h2>
+<p>Running spot instance training is straightforward with the <code>Estimator</code> API of the <a href="https://sagemaker.readthedocs.io/en/stable/">SageMaker Python SDK</a>.
+Compared to on-demand training, spot instance training additionally requires setting</p>
+<ul>
+<li><code>use_spot_instances=True</code>.</li>
+<li><code>max_retry_attempts=n</code> where <code>n</code> is the maximum number of times training is restarted.</li>
+<li><code>max_wait=t1</code> where <code>t1</code> is the maximum number of seconds to wait for training to complete and, if needed, for spot
+  instance capacity to become available.</li>
+<li><code>max_run=t2</code> where <code>t2</code> is the maximum number of seconds to wait for training to complete (must be less than <code>t1</code>).</li>
+<li><code>checkpoint_s3_uri=ckpt_uri</code> where <code>ckpt_uri</code> is a user-defined S3 location for synchronizing checkpoints with the
+  local checkpoint directory.</li>
+<li><code>checkpoint_local_path=ckpt_path</code> where <code>ckpt_path</code> is the local checkpoint directory (<code>/opt/ml/checkpoints</code> by default).</li>
+</ul>
+<p>In the following code template, set <code>account_id</code>, <code>region</code>, <code>role_name</code> and <code>my_bucket</code> to appropriate values for your
+AWS environment:</p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sagemaker</span><span class="w"> </span><span class="kn">import</span> <span class="n">Session</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sagemaker.estimator</span><span class="w"> </span><span class="kn">import</span> <span class="n">Estimator</span>
+
+
+<span class="n">SM_CHECKPOINT_DIR</span> <span class="o">=</span> <span class="s2">&quot;/opt/ml/checkpoints&quot;</span>
+
+<span class="c1"># Set according to your AWS environment</span>
+<span class="n">account_id</span> <span class="o">=</span> <span class="o">...</span>
+<span class="n">region</span> <span class="o">=</span> <span class="o">...</span>
+<span class="n">role_name</span> <span class="o">=</span> <span class="o">...</span>
+<span class="n">my_bucket</span> <span class="o">=</span> <span class="o">...</span>
+
+<span class="n">timestamp</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">-%H-%M-%S&quot;</span><span class="p">)</span>
+<span class="n">job_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;sagemaker-tutorial-</span><span class="si">{</span><span class="n">timestamp</span><span class="si">}</span><span class="s2">&quot;</span>
+
+<span class="n">session</span> <span class="o">=</span> <span class="n">Session</span><span class="p">()</span> 
+<span class="n">estimator</span> <span class="o">=</span> <span class="n">Estimator</span><span class="p">(</span><span class="n">image_uri</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">account_id</span><span class="si">}</span><span class="s2">.dkr.ecr.</span><span class="si">{</span><span class="n">region</span><span class="si">}</span><span class="s2">.amazonaws.com/sagemaker-tutorial:latest&quot;</span><span class="p">,</span>
+                      <span class="n">role</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;arn:aws:iam:&lt;account-id&gt;::role/</span><span class="si">{</span><span class="n">role_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                      <span class="n">instance_type</span><span class="o">=</span><span class="s2">&quot;ml.g4dn.12xlarge&quot;</span><span class="p">,</span>
+                      <span class="n">instance_count</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                      <span class="n">output_path</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;s3://</span><span class="si">{</span><span class="n">my_bucket</span><span class="si">}</span><span class="s2">/output&quot;</span><span class="p">,</span>
+                      <span class="n">checkpoint_s3_uri</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;s3://</span><span class="si">{</span><span class="n">my_bucket</span><span class="si">}</span><span class="s2">/output/</span><span class="si">{</span><span class="n">job_name</span><span class="si">}</span><span class="s2">/checkpoints&quot;</span><span class="p">,</span>
+                      <span class="n">checkpoint_local_path</span><span class="o">=</span><span class="n">SM_CHECKPOINT_DIR</span><span class="p">,</span>
+                      <span class="n">use_spot_instances</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                      <span class="n">max_retry_attempts</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                      <span class="n">max_wait</span><span class="o">=</span><span class="mi">14400</span><span class="p">,</span>
+                      <span class="n">max_run</span><span class="o">=</span><span class="mi">3600</span><span class="p">,</span>
+                      <span class="n">sagemaker_session</span><span class="o">=</span><span class="n">session</span><span class="p">,</span>
+                      <span class="n">environment</span><span class="o">=</span><span class="p">{</span>
+                          <span class="s2">&quot;SM_CHECKPOINT_DIR&quot;</span><span class="p">:</span> <span class="n">SM_CHECKPOINT_DIR</span>
+                      <span class="p">},</span>
+                      <span class="n">hyperparameters</span><span class="o">=</span><span class="p">{</span>
+                        <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="s2">&quot;CIFAR10DataModule&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;data.batch_size&quot;</span><span class="p">:</span> <span class="mi">32</span><span class="p">,</span>
+                        <span class="s2">&quot;optimizer&quot;</span><span class="p">:</span> <span class="s2">&quot;Adam&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;optimizer.lr&quot;</span><span class="p">:</span> <span class="mf">1e-3</span><span class="p">,</span>
+                        <span class="s2">&quot;trainer.accelerator&quot;</span><span class="p">:</span> <span class="s2">&quot;gpu&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;trainer.devices&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                        <span class="s2">&quot;trainer.max_epochs&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+                        <span class="s2">&quot;logger.save_dir&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;s3://</span><span class="si">{</span><span class="n">my_bucket</span><span class="si">}</span><span class="s2">/output/</span><span class="si">{</span><span class="n">job_name</span><span class="si">}</span><span class="s2">/logger-output&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;logger.flush_secs&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+                        <span class="s2">&quot;logger.name&quot;</span><span class="p">:</span> <span class="s2">&quot;tutorial&quot;</span>
+                      <span class="p">})</span>
+
+<span class="n">estimator</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;s3://</span><span class="si">{</span><span class="n">my_bucket</span><span class="si">}</span><span class="s2">/datasets/cifar-10&quot;</span><span class="p">,</span> <span class="n">job_name</span><span class="o">=</span><span class="n">job_name</span><span class="p">)</span>
+</code></pre></div>
+<p>This code snippet also sets the environment variable <code>SM_CHECKPOINT_DIR</code> which is then passed to the training script.
+I actually expected this to be set by the <a href="https://github.com/aws/sagemaker-training-toolkit">SageMaker training toolkit</a>
+but this is not the case. To preserve symmetry with other SageMaker-specific local paths and their corresponding
+environment variables I decided to introduce this variable here.</p>
+<h2 id="simulating-training-interruption">Simulating training interruption</h2>
+<p>Since SageMaker doesn't expose the IDs of its managed spot instances, we cannot use Amazon's <a href="https://aws.amazon.com/fis/">fault injection simulator</a>
+to interrupt them. Instead, we'll run training for 5 epochs and then resume training to run for further 2 epochs.
+Both training runs share their S3 checkpoint location. Training is started as in the previous section except that the
+S3 checkpoint location doesn't contain a job name.</p>
+<div class="highlight"><pre><code><span class="n">estimator</span> <span class="o">=</span> <span class="n">Estimator</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">checkpoint_s3_uri</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;s3://</span><span class="si">{</span><span class="n">my_bucket</span><span class="si">}</span><span class="s2">/checkpoints&quot;</span><span class="p">)</span>
+<span class="n">estimator</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+</code></pre></div>
+<p>To train for further 2 epochs, training is started again with <code>trainer.max_epochs=7</code>. Since the S3 checkpoint location
+is reused, SageMaker copies <code>last.ckpt</code> to the local checkpoint directory from where it is loaded by the training script.</p>
+<div class="highlight"><pre><code><span class="n">estimator</span> <span class="o">=</span> <span class="n">Estimator</span><span class="p">(</span><span class="o">...</span><span class="p">,</span>  
+                      <span class="n">checkpoint_s3_uri</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;s3://</span><span class="si">{</span><span class="n">my_bucket</span><span class="si">}</span><span class="s2">/checkpoints&quot;</span><span class="p">,</span> 
+                      <span class="n">hyperparameters</span><span class="o">=</span><span class="p">{</span><span class="o">...</span><span class="p">,</span> <span class="s2">&quot;trainer.max_epochs&quot;</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span> <span class="o">...</span><span class="p">})</span>
+<span class="n">estimator</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+</code></pre></div>
+<p>Tensorboard can be used to visualize how the second training run (blue) resumed from where the first (orange) stopped.
+The following traces are from a training run on 2 <code>ml.g4dn.xlarge</code> instances (with only 1 GPU per instance, for testing
+purposes).</p>
+<p><img alt="train-loss" src="/img/2022-02-26/train-loss.png" />
+<img alt="val-loss" src="/img/2022-02-26/val-loss.png" /></p>
+<h2 id="conclusion">Conclusion</h2>
+<p>Making a training script fault-tolerant for managed spot instance training is as simple as writing checkpoints to a
+SageMaker-specific local checkpoint directory and loading the most recent checkpoint when training is restarted.
+Restarting training on spot instance interruption and synchronizing checkpoints with S3 is handled by SageMaker
+automatically and doesn't require any extensions to the training script. Managed spot instance training allows you
+to train your PyTorch (Lightning) models reliably at lower spot instance prices, even in a multi-node, multi-GPU
+environment.</p>
+<h2 id="acknowledgements">Acknowledgements</h2>
+<p>Many thanks to Christoph Stumpf for useful feedback on this article and associated code, and Bernadette Hainzl for the
+wonderful painting in the header section.</p>
+    </div>
+
+    <nav class="post-nav">
+        
+        <a href="/2022/01/21/sagemaker-multi-node/" class="post-nav-link post-nav-older">
+            <span class="post-nav-label">&larr; Older</span>
+            <span class="post-nav-title">Using AWS SageMaker with minimal dependencies, part 1</span>
+        </a>
+        
+        
+        <a href="/2022/12/13/rotary-position-embedding/" class="post-nav-link post-nav-newer">
+            <span class="post-nav-label">Newer &rarr;</span>
+            <span class="post-nav-title">A gentle introduction to Rotary Position Embedding</span>
+        </a>
+        
+    </nav>
+
+    
+    <section class="comments">
+        <h2>Comments</h2>
+        <div id="disqus_thread"></div>
+    </section>
+    
+</article>
+
+        </div>
+    </main>
+
+    
+    <footer class="footer">
+        <div class="container">
+            
+<ul class="footer-social-links">
+    <li>
+        <a href="https://linkedin.com/in/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+    <rect x="2" y="9" width="4" height="12"/>
+    <circle cx="4" cy="4" r="2"/>
+</svg>
+
+            linkedin.com/in/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/gradion-ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/gradion-ai
+        </a>
+    </li>
+    <li>
+        <a href="https://gradion.ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
+    <path d="M9 22v-4h6v4"/>
+    <path d="M8 6h.01"/><path d="M16 6h.01"/>
+    <path d="M12 6h.01"/>
+    <path d="M12 10h.01"/><path d="M12 14h.01"/>
+    <path d="M16 10h.01"/><path d="M16 14h.01"/>
+    <path d="M8 10h.01"/><path d="M8 14h.01"/>
+</svg>
+
+            gradion.ai
+        </a>
+    </li>
+    <li>
+        <a href="/llms.txt">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 8V4H8"/>
+    <rect width="16" height="12" x="4" y="8" rx="2"/>
+    <path d="M2 14h2"/>
+    <path d="M20 14h2"/>
+    <path d="M15 13v2"/>
+    <path d="M9 13v2"/>
+</svg>
+
+            llms.txt
+        </a>
+    </li>
+    <li>
+        <a href="/feed.xml">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 11a9 9 0 0 1 9 9"/>
+    <path d="M4 4a16 16 0 0 1 16 16"/>
+    <circle cx="5" cy="19" r="1"/>
+</svg>
+
+            feed.xml
+        </a>
+    </li>
+</ul>
+
+            <p class="footer-copyright">// Martin Krasser, 2026</p>
+        </div>
+    </footer>
+
+    <script>
+    document.querySelectorAll('a[href^="http"]').forEach(link => {
+        if (!link.href.startsWith(location.origin)) {
+            link.target = '_blank';
+            link.rel = 'noopener';
+        }
+    });
+    </script>
+    
+
+<script>
+var disqus_config = function () {
+    this.page.url = 'https://krasserm.github.io/2022/02/26/sagemaker-fault-tolerance/';
+    this.page.identifier = '/2022/02/26/sagemaker-fault-tolerance/';
+};
+(function() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://krasserm.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+</body>
+</html>

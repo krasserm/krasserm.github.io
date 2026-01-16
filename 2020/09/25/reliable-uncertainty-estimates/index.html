@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#0a0e14">
+    <title>Reliable uncertainty estimates for neural network predictions - Martin Krasser</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/pygments.css">
+    <link rel="alternate" type="application/atom+xml" title="Martin Krasser Feed" href="/feed.xml">
+    
+<script>
+MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="/" class="nav-brand">Martin Krasser</a>
+            <ul class="nav-links">
+                
+                <li><a href="/about/">About</a></li>
+                
+                <li><a href="/">Blog</a></li>
+                
+                <li><a href="/industry/">Industry</a></li>
+                
+                <li><a href="/open-source/">Open Source</a></li>
+                
+                <li><a href="/citations/">Citations</a></li>
+                
+                <li><a href="/stories/">Stories</a></li>
+                
+                <li><a href="/contact/">Contact</a></li>
+                
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="container">
+            
+<article class="post">
+    <header class="post-header">
+        <h1 class="post-title">Reliable uncertainty estimates for neural network predictions</h1>
+        
+        <p class="post-meta">
+            <time datetime="2020-09-25">
+                September 25, 2020
+            </time>
+            
+            <span class="post-author">by Martin Krasser</span>
+            
+        </p>
+    </header>
+
+    <div class="post-content">
+        <p><em>Sources:</em></p>
+<ul>
+<li><em><a href="https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/dev/noise-contrastive-priors/ncp.ipynb">Notebook</a></em></li>
+<li><em><a href="https://github.com/krasserm/bayesian-machine-learning">Repository</a></em></li>
+</ul>
+<p>I previously wrote about <a href="/2019/03/14/bayesian-neural-networks/">Bayesian neural networks</a> and explained how uncertainty estimates can be obtained for network predictions. Uncertainty in predictions that comes from uncertainty in network weights is called <em>epistemic uncertainty</em> or model uncertainty. A simple regression example demonstrated how epistemic uncertainty increases in regions outside the training data distribution:</p>
+<p><img alt="Epistemic uncertainty" src="/img/2020-09-25/epistemic-uncertainty.png" /></p>
+<p>A reader later <a href="https://github.com/krasserm/bayesian-machine-learning/issues/8">experimented</a> with discontinuous ranges of training data and found that uncertainty estimates are lower than expected in training data "gaps", as shown in the following figure near the center of the $x$ axis. In these out-of-distribution (OOD) regions the network is over-confident in its predictions. One reason for this over-confidence is that weight priors usually impose only weak constraints over network outputs in OOD regions.</p>
+<p><img alt="Epistemic uncertainty gap" src="/img/2020-09-25/epistemic-uncertainty-gap.png" /></p>
+<p>If we could instead define a prior in data space directly we could better control uncertainty estimates for OOD data. A prior in data space better captures assumptions about input-output relationships than priors in weight space. Including such a prior through a loss in data space would allow a network to learn distributions over weights that better generalize to OOD regions i.e. enables a network to output more reliable uncertainty estimates.</p>
+<p>This is exactly what the paper <a href="http://proceedings.mlr.press/v115/hafner20a.html">Noise Contrastive Priors for Functional Uncertainty</a> does. In this article I'll give an introduction to their approach and demonstrate how it fixes over-confidence in OOD regions. I will again use non-linear regression with one-dimensional inputs as an example and plan to cover higher-demensional inputs in a later article. </p>
+<p>Application of noise contrastive priors (NCPs) is not limited to Bayesian neural networks, they can also be applied to deterministic neural networks. Here, I'll use a Bayesian neural network and implement it with Tensorflow 2 and <a href="https://www.tensorflow.org/probability">Tensorflow Probability</a>. </p>
+<div class="highlight"><pre><code><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tensorflow</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tf</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">seaborn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sns</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow.keras.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">Input</span><span class="p">,</span> <span class="n">Dense</span><span class="p">,</span> <span class="n">Lambda</span><span class="p">,</span> <span class="n">LeakyReLU</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow.keras.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow.keras.regularizers</span><span class="w"> </span><span class="kn">import</span> <span class="n">L2</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow_probability</span><span class="w"> </span><span class="kn">import</span> <span class="n">distributions</span> <span class="k">as</span> <span class="n">tfd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow_probability</span><span class="w"> </span><span class="kn">import</span> <span class="n">layers</span> <span class="k">as</span> <span class="n">tfpl</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">norm</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span><span class="n">train</span><span class="p">,</span>
+                   <span class="n">backprop</span><span class="p">,</span>
+                   <span class="n">select_bands</span><span class="p">,</span> 
+                   <span class="n">select_subset</span><span class="p">,</span>
+                   <span class="n">style</span><span class="p">,</span>
+                   <span class="n">plot_data</span><span class="p">,</span> 
+                   <span class="n">plot_prediction</span><span class="p">,</span> 
+                   <span class="n">plot_uncertainty</span><span class="p">)</span>
+
+<span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
+<span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;tensorflow&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="training-dataset">Training dataset</h2>
+<div class="highlight"><pre><code><span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="mi">123</span><span class="p">)</span>
+</code></pre></div>
+<p>The training dataset are 40 noisy samples from a sinusoidal function <code>f</code> taken from two distinct regions of the input space (red dots). The gray dots illustrate how the noise level increases with $x$ (heteroskedastic noise). </p>
+<div class="highlight"><pre><code><span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sinusoidal function.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="mi">25</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">x</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">noise</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">slope</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create heteroskedastic noise.&quot;&quot;&quot;</span>
+    <span class="n">noise_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">x</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">slope</span>
+    <span class="k">return</span> <span class="n">rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">noise_std</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">x_test</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mf">1.5</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># Noisy samples from f (with heteroskedastic noise)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="n">noise</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">slope</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="n">rng</span><span class="p">)</span>
+
+<span class="c1"># Select data from 2 of 5 bands (regions)</span>
+<span class="n">x_bands</span><span class="p">,</span> <span class="n">y_bands</span> <span class="o">=</span> <span class="n">select_bands</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="p">[</span><span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">])</span>
+
+<span class="c1"># Select 40 random samples from these regions</span>
+<span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span> <span class="o">=</span> <span class="n">select_subset</span><span class="p">(</span><span class="n">x_bands</span><span class="p">,</span> <span class="n">y_bands</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="n">rng</span><span class="p">)</span>
+
+<span class="n">plot_data</span><span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="o">**</span><span class="n">style</span><span class="p">[</span><span class="s1">&#39;bg_data&#39;</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Noisy data&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">();</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2020-09-25/output_5_0.png" /></p>
+<p>Goal is to have a model that outputs lower epistemic uncertainty in training data regions and higher epistemic uncertainty in all other regions, including training data "gaps". In addition to estimating epistemic uncertainty the model should also estimate <em>aleatoric uncertainty</em> i.e. the heteroskedastic noise in the training data. </p>
+<h2 id="noise-contrastive-estimation">Noise contrastive estimation</h2>
+<p>The algorithm developed by the authors of the NCP paper is inspired by <a href="http://proceedings.mlr.press/v9/gutmann10a.html">noise contrastive estimation</a> (NCE). With noise contrastive estimation a model learns to recognize patterns in training data by contrasting them to random noise. Instead of training a model on training data alone it is trained in context of a binary classification task with the goal of discriminating training data from noise data sampled from an artificial noise distribution. </p>
+<p>Hence, in addition to a trained model, NCE also obtains a binary classifier that can estimate the probability of input data to come from the training distribution or from the noise distribution. This can be used to obtain more reliable uncertainty estimates. For example, a higher probability that an input comes from the noise distribution should result in higher model uncertainty.</p>
+<p>Samples from a noise distribution are often obtained by adding random noise to training data. These samples represent OOD data. In practice it is often sufficient to have OOD samples <em>near</em> the boundary of the training data distribution to also get reliable uncertainty estimates in other regions of the OOD space. Noise contrastive priors are based on this hypothesis.</p>
+<h2 id="noise-contrastive-priors">Noise contrastive priors</h2>
+<p>A noise contrastive prior for regression is a joint <em>data prior</em> $p(x, y)$ over input $x$ and output $y$. Using the product rule of probability, $p(x, y) = p(x)p(y \mid x)$, it can be defined as the product of an <em>input prior</em> $p(x)$ and an <em>output prior</em> $p(y \mid x)$. </p>
+<p>The input prior describes the distribution of OOD data $\tilde{x}$ that are generated from the training data $x$ by adding random noise epsilon i.e. $\tilde{x} = x + \epsilon$ where $\epsilon \sim \mathcal{N}(0, \sigma_x^2)$. The input prior can therefore be defined as the convolved distribution:</p>
+<p>$$
+p_{nc}(\tilde{x}) = {1 \over N} \sum_{i=1}^N \mathcal{N}(\tilde{x} - x_i \mid 0, \sigma_x^2)
+\tag{1}
+$$</p>
+<p>where $x_i$ are the inputs from the training dataset and $\sigma_x$ is a hyper-parameter. As described in the paper, models trained with NCPs are quite robust to the size of input noise $\sigma_x$. The following figure visualizes the distribution of training inputs and OOD inputs as histograms, the orange line is the input prior density.</p>
+<div class="highlight"><pre><code><span class="k">def</span><span class="w"> </span><span class="nf">perturbe_x</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">sigma_x</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Perturbe input x with noise sigma_x (n samples).&quot;&quot;&quot;</span>
+    <span class="n">ood_x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">sigma_x</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">n</span><span class="p">))</span>
+    <span class="n">ood_y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>    
+    <span class="k">return</span> <span class="n">ood_x</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">ood_y</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">input_prior_density</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x_train</span><span class="p">,</span> <span class="n">sigma_x</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute input prior density of x.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">norm</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma_x</span><span class="p">)</span><span class="o">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">x_train</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">sigma_x</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">sigma_y</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+<span class="n">ood_x</span><span class="p">,</span> <span class="n">ood_y</span> <span class="o">=</span> <span class="n">perturbe_x</span><span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">sigma_x</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
+<span class="n">ood_density</span> <span class="o">=</span> <span class="n">input_prior_density</span><span class="p">(</span><span class="n">ood_x</span><span class="p">,</span> <span class="n">x_train</span><span class="p">,</span> <span class="n">sigma_x</span><span class="p">)</span>
+
+<span class="n">sns</span><span class="o">.</span><span class="n">lineplot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">ood_x</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">y</span><span class="o">=</span><span class="n">ood_density</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;tab:orange&#39;</span><span class="p">);</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">histplot</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Train inputs&#39;</span><span class="p">:</span> <span class="n">x_train</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="s1">&#39;OOD inputs&#39;</span><span class="p">:</span> <span class="n">ood_x</span><span class="o">.</span><span class="n">ravel</span><span class="p">()},</span> 
+                   <span class="n">element</span><span class="o">=</span><span class="s1">&#39;bars&#39;</span><span class="p">,</span> <span class="n">stat</span><span class="o">=</span><span class="s1">&#39;density&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">common_norm</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Input prior density&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">);</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2020-09-25/output_7_0.png" /></p>
+<p>The definition of the output prior is motivated by <em>data augmentation</em>. A model should be encouraged to not only predict target $y$ at training input $x$ but also predict the same target at perturbed input $\tilde{x}$ that has been generated from $x$ by adding noise. The output prior is therefore defined as:</p>
+<p>$$
+p_{nc}(\tilde{y} \mid \tilde{x}) = \mathcal{N}(\tilde{y} \mid y, \sigma_y^2)
+\tag{2}
+$$</p>
+<p>$\sigma_y$ is a hyper-parameter that should cover relatively high prior uncertainty in model output given OOD input. The joint prior $p(x, y)$ is best visualized by sampling values from it and doing a kernel-density estimation from these samples (a density plot from an analytical evaluation is rather "noisy" because of the data augmentation setting).</p>
+<div class="highlight"><pre><code><span class="k">def</span><span class="w"> </span><span class="nf">output_prior_dist</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">sigma_y</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create output prior distribution (data augmentation setting).&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Independent</span><span class="p">(</span><span class="n">tfd</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">sigma_y</span><span class="p">))</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">sample_joint_prior</span><span class="p">(</span><span class="n">ood_x</span><span class="p">,</span> <span class="n">output_prior</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Draw n samples from joint prior at ood_x.&quot;&quot;&quot;</span>
+    <span class="n">x_sample</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">ood_x</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">n</span><span class="p">)</span>
+    <span class="n">y_sample</span> <span class="o">=</span> <span class="n">output_prior</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">n</span><span class="p">)</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">x_sample</span><span class="p">,</span> <span class="n">y_sample</span>
+
+<span class="n">output_prior</span> <span class="o">=</span> <span class="n">output_prior_dist</span><span class="p">(</span><span class="n">ood_y</span><span class="p">,</span> <span class="n">sigma_y</span><span class="p">)</span>
+<span class="n">x_samples</span><span class="p">,</span> <span class="n">y_samples</span> <span class="o">=</span> <span class="n">sample_joint_prior</span><span class="p">(</span><span class="n">ood_x</span><span class="p">,</span> <span class="n">output_prior</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+<span class="n">sns</span><span class="o">.</span><span class="n">kdeplot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x_samples</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y_samples</span><span class="p">,</span> 
+            <span class="n">levels</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">thresh</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> 
+            <span class="n">fill</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis&#39;</span><span class="p">,</span> 
+            <span class="n">cbar</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">cbar_kws</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;format&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">%.2f</span><span class="s1">&#39;</span><span class="p">},</span>
+            <span class="n">gridsize</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">clip</span><span class="o">=</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)))</span>
+<span class="n">plot_data</span><span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Joint prior density&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">();</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2020-09-25/output_9_0.png" /></p>
+<h2 id="regression-models">Regression models</h2>
+<p>The regression models used in the following subsections are probabilistic models $p(y \mid x)$ parameterized by the outputs of a neural network given input $x$. All networks have two hidden layers with leaky ReLU activations and 200 units each. The details of the output layers are described along with the individual models. I will first demonstrate how two models without NCPs fail to produce reliable uncertainty estimates in OOD regions and then show how NCPs can fix that.</p>
+<h3 id="deterministic-neural-network-without-ncps">Deterministic neural network without NCPs</h3>
+<p>A regression model that uses a deterministic neural network for parameterization can be defined as $p(y \mid x, \boldsymbol{\theta}) = \mathcal{N}(y \mid \mu(x, \boldsymbol{\theta}), \sigma^2(x, \boldsymbol{\theta}))$. Mean $\mu$ and standard deviation $\sigma$ are functions of input $x$ and network weights $\boldsymbol{\theta}$. In a deterministic neural network, $\boldsymbol{\theta}$ are point estimates. Outputs at input $x$ can be generated by sampling from $p(y \mid x, \boldsymbol{\theta})$ where $\mu(x,\boldsymbol{\theta})$ is the expected value of the sampled outputs and $\sigma^2(x, \boldsymbol{\theta})$ their variance. The variance represents aleatoric uncertainty. </p>
+<p>Given a training dataset $\mathbf{x}, \mathbf{y} = \left\{ x_i, y_i \right\}$ and using $\log p(\mathbf{y} \mid \mathbf{x}, \boldsymbol{\theta}) = \sum_i \log p(y_i \mid x_i, \boldsymbol{\theta})$, a maximum likelihood (ML) estimate of $\boldsymbol{\theta}$ can be obtained by minimizing the negative log likelihood.</p>
+<p>$$
+L(\boldsymbol{\theta}) = - \log p(\mathbf{y} \mid \mathbf{x},\boldsymbol{\theta})
+\tag{3}
+$$</p>
+<p>A maximum-a-posteriori (MAP) estimate can be obtained by minimizing the following loss function:</p>
+<p>$$
+L(\boldsymbol{\theta}) = - \log p(\mathbf{y} \mid \mathbf{x}, \boldsymbol{\theta}) - \lambda \log p(\boldsymbol{\theta})
+\tag{4}
+$$</p>
+<p>where $p(\boldsymbol{\theta})$ is an isotropic normal prior over network weights with zero mean. This is also known as L2 regularization with regularization strength $\lambda$.</p>
+<p>The following implementation uses the <code>DistributionLambda</code> layer of Tensorflow Probability to produce $p(y \mid x, \boldsymbol{\theta})$ as model output. The <code>loc</code> and <code>scale</code> parameters of that distribution are set from the output of layers <code>mu</code> and <code>sigma</code>, respectively. Layer <code>sigma</code> uses a <a href="https://en.wikipedia.org/wiki/Rectifier_(neural_networks)#Softplus">softplus</a> activation function to ensure non-negative output.</p>
+<div class="highlight"><pre><code><span class="k">def</span><span class="w"> </span><span class="nf">create_model</span><span class="p">(</span><span class="n">n_hidden</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">regularization_strength</span><span class="o">=</span><span class="mf">0.01</span><span class="p">):</span>
+    <span class="n">l2_regularizer</span> <span class="o">=</span> <span class="n">L2</span><span class="p">(</span><span class="n">regularization_strength</span><span class="p">)</span>
+    <span class="n">leaky_relu</span> <span class="o">=</span> <span class="n">LeakyReLU</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+
+    <span class="n">x_in</span> <span class="o">=</span> <span class="n">Input</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,))</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">Dense</span><span class="p">(</span><span class="n">n_hidden</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="n">leaky_relu</span><span class="p">,</span> <span class="n">kernel_regularizer</span><span class="o">=</span><span class="n">l2_regularizer</span><span class="p">)(</span><span class="n">x_in</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">Dense</span><span class="p">(</span><span class="n">n_hidden</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="n">leaky_relu</span><span class="p">,</span> <span class="n">kernel_regularizer</span><span class="o">=</span><span class="n">l2_regularizer</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">Dense</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;mu&#39;</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">Dense</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;softplus&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;sigma&#39;</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">Lambda</span><span class="p">(</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">scale</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1e-5</span><span class="p">))((</span><span class="n">m</span><span class="p">,</span> <span class="n">s</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">Model</span><span class="p">(</span><span class="n">x_in</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+</code></pre></div>
+<div class="highlight"><pre><code><span class="n">model</span> <span class="o">=</span> <span class="n">create_model</span><span class="p">()</span>
+</code></pre></div>
+<p>To reduce overfitting of the model to the relatively small training set an L2 regularizer is added to the kernel of the hidden layers. The value of the corresponding regularization term in the loss function can be obtained via <code>model.losses</code> during training. The negative log likelihood is computed with the <code>log_prob</code> method of the distribution returned from a <code>model</code> call.</p>
+<div class="highlight"><pre><code><span class="nd">@tf</span><span class="o">.</span><span class="n">function</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">train_step</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">GradientTape</span><span class="p">()</span> <span class="k">as</span> <span class="n">tape</span><span class="p">:</span>
+        <span class="n">out_dist</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">nll</span> <span class="o">=</span> <span class="o">-</span><span class="n">out_dist</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">reg</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">losses</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">nll</span><span class="p">)</span> <span class="o">+</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">reg</span><span class="p">)</span>
+
+    <span class="n">optimizer</span><span class="o">.</span><span class="n">apply_gradients</span><span class="p">(</span><span class="n">backprop</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">loss</span><span class="p">,</span> <span class="n">tape</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">loss</span><span class="p">,</span> <span class="n">out_dist</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+</code></pre></div>
+<p>With this specific regression model, we can only predict aleatoric uncertainty via $\sigma(x, \boldsymbol{\theta})$ but not epistemic uncertainty. After training the model, we can plot the expected output $\mu$ together with aleatoric uncertainty. Aleatoric uncertainty increases in training data regions as $x$ increases but is not reliable in OOD regions.</p>
+<div class="highlight"><pre><code><span class="n">train</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">4000</span><span class="p">,</span> <span class="n">step_fn</span><span class="o">=</span><span class="n">train_step</span><span class="p">)</span>
+</code></pre></div>
+<pre><code>epoch 1000: loss = 2.188, mse = 0.114
+epoch 2000: loss = -2.775, mse = 0.061
+epoch 3000: loss = -4.832, mse = 0.045
+epoch 4000: loss = -5.896, mse = 0.039
+</code></pre>
+<div class="highlight"><pre><code><span class="n">out_dist</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">x_test</span><span class="p">)</span>
+
+<span class="n">aleatoric_uncertainty</span><span class="o">=</span><span class="n">out_dist</span><span class="o">.</span><span class="n">stddev</span><span class="p">()</span>
+<span class="n">expected_output</span> <span class="o">=</span> <span class="n">out_dist</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+</code></pre></div>
+<div class="highlight"><pre><code><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">plot_data</span><span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+<span class="n">plot_prediction</span><span class="p">(</span><span class="n">x_test</span><span class="p">,</span> 
+                <span class="n">expected_output</span><span class="p">,</span> 
+                <span class="n">aleatoric_uncertainty</span><span class="o">=</span><span class="n">aleatoric_uncertainty</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">plot_uncertainty</span><span class="p">(</span><span class="n">x_test</span><span class="p">,</span> 
+                 <span class="n">aleatoric_uncertainty</span><span class="o">=</span><span class="n">aleatoric_uncertainty</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">();</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2020-09-25/output_18_0.png" /></p>
+<h3 id="bayesian-neural-network-without-ncps">Bayesian neural network without NCPs</h3>
+<p>In a Bayesian neural network, we infer a posterior distribution $p(\mathbf{w} \mid \mathbf{x}, \mathbf{y})$ over weights $\mathbf{w}$ given training data $\mathbf{x}$, $\mathbf{y}$ instead of making point estimates with ML or MAP. In general, the true posterior $p(\mathbf{w} \mid \mathbf{x}, \mathbf{y})$ is untractable for a neural network and is often approximated with a variational distribution $q(\mathbf{w} \mid \boldsymbol{\theta}, \mathbf{x}, \mathbf{y})$ or $q(\mathbf{w} \mid \boldsymbol{\theta})$ for short. You can find an introduction to Bayesian neural networks and variational inference in <a href="/2019/03/14/bayesian-neural-networks/">this article</a>.</p>
+<p>Following the conventions in the linked article, I'm using the variable $\mathbf{w}$ for neural network weights that are random variables and $\boldsymbol{\theta}$ for the parameters of the variational distribution and for neural network weights that are deterministic variables. This distinction is useful for models that use both, variational and deterministic layers. </p>
+<p>Here, we will implement a variational approximation only for the <code>mu</code> layer i.e. for the layer that produces the expected output $\mu(x, \mathbf{w}, \boldsymbol{\theta})$. This time it additionally depends on weights $\mathbf{w}$ sampled from the variational distribution $q(\mathbf{w} \mid \boldsymbol{\theta})$. The variational distribution $q(\mathbf{w} \mid \boldsymbol{\theta})$ therefore induces a distribution over the expected output $q(\mu \mid x, \boldsymbol{\theta}) = \int \mu(x, \mathbf{w}, \boldsymbol{\theta}) q(\mathbf{w} \mid \boldsymbol{\theta}) d\mathbf{w}$. </p>
+<p>To generate an output at input $x$ we first sample from the variational distribution $q(\mathbf{w} \mid \boldsymbol{\theta})$ and then use that sample as input for $p(y \mid x, \mathbf{w}, \boldsymbol{\theta}) = \mathcal{N}(y \mid \mu(x, \mathbf{w}, \boldsymbol{\theta}), \sigma^2(x, \boldsymbol{\theta}))$ from which we finally sample an output value $y$. The variance of output values covers both epistemic and aleatoric uncertainty where aleatoric uncertainty is contributed by $\sigma^2(x, \boldsymbol{\theta})$. The mean of $\mu$ is the expected value of output $y$ and the variance of $\mu$ represents epistemic uncertainty i.e. model uncertainty.</p>
+<p>Since the true posterior $p(\mathbf{w} \mid \mathbf{x}, \mathbf{y})$ is untractable in the general case the predictive distribution $p(y \mid x, \boldsymbol{\theta}) = \int p(y \mid x, \mathbf{w}, \boldsymbol{\theta}) q(\mathbf{w} \mid \boldsymbol{\theta}) d\mathbf{w}$ is untractable too and cannot be used directly for optimizing $\boldsymbol{\theta}$. In the special case of Bayesian inference for layer <code>mu</code> only, there should be a tractable solution (I think) but we will assume the general case here and use variational inference. The loss function is therefore the negative variational lower bound.</p>
+<p>$$
+L(\boldsymbol{\theta}) = - \mathbb{E}_{q(\mathbf{w} \mid \boldsymbol{\theta})} \log p(\mathbf{y} \mid \mathbf{x}, \mathbf{w}, \boldsymbol{\theta}) + \mathrm{KL}(q(\mathbf{w} \mid \boldsymbol{\theta}) \mid\mid p(\mathbf{w}))
+\tag{5}
+$$</p>
+<p>The expectation w.r.t. $q(\mathbf{w} \mid \boldsymbol{\theta})$ is approximated via sampling in a forward pass. In a <a href="/2019/03/14/bayesian-neural-networks/">previous article</a> I implemented that with a custom <code>DenseVariational</code> layer, here I'm using <code>DenseReparameterization</code> from Tensorflow Probability. Both model the variational distribution over weights as factorized normal distribution $q(\mathbf{w} \mid \boldsymbol{\theta})$ and produce a stochastic weight output by sampling from that distribution. They only differ in some implementation details.</p>
+<div class="highlight"><pre><code><span class="k">def</span><span class="w"> </span><span class="nf">create_model</span><span class="p">(</span><span class="n">n_hidden</span><span class="o">=</span><span class="mi">200</span><span class="p">):</span>
+    <span class="n">leaky_relu</span> <span class="o">=</span> <span class="n">LeakyReLU</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+
+    <span class="n">x_in</span> <span class="o">=</span> <span class="n">Input</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,))</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">Dense</span><span class="p">(</span><span class="n">n_hidden</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="n">leaky_relu</span><span class="p">)(</span><span class="n">x_in</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">Dense</span><span class="p">(</span><span class="n">n_hidden</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="n">leaky_relu</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">tfpl</span><span class="o">.</span><span class="n">DenseReparameterization</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;mu&#39;</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">Dense</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;softplus&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;sigma&#39;</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">Lambda</span><span class="p">(</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">scale</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1e-5</span><span class="p">))((</span><span class="n">m</span><span class="p">,</span> <span class="n">s</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">Model</span><span class="p">(</span><span class="n">x_in</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+</code></pre></div>
+<div class="highlight"><pre><code><span class="n">model</span> <span class="o">=</span> <span class="n">create_model</span><span class="p">()</span>
+</code></pre></div>
+<p>The implementation of the loss function follows directly from Equation $(5)$. The KL divergence is added by the variational layer to the <code>model</code> object and can be obtained via <code>model.losses</code>. When using mini-batches the KL divergence must be divided by the number of batches per epoch. Because of the small training dataset, the KL divergence is further multiplied by <code>0.1</code> to lessen the influence of the prior. The likelihood term of the loss function i.e. the first term in Equation $(5)$ is computed via the distribution returned by the model.</p>
+<div class="highlight"><pre><code><span class="n">train_size</span> <span class="o">=</span> <span class="n">x_train</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">batch_size</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">batches_per_epoch</span> <span class="o">=</span> <span class="n">train_size</span> <span class="o">/</span> <span class="n">batch_size</span>
+
+<span class="n">kl_weight</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">batches_per_epoch</span>
+
+<span class="c1"># Further reduce regularization effect of KL term</span>
+<span class="c1"># in variational lower bound since we only have a </span>
+<span class="c1"># small training set (to prevent that posterior</span>
+<span class="c1"># over weights collapses to prior).</span>
+<span class="n">kl_weight</span> <span class="o">=</span> <span class="n">kl_weight</span> <span class="o">*</span> <span class="mf">0.1</span>
+
+<span class="nd">@tf</span><span class="o">.</span><span class="n">function</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">train_step</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">kl_weight</span><span class="o">=</span><span class="n">kl_weight</span><span class="p">):</span>
+    <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">GradientTape</span><span class="p">()</span> <span class="k">as</span> <span class="n">tape</span><span class="p">:</span>
+        <span class="n">out_dist</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">nll</span> <span class="o">=</span> <span class="o">-</span><span class="n">out_dist</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">kl_div</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">losses</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">nll</span><span class="p">)</span> <span class="o">+</span> <span class="n">kl_weight</span> <span class="o">*</span> <span class="n">kl_div</span>
+
+    <span class="n">optimizer</span><span class="o">.</span><span class="n">apply_gradients</span><span class="p">(</span><span class="n">backprop</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">loss</span><span class="p">,</span> <span class="n">tape</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">loss</span><span class="p">,</span> <span class="n">out_dist</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+</code></pre></div>
+<p>After training, we run the test input <code>x_test</code> several times through the network to obtain samples of the stochastic output of layer <code>mu</code>. From these samples we compute the mean and variance of $\mu$ i.e. we numerically approximate $q(\mu \mid x, \boldsymbol{\theta})$. The variance of $\mu$ is a measure of epistemic uncertainty. In the next section we'll use an analytical expression for $q(\mu \mid x, \boldsymbol{\theta})$. </p>
+<div class="highlight"><pre><code><span class="n">train</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">8000</span><span class="p">,</span> <span class="n">step_fn</span><span class="o">=</span><span class="n">train_step</span><span class="p">)</span>
+</code></pre></div>
+<pre><code>epoch 1000: loss = 10.245, mse = 0.131
+epoch 2000: loss = 3.361, mse = 0.094
+epoch 3000: loss = 1.265, mse = 0.086
+epoch 4000: loss = 0.040, mse = 0.079
+epoch 5000: loss = -0.773, mse = 0.069
+epoch 6000: loss = -1.527, mse = 0.060
+epoch 7000: loss = -2.112, mse = 0.051
+epoch 8000: loss = -2.788, mse = 0.043
+</code></pre>
+<div class="highlight"><pre><code><span class="n">out_dist</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">x_test</span><span class="p">)</span>
+<span class="n">out_dist_means</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
+    <span class="n">out_dist</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">x_test</span><span class="p">)</span>
+    <span class="n">out_dist_means</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">out_dist</span><span class="o">.</span><span class="n">mean</span><span class="p">())</span>
+
+<span class="n">aleatoric_uncertainty</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">x_test</span><span class="p">)</span><span class="o">.</span><span class="n">stddev</span><span class="p">()</span>
+<span class="n">epistemic_uncertainty</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">reduce_std</span><span class="p">(</span><span class="n">out_dist_means</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">expected_output</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">out_dist_means</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</code></pre></div>
+<div class="highlight"><pre><code><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">plot_data</span><span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+<span class="n">plot_prediction</span><span class="p">(</span><span class="n">x_test</span><span class="p">,</span> 
+                <span class="n">expected_output</span><span class="p">,</span> 
+                <span class="n">aleatoric_uncertainty</span><span class="o">=</span><span class="n">aleatoric_uncertainty</span><span class="p">,</span> 
+                <span class="n">epistemic_uncertainty</span><span class="o">=</span><span class="n">epistemic_uncertainty</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">plot_uncertainty</span><span class="p">(</span><span class="n">x_test</span><span class="p">,</span> 
+                 <span class="n">aleatoric_uncertainty</span><span class="o">=</span><span class="n">aleatoric_uncertainty</span><span class="p">,</span> 
+                 <span class="n">epistemic_uncertainty</span><span class="o">=</span><span class="n">epistemic_uncertainty</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">();</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2020-09-25/output_27_0.png" /></p>
+<p>As mentioned in the beginning, a Bayesian neural network with a prior over weights is over-confident in the training data "gap" i.e. in the OOD region between the two training data regions. Our intuition tells us that epistemic uncertainty should be higher here. Also the model is over-confident of a linear relationship for input values less than <code>-0.5</code>.</p>
+<h3 id="bayesian-neural-network-with-ncps">Bayesian neural network with NCPs</h3>
+<p>Regularizing the variational posterior $q(\mathbf{w} \mid \boldsymbol{\theta})$ to be closer to a prior over weights $p(\mathbf{w})$ by minimizing the KL divergence in Equation $(5)$ doesn't seem to generalize well to all OOD regions. But, as mentioned in the previous section, the variational distribution $q(\mathbf{w} \mid \boldsymbol{\theta})$ induces a distribution $q(\mu \mid x, \boldsymbol{\theta})$ in data space which allows comparison to a noise contrastive prior that is also defined in data space.</p>
+<p>In particular, for OOD input $\tilde{x}$, sampled from a noise contrastive input prior $p_{nc}(\tilde{x})$, we want the mean distribution $q(\mu \mid \tilde{x}, \boldsymbol{\theta})$ to be close to a <em>mean prior</em> $p_{nc}(\tilde{y} \mid \tilde{x})$ which is the output prior defined in Equation $(2)$. In other words, the expected output and epistemic uncertainty should be close to the mean prior for OOD data. This can be achieved by reparameterizing the KL divergence in weight space as KL divergence in output space by replacing $q(\mathbf{w} \mid \boldsymbol{\theta})$ with $q(\mu \mid \tilde{x}, \boldsymbol{\theta})$ and $p(\mathbf{w})$ with $p_{nc}(\tilde{y} \mid \tilde{x})$. Using an OOD dataset $\mathbf{\tilde{x}}, \mathbf{\tilde{y}}$ derived from a training dataset $\mathbf{x}, \mathbf{y}$ the loss function is</p>
+<p>$$
+L(\boldsymbol{\theta}) \approx - \mathbb{E}_{q(\mathbf{w} \mid \boldsymbol{\theta})} \log p(\mathbf{y} \mid \mathbf{x}, \mathbf{w}, \boldsymbol{\theta}) + \mathrm{KL}(q(\boldsymbol{\mu} \mid \mathbf{\tilde{x}}, \boldsymbol{\theta}) \mid\mid p_{nc}(\mathbf{\tilde{y}} \mid \mathbf{\tilde{x}}))
+\tag{6}
+$$</p>
+<p>This is an approximation of Equation $(5)$ for reasons explained in Appendix B of the paper. For their experiments, the authors use the opposite direction of the KL divergence without having found a significant difference i.e. they used the loss function</p>
+<p>$$
+L(\boldsymbol{\theta}) = - \mathbb{E}_{q(\mathbf{w} \mid \boldsymbol{\theta})} \log p(\mathbf{y} \mid \mathbf{x}, \mathbf{w}, \boldsymbol{\theta}) + \mathrm{KL}(p_{nc}(\mathbf{\tilde{y}} \mid \mathbf{\tilde{x}}) \mid\mid q(\boldsymbol{\mu} \mid \mathbf{\tilde{x}}, \boldsymbol{\theta}))
+\tag{7}
+$$</p>
+<p>This allows an interpretation of the KL divergence as fitting the mean distribution to an empirical OOD distribution (derived from the training dataset) via maximum likelihood using data augmentation. Recall how the definition of $p_{nc}(\tilde{y} \mid \tilde{x})$ in Equation $(2)$ was motivated by data augmentation. The following implementation uses the loss function defined in Equation $(7)$.</p>
+<p>Since we have a variational approximation only in the linear <code>mu</code> layer we can derive an anlytical expression for $q(\mu \mid \tilde{x}, \boldsymbol{\theta})$ using the parameters $\boldsymbol{\theta}$ of the variational distribution $q(\mathbf{w} \mid \boldsymbol{\theta})$ and the output of the second hidden layer (<code>inputs</code> in code below). The corresponding implementation is in the (inner) function <code>mean_dist</code>. The model is extended to additionally return the mean distribution.</p>
+<div class="highlight"><pre><code><span class="k">def</span><span class="w"> </span><span class="nf">mean_dist_fn</span><span class="p">(</span><span class="n">variational_layer</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mean_dist</span><span class="p">(</span><span class="n">inputs</span><span class="p">):</span>
+        <span class="c1"># Assumes that a deterministic bias variable </span>
+        <span class="c1"># is used in variational_layer</span>
+        <span class="n">bias_mean</span> <span class="o">=</span> <span class="n">variational_layer</span><span class="o">.</span><span class="n">bias_posterior</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+        <span class="c1"># Assumes that a random kernel variable</span>
+        <span class="c1"># is used in variational_layer</span>
+        <span class="n">kernel_mean</span> <span class="o">=</span> <span class="n">variational_layer</span><span class="o">.</span><span class="n">kernel_posterior</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">kernel_std</span> <span class="o">=</span> <span class="n">variational_layer</span><span class="o">.</span><span class="n">kernel_posterior</span><span class="o">.</span><span class="n">stddev</span><span class="p">()</span>
+
+        <span class="c1"># A Gaussian over kernel k in variational_layer induces</span>
+        <span class="c1"># a Gaussian over output &#39;mu&#39; (where mu = inputs * k + b):</span>
+        <span class="c1">#</span>
+        <span class="c1"># - q(k) = N(k|k_mean, k_std^2)</span>
+        <span class="c1">#</span>
+        <span class="c1"># - E[inputs * k + b] = inputs * E[k] + b</span>
+        <span class="c1">#                     = inputs * k_mean + b</span>
+        <span class="c1">#                     = mu_mean</span>
+        <span class="c1">#</span>
+        <span class="c1"># - Var[inputs * k + b] = inputs^2 * Var[k]</span>
+        <span class="c1">#                       = inputs^2 * k_std^2</span>
+        <span class="c1">#                       = mu_var</span>
+        <span class="c1">#                       = mu_std^2</span>
+        <span class="c1">#</span>
+        <span class="c1"># -q(mu) = N(mu|mu_mean, mu_std^2)</span>
+
+        <span class="n">mu_mean</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">kernel_mean</span><span class="p">)</span> <span class="o">+</span> <span class="n">bias_mean</span>
+        <span class="n">mu_var</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">inputs</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">kernel_std</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">mu_std</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">mu_var</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu_mean</span><span class="p">,</span> <span class="n">mu_std</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">mean_dist</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">create_model</span><span class="p">(</span><span class="n">n_hidden</span><span class="o">=</span><span class="mi">200</span><span class="p">):</span>
+    <span class="n">leaky_relu</span> <span class="o">=</span> <span class="n">LeakyReLU</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+    <span class="n">variational_layer</span> <span class="o">=</span> <span class="n">tfpl</span><span class="o">.</span><span class="n">DenseReparameterization</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;mu&#39;</span><span class="p">)</span>
+
+    <span class="n">x_in</span> <span class="o">=</span> <span class="n">Input</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,))</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">Dense</span><span class="p">(</span><span class="n">n_hidden</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="n">leaky_relu</span><span class="p">)(</span><span class="n">x_in</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">Dense</span><span class="p">(</span><span class="n">n_hidden</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="n">leaky_relu</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">variational_layer</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">Dense</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;softplus&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;sigma&#39;</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">mean_dist</span> <span class="o">=</span> <span class="n">Lambda</span><span class="p">(</span><span class="n">mean_dist_fn</span><span class="p">(</span><span class="n">variational_layer</span><span class="p">))(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">out_dist</span> <span class="o">=</span> <span class="n">Lambda</span><span class="p">(</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">scale</span><span class="o">=</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1e-5</span><span class="p">))((</span><span class="n">m</span><span class="p">,</span> <span class="n">s</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">Model</span><span class="p">(</span><span class="n">x_in</span><span class="p">,</span> <span class="p">[</span><span class="n">out_dist</span><span class="p">,</span> <span class="n">mean_dist</span><span class="p">])</span>
+</code></pre></div>
+<div class="highlight"><pre><code><span class="n">model</span> <span class="o">=</span> <span class="n">create_model</span><span class="p">()</span>
+</code></pre></div>
+<p>With the mean distribution returned by the model, the KL divergence can be computed analytically. For models with more variational layers we cannot derive an anayltical expression for $q(\mu \mid \tilde{x}, \boldsymbol{\theta})$ and have to estimate the KL divergence using samples from the mean distribution i.e. using the stochastic output of layer <code>mu</code> directly. The following implementation computes the KL divergence analytically.</p>
+<div class="highlight"><pre><code><span class="nd">@tf</span><span class="o">.</span><span class="n">function</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">train_step</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> 
+               <span class="n">sigma_x</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+               <span class="n">sigma_y</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+               <span class="n">ood_std_noise</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> 
+               <span class="n">ncp_weight</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
+
+    <span class="c1"># Generate random OOD data from training data</span>
+    <span class="n">ood_x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">tf</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">stddev</span><span class="o">=</span><span class="n">sigma_x</span><span class="p">)</span>
+
+    <span class="c1"># NCP output prior (data augmentation setting)</span>
+    <span class="n">ood_mean_prior</span> <span class="o">=</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">sigma_y</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">GradientTape</span><span class="p">()</span> <span class="k">as</span> <span class="n">tape</span><span class="p">:</span>
+        <span class="c1"># output and mean distribution for training data</span>
+        <span class="n">out_dist</span><span class="p">,</span> <span class="n">mean_dist</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># output and mean distribution for OOD data</span>
+        <span class="n">ood_out_dist</span><span class="p">,</span> <span class="n">ood_mean_dist</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">ood_x</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Negative log likelihood of training data</span>
+        <span class="n">nll</span> <span class="o">=</span> <span class="o">-</span><span class="n">out_dist</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+
+        <span class="c1"># KL divergence between output prior and OOD mean distribution</span>
+        <span class="n">kl_ood_mean</span> <span class="o">=</span> <span class="n">tfd</span><span class="o">.</span><span class="n">kl_divergence</span><span class="p">(</span><span class="n">ood_mean_prior</span><span class="p">,</span> <span class="n">ood_mean_dist</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">ood_std_noise</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">kl_ood_std</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Encourage aleatoric uncertainty to be close to a</span>
+            <span class="c1"># pre-defined noise for OOD data (ood_std_noise)</span>
+            <span class="n">ood_std_prior</span> <span class="o">=</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ood_std_noise</span><span class="p">)</span>
+            <span class="n">ood_std_dist</span> <span class="o">=</span> <span class="n">tfd</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ood_out_dist</span><span class="o">.</span><span class="n">stddev</span><span class="p">())</span>
+            <span class="n">kl_ood_std</span> <span class="o">=</span> <span class="n">tfd</span><span class="o">.</span><span class="n">kl_divergence</span><span class="p">(</span><span class="n">ood_std_prior</span><span class="p">,</span> <span class="n">ood_std_dist</span><span class="p">)</span>
+
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">nll</span> <span class="o">+</span> <span class="n">ncp_weight</span> <span class="o">*</span> <span class="n">kl_ood_mean</span> <span class="o">+</span> <span class="n">ncp_weight</span> <span class="o">*</span> <span class="n">kl_ood_std</span><span class="p">)</span>
+
+    <span class="n">optimizer</span><span class="o">.</span><span class="n">apply_gradients</span><span class="p">(</span><span class="n">backprop</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">loss</span><span class="p">,</span> <span class="n">tape</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">loss</span><span class="p">,</span> <span class="n">mean_dist</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+</code></pre></div>
+<p>The implementation of the loss function uses an additional term that is not present in  Equation $(7)$. This term is added if <code>ood_std_noise</code> is defined. It encourages the aleatoric uncertainty for OOD data to be close to a predefined <code>ood_std_noise</code>, a hyper-parameter that we set to a rather low value so that low aleatoric uncertainty is predicted in OOD regions. This makes sense as we can only reasonably estimate aleatoric noise in regions of existing training data.</p>
+<p>After training the model we can get the expected output, epistemic uncertainty and aleatoric uncertainty with a single pass of test inputs through the model. The expected output can be obtained from the mean of the mean distribution, epistemic uncertainty from the variance of the mean distribution and aleatoric uncertainty from the variance of the output distribution (= output of the <code>sigma</code> layer).</p>
+<div class="highlight"><pre><code><span class="n">train</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">15000</span><span class="p">,</span> <span class="n">step_fn</span><span class="o">=</span><span class="n">train_step</span><span class="p">)</span>
+</code></pre></div>
+<pre><code>epoch 1000: loss = 160.744, mse = 0.155
+epoch 2000: loss = 11.848, mse = 0.152
+epoch 3000: loss = 11.350, mse = 0.150
+epoch 4000: loss = 10.598, mse = 0.146
+epoch 5000: loss = 10.288, mse = 0.137
+epoch 6000: loss = 9.587, mse = 0.120
+epoch 7000: loss = 8.948, mse = 0.103
+epoch 8000: loss = 8.420, mse = 0.087
+epoch 9000: loss = 8.008, mse = 0.073
+epoch 10000: loss = 7.728, mse = 0.061
+epoch 11000: loss = 7.521, mse = 0.054
+epoch 12000: loss = 7.242, mse = 0.050
+epoch 13000: loss = 7.034, mse = 0.047
+epoch 14000: loss = 6.911, mse = 0.043
+epoch 15000: loss = 6.892, mse = 0.043
+</code></pre>
+<div class="highlight"><pre><code><span class="n">out_dist</span><span class="p">,</span> <span class="n">mean_dist</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">x_test</span><span class="p">)</span>
+
+<span class="n">aleatoric_uncertainty</span> <span class="o">=</span> <span class="n">out_dist</span><span class="o">.</span><span class="n">stddev</span><span class="p">()</span>
+<span class="n">epistemic_uncertainty</span> <span class="o">=</span> <span class="n">mean_dist</span><span class="o">.</span><span class="n">stddev</span><span class="p">()</span>
+<span class="n">expected_output</span> <span class="o">=</span> <span class="n">mean_dist</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+</code></pre></div>
+<div class="highlight"><pre><code><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">plot_data</span><span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+<span class="n">plot_prediction</span><span class="p">(</span><span class="n">x_test</span><span class="p">,</span> 
+                <span class="n">expected_output</span><span class="p">,</span> 
+                <span class="n">aleatoric_uncertainty</span><span class="o">=</span><span class="n">aleatoric_uncertainty</span><span class="p">,</span> 
+                <span class="n">epistemic_uncertainty</span><span class="o">=</span><span class="n">epistemic_uncertainty</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">plot_uncertainty</span><span class="p">(</span><span class="n">x_test</span><span class="p">,</span> 
+                 <span class="n">aleatoric_uncertainty</span><span class="o">=</span><span class="n">aleatoric_uncertainty</span><span class="p">,</span> 
+                 <span class="n">epistemic_uncertainty</span><span class="o">=</span><span class="n">epistemic_uncertainty</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">();</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2020-09-25/output_36_0.png" /></p>
+<p>We can see that epistemic uncertainty is now high in <em>all</em> OOD regions which fixes the issue mentioned in the beginning. Aleatoric uncertainty increases with increasing x in training data regions while being small in OOD regions. This is useful for e.g. <a href="https://en.wikipedia.org/wiki/Active_learning_(machine_learning)">active learning</a> where new training data should be sampled in regions of high epistemic uncertainty but low noise. The application of NCPs to active learning is described in more detail in the paper.</p>
+<h2 id="references">References</h2>
+<ul>
+<li>
+<p>Hafner, D., Tran, D., Irpan, A., Lillicrap, T., and Davidson, J. <a href="http://proceedings.mlr.press/v115/hafner20a.html">Noise Contrastive Priors for Functional Uncertainty</a>. In <em>Proceedings of The 35th Uncertainty in Artificial Intelligence Conference</em>, pages 905-914, 2020.</p>
+</li>
+<li>
+<p>M. Gutmann and A. Hyvärinen. <a href="http://proceedings.mlr.press/v9/gutmann10a.html">Noise-contrastive estimation: A new estimation principle for unnormalized statistical models</a>. In <em>Proceedings of the Thirteenth International Conference on Artificial Intelligence and Statistics</em>, pages 297-304, 2010.</p>
+</li>
+</ul>
+<h2 id="acknowledgements">Acknowledgements</h2>
+<p>Thanks to Danijar Hafner, Dustin Tran and Christoph Stumpf for useful feedback on a earlier draft.</p>
+    </div>
+
+    <nav class="post-nav">
+        
+        <a href="/2020/04/25/getting-started-with-pymc4/" class="post-nav-link post-nav-older">
+            <span class="post-nav-label">&larr; Older</span>
+            <span class="post-nav-title">Getting started with PyMC4</span>
+        </a>
+        
+        
+        <a href="/2020/11/04/gaussian-processes-classification/" class="post-nav-link post-nav-newer">
+            <span class="post-nav-label">Newer &rarr;</span>
+            <span class="post-nav-title">Gaussian processes for classification</span>
+        </a>
+        
+    </nav>
+
+    
+    <section class="comments">
+        <h2>Comments</h2>
+        <div id="disqus_thread"></div>
+    </section>
+    
+</article>
+
+        </div>
+    </main>
+
+    
+    <footer class="footer">
+        <div class="container">
+            
+<ul class="footer-social-links">
+    <li>
+        <a href="https://linkedin.com/in/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+    <rect x="2" y="9" width="4" height="12"/>
+    <circle cx="4" cy="4" r="2"/>
+</svg>
+
+            linkedin.com/in/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/gradion-ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/gradion-ai
+        </a>
+    </li>
+    <li>
+        <a href="https://gradion.ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
+    <path d="M9 22v-4h6v4"/>
+    <path d="M8 6h.01"/><path d="M16 6h.01"/>
+    <path d="M12 6h.01"/>
+    <path d="M12 10h.01"/><path d="M12 14h.01"/>
+    <path d="M16 10h.01"/><path d="M16 14h.01"/>
+    <path d="M8 10h.01"/><path d="M8 14h.01"/>
+</svg>
+
+            gradion.ai
+        </a>
+    </li>
+    <li>
+        <a href="/llms.txt">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 8V4H8"/>
+    <rect width="16" height="12" x="4" y="8" rx="2"/>
+    <path d="M2 14h2"/>
+    <path d="M20 14h2"/>
+    <path d="M15 13v2"/>
+    <path d="M9 13v2"/>
+</svg>
+
+            llms.txt
+        </a>
+    </li>
+    <li>
+        <a href="/feed.xml">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 11a9 9 0 0 1 9 9"/>
+    <path d="M4 4a16 16 0 0 1 16 16"/>
+    <circle cx="5" cy="19" r="1"/>
+</svg>
+
+            feed.xml
+        </a>
+    </li>
+</ul>
+
+            <p class="footer-copyright">// Martin Krasser, 2026</p>
+        </div>
+    </footer>
+
+    <script>
+    document.querySelectorAll('a[href^="http"]').forEach(link => {
+        if (!link.href.startsWith(location.origin)) {
+            link.target = '_blank';
+            link.rel = 'noopener';
+        }
+    });
+    </script>
+    
+
+<script>
+var disqus_config = function () {
+    this.page.url = 'https://krasserm.github.io/2020/09/25/reliable-uncertainty-estimates/';
+    this.page.identifier = '/2020/09/25/reliable-uncertainty-estimates/';
+};
+(function() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://krasserm.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+</body>
+</html>

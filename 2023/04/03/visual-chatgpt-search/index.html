@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#0a0e14">
+    <title>Extending Visual ChatGPT with image search engines - Martin Krasser</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/pygments.css">
+    <link rel="alternate" type="application/atom+xml" title="Martin Krasser Feed" href="/feed.xml">
+    
+<script>
+MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="/" class="nav-brand">Martin Krasser</a>
+            <ul class="nav-links">
+                
+                <li><a href="/about/">About</a></li>
+                
+                <li><a href="/">Blog</a></li>
+                
+                <li><a href="/industry/">Industry</a></li>
+                
+                <li><a href="/open-source/">Open Source</a></li>
+                
+                <li><a href="/citations/">Citations</a></li>
+                
+                <li><a href="/stories/">Stories</a></li>
+                
+                <li><a href="/contact/">Contact</a></li>
+                
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="container">
+            
+<article class="post">
+    <header class="post-header">
+        <h1 class="post-title">Extending Visual ChatGPT with image search engines</h1>
+        
+        <p class="post-meta">
+            <time datetime="2023-04-03">
+                April 03, 2023
+            </time>
+            
+            <span class="post-author">by Martin Krasser</span>
+            
+        </p>
+    </header>
+
+    <div class="post-content">
+        <p><em>The source code for this article, an extended version of Visual ChatGPT, is available <a href="https://github.com/krasserm/visual-chatgpt">here</a></em>.
+<em><strong>Update:</strong> A</em> 🤗 <em><a href="https://huggingface.co/docs/transformers/transformers_agents">Transformers Agent</a> based implementation
+of the examples in this article is available <a href="https://colab.research.google.com/github/krasserm/transformers-agent-examples/blob/main/image-search.ipynb">here</a>.</em></p>
+<p>A recent trend in software development uses large language models (LLMs) to understand user input in natural language and
+to execute complex user instructions by autonomously decomposing them into simpler subtasks. These LLMs are often augmented
+with application-specific reasoning skills and the ability to use external tools [1]. LLM augmentation requires learning,
+either in-context learning (prompting) or fine-tuning. External tools help LLMs to execute specialized tasks for which the
+model itself doesn't have sufficient capabilities. This can be, for example, an external knowledge source for retrieving
+factual and up-to-date information, or a calculator for answering more complex math questions.</p>
+<h2 id="visual-chatgpt">Visual ChatGPT</h2>
+<p>A good example of an augmented LLM is Visual ChatGPT [2]. It enables users to interact with ChatGPT not only via
+text but also images. For image processing and generation it integrates visual foundation models (VFMs) as external
+tools. The language model learns usage of VFMs and handling of image data via prompting. Prompts are managed by a central
+component, the Prompt Manager, which also mediates information exchange between ChatGPT and VFMs:</p>
+<p><img alt="Visual ChatGPT" src="/img/2023-04-03/visual-chatgpt.png" /></p>
+<p>For implementing the Prompt Manager, Visual ChatGPT uses <a href="https://python.langchain.com/en/latest/">LangChain</a>, a framework
+for developing applications powered by language models. LangChain connects language models to other sources of data and
+allows them to interact with their environment. It enables language models to behave like agents, making decisions about
+which actions to take, taking that action, seeing an observation, and repeating that until done.</p>
+<h2 id="visual-chatgpt-with-image-search">Visual ChatGPT with image search</h2>
+<p>A current limitation of Visual ChatGPT (at the time of writing this article) is that it does not support image search.
+This section demonstrates how to implement tools for image search, both by query text and query image. For simplicity,
+these tools only return the top-scoring image in order to make them compatible with the current Visual ChatGPT user
+interface. The search tools use the <a href="https://github.com/rom1504/clip-retrieval">clip-retrieval</a> client for searching 
+images in the LAION-5B dataset [3]. The client is instantiated in a <code>SearchSupport</code> base class:</p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">clip_retrieval.clip_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClipClient</span><span class="p">,</span> <span class="n">Modality</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SearchSupport</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">ClipClient</span><span class="p">(</span>
+            <span class="n">url</span><span class="o">=</span><span class="s2">&quot;https://knn.laion.ai/knn-service&quot;</span><span class="p">,</span>
+            <span class="n">indice_name</span><span class="o">=</span><span class="s2">&quot;laion5B-L-14&quot;</span><span class="p">,</span>
+            <span class="n">modality</span><span class="o">=</span><span class="n">Modality</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
+            <span class="n">num_images</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="p">)</span>
+</code></pre></div>
+<p><code>ClipClient</code> can be used for both, image search by query text (<code>self.client.query(text=...)</code>) and query image
+(<code>self.client.query(image=...)</code>). The only thing required for integrating image search as external tool into Visual
+ChatGPT, is to describe the behavior of the search tool in plain English with a <code>@prompts</code> decorator, and implementing
+an <code>inference</code> method for interacting with the search engine. <code>ImageSearch</code> implements search by query text:</p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">search</span><span class="w"> </span><span class="kn">import</span> <span class="n">download_best_available</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_image_name</span><span class="p">,</span> <span class="n">prompts</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ImageSearch</span><span class="p">(</span><span class="n">SearchSupport</span><span class="p">):</span>
+    <span class="nd">@prompts</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Search Image That Matches User Input Text&quot;</span><span class="p">,</span>
+             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;useful when you want to search an image that matches a given description. &quot;</span>
+                         <span class="s2">&quot;like: find an image that contains certain objects with certain properties, &quot;</span>
+                         <span class="s2">&quot;or refine a previous search with additional criteria. &quot;</span> 
+                         <span class="s2">&quot;The input to this tool should be a string, representing the description. &quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">inference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query_text</span><span class="p">):</span>
+        <span class="n">search_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">query_text</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">download_best_available</span><span class="p">(</span><span class="n">search_result</span><span class="p">,</span> <span class="n">get_image_name</span><span class="p">())</span>
+</code></pre></div>
+<p>The values of the <code>name</code> and <code>description</code> parameters of the <code>@prompts</code> decorator take into account the prompt management
+aspects described in section 3.2 of [2] (Prompt Managing of Foundation Models). These are included as-is into the
+language model prompt (among many other details) so that ChatGPT learns about the existence of the search tool, the
+conditions when it should be selected, some abstract usage examples and the expected input type.</p>
+<p>A <code>search_result</code> object contains the URLs of the top 10 images and <code>download_best_available</code> downloads the top scoring
+image from the internet, if available, otherwise the next best scoring image (recursively). The downloaded image is stored
+under a unique filename generated by <code>get_image_name()</code>.</p>
+<p><code>VisualSearch</code> searches an image that is visually similar to a query image. The implementation closely follows
+that of <code>ImageSearch</code>. The major difference is the tool description in the <code>@prompts</code> decorator, of course. The filename
+generated by <code>get_new_image_name</code> is a chained filename, for reasons explained in section 3.4 of [2] (Prompt Managing
+of Foundation Model Outputs).</p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">search</span><span class="w"> </span><span class="kn">import</span> <span class="n">download_best_available</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_new_image_name</span><span class="p">,</span> <span class="n">prompts</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">VisualSearch</span><span class="p">(</span><span class="n">SearchSupport</span><span class="p">):</span>
+    <span class="nd">@prompts</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;Search Image Visually Similar to an Input Image&quot;</span><span class="p">,</span>
+             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;useful when you want to search an image that is visually similar to an input image. &quot;</span>
+                         <span class="s2">&quot;like: find an image visually similar to a generated or modified image. &quot;</span>
+                         <span class="s2">&quot;The input to this tool should be a string, representing the input image path. &quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">inference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query_img_path</span><span class="p">):</span>
+        <span class="n">search_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">image</span><span class="o">=</span><span class="n">query_img_path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">download_best_available</span><span class="p">(</span><span class="n">search_result</span><span class="p">,</span> <span class="n">get_new_image_name</span><span class="p">(</span><span class="n">query_img_path</span><span class="p">,</span> <span class="s2">&quot;visual-search&quot;</span><span class="p">))</span>
+</code></pre></div>
+<p>Importing <code>ImageSearch</code> and <code>VisualSearch</code> into <a href="https://github.com/krasserm/visual-chatgpt/blob/main/visual_chatgpt.py">visual_chatgpt.py</a>
+is sufficient for being able to load these search tools from the command line.</p>
+<h2 id="application-setup">Application setup</h2>
+<p>Set up a virtual environment as described in <a href="https://github.com/krasserm/visual-chatgpt/blob/main/README.md#quick-start">Quick Start</a>
+and then start the application with</p>
+<div class="highlight"><pre><code>python<span class="w"> </span>visual_chatgpt.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--load<span class="o">=</span><span class="s2">&quot;ImageCaptioning_cuda:0,ImageEditing_cuda:1,Text2Image_cuda:2,ImageSearch_,VisualSearch_&quot;</span><span class="w"> </span><span class="se">\ </span>
+<span class="w">  </span>--port<span class="o">=</span><span class="m">6010</span>
+</code></pre></div>
+<p>This loads three VFMs and the two search tools. The following <a href="#usage-examples">examples</a> have been generated with this
+configuration. You may need to adjust the device settings (<code>cuda:0</code>, <code>cuda:1</code>, ...) depending on the number and size of
+available GPUs.</p>
+<h2 id="usage-examples">Usage examples</h2>
+<p>Generate an image and find a visually similar image in the LAION-5B dataset. The generated image is used as query image:</p>
+<p><img alt="Sample 1" src="/img/2023-04-03/sample-1.png" /></p>
+<p>Search an image in the LAION-5B dataset matching a user-provided description (query text) and then process that image
+with a visual foundation model:</p>
+<p><img alt="Sample 2" src="/img/2023-04-03/sample-2.png" /></p>
+<p>Instruct Visual ChatGPT to generate an image, caption that image and then search for a LAION-5B image matching the
+caption. The instruction is decomposed by ChatGPT into three steps: image generation, image captioning and image search
+by query text:</p>
+<p><img alt="Sample 3" src="/img/2023-04-03/sample-3.png" /></p>
+<p>These are rather simple examples. You can of course combine the search tools with other VFMs to support more complex
+image processing and search workflows.</p>
+<h2 id="references">References</h2>
+<p>[1] G. Mialon, R. Dessì, M. Lomeli, C. Nalmpantis, R. Pasunuru, R. Raileanu, B. Rozière, T. Schick, J. Dwivedi-Yu,
+A. Celikyilmaz, E. Grave, Y. LeCun, and T. Scialom. Augmented Language Models: A Survey.
+<a href="https://arxiv.org/abs/2302.07842">arXiv preprint arXiv:2302.07842</a>, 2023.</p>
+<p>[2] Chenfei Wu, Shengming Yin, Weizhen Qi, Xiaodong Wang, Zecheng Tang, and Nan Duan. Visual chatgpt: Talking, 
+drawing and editing with visual foundation models.
+<a href="https://arxiv.org/abs/2303.04671">arXiv preprint arXiv:2303.04671</a>, 2023.</p>
+<p>[3] Schuhmann, C., Beaumont, R., Vencu, R., Gordon, C., Wightman, R., Cherti, M., Coombes, T., Katta, A., Mullis,
+C., Wortsman, M., et al. LAION-5B: An open large-scale dataset for training next generation image-text models.
+<a href="https://arxiv.org/abs/2210.08402">arXiv preprint arXiv:2210.08402</a>, 2022.</p>
+    </div>
+
+    <nav class="post-nav">
+        
+        <a href="/2023/01/23/scaling-perceiver-ar/" class="post-nav-link post-nav-older">
+            <span class="post-nav-label">&larr; Older</span>
+            <span class="post-nav-title">Training compute-optimal Perceiver AR language models</span>
+        </a>
+        
+        
+        <a href="/2023/12/10/grammar-based-agents/" class="post-nav-link post-nav-newer">
+            <span class="post-nav-label">Newer &rarr;</span>
+            <span class="post-nav-title">Schema-guided generation in LangChain agents</span>
+        </a>
+        
+    </nav>
+
+    
+    <section class="comments">
+        <h2>Comments</h2>
+        <div id="disqus_thread"></div>
+    </section>
+    
+</article>
+
+        </div>
+    </main>
+
+    
+    <footer class="footer">
+        <div class="container">
+            
+<ul class="footer-social-links">
+    <li>
+        <a href="https://linkedin.com/in/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+    <rect x="2" y="9" width="4" height="12"/>
+    <circle cx="4" cy="4" r="2"/>
+</svg>
+
+            linkedin.com/in/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/gradion-ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/gradion-ai
+        </a>
+    </li>
+    <li>
+        <a href="https://gradion.ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
+    <path d="M9 22v-4h6v4"/>
+    <path d="M8 6h.01"/><path d="M16 6h.01"/>
+    <path d="M12 6h.01"/>
+    <path d="M12 10h.01"/><path d="M12 14h.01"/>
+    <path d="M16 10h.01"/><path d="M16 14h.01"/>
+    <path d="M8 10h.01"/><path d="M8 14h.01"/>
+</svg>
+
+            gradion.ai
+        </a>
+    </li>
+    <li>
+        <a href="/llms.txt">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 8V4H8"/>
+    <rect width="16" height="12" x="4" y="8" rx="2"/>
+    <path d="M2 14h2"/>
+    <path d="M20 14h2"/>
+    <path d="M15 13v2"/>
+    <path d="M9 13v2"/>
+</svg>
+
+            llms.txt
+        </a>
+    </li>
+    <li>
+        <a href="/feed.xml">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 11a9 9 0 0 1 9 9"/>
+    <path d="M4 4a16 16 0 0 1 16 16"/>
+    <circle cx="5" cy="19" r="1"/>
+</svg>
+
+            feed.xml
+        </a>
+    </li>
+</ul>
+
+            <p class="footer-copyright">// Martin Krasser, 2026</p>
+        </div>
+    </footer>
+
+    <script>
+    document.querySelectorAll('a[href^="http"]').forEach(link => {
+        if (!link.href.startsWith(location.origin)) {
+            link.target = '_blank';
+            link.rel = 'noopener';
+        }
+    });
+    </script>
+    
+
+<script>
+var disqus_config = function () {
+    this.page.url = 'https://krasserm.github.io/2023/04/03/visual-chatgpt-search/';
+    this.page.identifier = '/2023/04/03/visual-chatgpt-search/';
+};
+(function() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://krasserm.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+</body>
+</html>

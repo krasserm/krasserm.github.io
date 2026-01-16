@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#0a0e14">
+    <title>DeepSeek-R1 agents with code actions - Martin Krasser</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/pygments.css">
+    <link rel="alternate" type="application/atom+xml" title="Martin Krasser Feed" href="/feed.xml">
+    
+<script>
+MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="/" class="nav-brand">Martin Krasser</a>
+            <ul class="nav-links">
+                
+                <li><a href="/about/">About</a></li>
+                
+                <li><a href="/">Blog</a></li>
+                
+                <li><a href="/industry/">Industry</a></li>
+                
+                <li><a href="/open-source/">Open Source</a></li>
+                
+                <li><a href="/citations/">Citations</a></li>
+                
+                <li><a href="/stories/">Stories</a></li>
+                
+                <li><a href="/contact/">Contact</a></li>
+                
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="container">
+            
+<article class="post">
+    <header class="post-header">
+        <h1 class="post-title">DeepSeek-R1 agents with code actions</h1>
+        
+        <p class="post-meta">
+            <time datetime="2025-02-05">
+                February 05, 2025
+            </time>
+            
+            <span class="post-author">by Martin Krasser</span>
+            
+        </p>
+    </header>
+
+    <div class="post-content">
+        <p>I ran a quick <a href="https://github.com/gradion-ai/freeact/blob/wip-legacy-pre-reasoning/evaluation/README.md">experiment</a> investigating how DeepSeek-R1 performs on agentic tasks, despite not supporting tool use natively, and I was quite impressed by preliminary results. This experiment runs DeepSeek-R1 in a single-agent setup, where the model not only plans the actions but also formulates the actions as executable Python code. On a subset<sup>1</sup> of the GAIA validation split, DeepSeek-R1 outperforms Claude 3.5 Sonnet by 12.5% absolute, from 53.1% to 65.6% correct, and other models by an even larger margin:</p>
+<p><img alt="eval" src="/img/2025-02-05/deepseek-r1-eval.png" /></p>
+<p>The experiment followed model usage guidelines from the <a href="https://arxiv.org/abs/2501.12948">DeepSeek-R1 paper</a> and the <a href="https://huggingface.co/deepseek-ai/DeepSeek-R1#usage-recommendations">model card</a>: Don't use few-shot examples, avoid adding a system prompt, and set the temperature to 0.5 - 0.7 (0.6 was used). You can find further evaluation details <a href="https://github.com/gradion-ai/freeact/blob/wip-legacy-pre-reasoning/evaluation/README.md">here</a>.</p>
+<h2 id="approach">Approach</h2>
+<p>DeepSeek-R1's strong coding capabilities enable it to act as an agent without being explicitly trained for tool use. By allowing the model to generate actions as Python code, it can flexibly interact with environments through code execution.</p>
+<p>Tools are implemented as Python code that is included directly in the prompt. This can be a simple function definition or a module of a larger package - any valid Python code. The model then generates <em>code actions</em> that call these tools.</p>
+<p>Results from executing these actions feed back to the model as follow-up messages, driving the next steps until a final answer is reached. The agent framework is a simple iterative coding loop that mediates the conversation between the model and its environment.</p>
+<h2 id="conversations">Conversations</h2>
+<p>DeepSeek-R1 is used as chat model in my experiment, where the model autonomously pulls additional context from its environment by using tools e.g. by using a search engine or fetching data from web pages. This drives the conversation with the environment that continues until a final answer is reached.</p>
+<p>In contrast, o1 models are known to <a href="https://www.latent.space/p/o1-skill-issue">perform poorly when used as chat models</a> i.e. they don't try to pull context during a conversation. According to the linked article, o1 models perform best when they have the full context available, with clear instructions on what to do with it.</p>
+<p>Initially, I also tried a <em>full context in a single prompt</em> approach at each step (with results from previous steps included), but this led to significantly lower scores on the GAIA subset. Switching to the conversational approach described above, I was able to reach the reported 65.6% performance.</p>
+<p>This raises an interesting question about the claim that <a href="https://www.latent.space/p/o1-skill-issue">o1 isn't a chat model</a> - perhaps this observation was more relevant to older o1 models that lacked tool use capabilities? After all, isn't tool use support an important mechanism for enabling models to pull additional context from their environment? This conversational approach certainly seems effective for DeepSeek-R1, though I still need to conduct similar experiments with o1 models.</p>
+<h2 id="generalization">Generalization</h2>
+<p>Although DeepSeek-R1 was mainly trained with RL on math and coding tasks, it is remarkable that generalization to agentic tasks with tool use via code actions works so well. This ability to generalize to agentic tasks reminds of recent research by DeepMind that shows that <a href="https://arxiv.org/abs/2501.17161">RL generalizes whereas SFT memorizes</a>, although generalization to tool use wasn't investigated in that work.</p>
+<p>Despite its ability to generalize to tool use, DeepSeek-R1 often produces very long reasoning traces at each step, compared to other models in my experiments, limiting the usefulness of this model in a single-agent setup. Even simpler tasks sometimes take a long time to complete. Further RL on agentic tool use, be it via code actions or not, could be one option to improve efficiency.</p>
+<h2 id="underthinking">Underthinking</h2>
+<p>I also observed the <a href="https://arxiv.org/abs/2501.18585">underthinking phenomenon</a> with DeepSeek-R1. This is when a reasoning model frequently switches between different reasoning thoughts without sufficiently exploring promising paths to reach a correct solution. This was a major reason for overly long reasoning traces produced by DeepSeek-R1. This can be seen in the recorded traces that are available for <a href="https://github.com/user-attachments/files/18655103/evaluation-results-agents-5_medium_benchmark_2.zip">download</a>.</p>
+<h2 id="future-experiments">Future experiments</h2>
+<p>Another common application of reasoning models is to use them for planning only, while using other models for generating code actions. This could be a potential new feature of <a href="https://github.com/gradion-ai/freeact/tree/0.6.x">freeact</a>, if this separation of roles proves useful for more complex tasks.</p>
+<p>I'm also curious about how reasoning models that already support tool use (like o1, o3, ...) perform in a single-agent setup, with and without generating code actions. Recent developments like OpenAI's <a href="https://openai.com/index/introducing-deep-research/">Deep Research</a> or Hugging Face's <a href="https://huggingface.co/blog/open-deep-research">open-source Deep Research</a>, which also uses code actions, look interesting.</p>
+<hr />
+<p><sup>1</sup> The GAIA subset is from <a href="https://huggingface.co/datasets/m-ric/agents_medium_benchmark_2">this dataset</a>, created by the smolagents team at Hugging Face to <a href="https://huggingface.co/blog/smolagents#how-strong-are-open-models-for-agentic-workflows">evaluate</a> their agents.</p>
+    </div>
+
+    <nav class="post-nav">
+        
+        <a href="/2024/06/26/planner-prompt-masking/" class="post-nav-link post-nav-older">
+            <span class="post-nav-label">&larr; Older</span>
+            <span class="post-nav-title">Impact of prompt masking on LLM agent planning performance</span>
+        </a>
+        
+        
+        <a href="/2025/08/06/agent-authorization/" class="post-nav-link post-nav-newer">
+            <span class="post-nav-label">Newer &rarr;</span>
+            <span class="post-nav-title">Agent authorization without the pain</span>
+        </a>
+        
+    </nav>
+
+    
+    <section class="comments">
+        <h2>Comments</h2>
+        <div id="disqus_thread"></div>
+    </section>
+    
+</article>
+
+        </div>
+    </main>
+
+    
+    <footer class="footer">
+        <div class="container">
+            
+<ul class="footer-social-links">
+    <li>
+        <a href="https://linkedin.com/in/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+    <rect x="2" y="9" width="4" height="12"/>
+    <circle cx="4" cy="4" r="2"/>
+</svg>
+
+            linkedin.com/in/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/gradion-ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/gradion-ai
+        </a>
+    </li>
+    <li>
+        <a href="https://gradion.ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
+    <path d="M9 22v-4h6v4"/>
+    <path d="M8 6h.01"/><path d="M16 6h.01"/>
+    <path d="M12 6h.01"/>
+    <path d="M12 10h.01"/><path d="M12 14h.01"/>
+    <path d="M16 10h.01"/><path d="M16 14h.01"/>
+    <path d="M8 10h.01"/><path d="M8 14h.01"/>
+</svg>
+
+            gradion.ai
+        </a>
+    </li>
+    <li>
+        <a href="/llms.txt">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 8V4H8"/>
+    <rect width="16" height="12" x="4" y="8" rx="2"/>
+    <path d="M2 14h2"/>
+    <path d="M20 14h2"/>
+    <path d="M15 13v2"/>
+    <path d="M9 13v2"/>
+</svg>
+
+            llms.txt
+        </a>
+    </li>
+    <li>
+        <a href="/feed.xml">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 11a9 9 0 0 1 9 9"/>
+    <path d="M4 4a16 16 0 0 1 16 16"/>
+    <circle cx="5" cy="19" r="1"/>
+</svg>
+
+            feed.xml
+        </a>
+    </li>
+</ul>
+
+            <p class="footer-copyright">// Martin Krasser, 2026</p>
+        </div>
+    </footer>
+
+    <script>
+    document.querySelectorAll('a[href^="http"]').forEach(link => {
+        if (!link.href.startsWith(location.origin)) {
+            link.target = '_blank';
+            link.rel = 'noopener';
+        }
+    });
+    </script>
+    
+
+<script>
+var disqus_config = function () {
+    this.page.url = 'https://krasserm.github.io/2025/02/05/deepseek-r1-agent/';
+    this.page.identifier = '/2025/02/05/deepseek-r1-agent/';
+};
+(function() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://krasserm.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+</body>
+</html>

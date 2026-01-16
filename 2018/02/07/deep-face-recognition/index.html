@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#0a0e14">
+    <title>Deep face recognition with Keras, Dlib and OpenCV - Martin Krasser</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/pygments.css">
+    <link rel="alternate" type="application/atom+xml" title="Martin Krasser Feed" href="/feed.xml">
+    
+<script>
+MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="/" class="nav-brand">Martin Krasser</a>
+            <ul class="nav-links">
+                
+                <li><a href="/about/">About</a></li>
+                
+                <li><a href="/">Blog</a></li>
+                
+                <li><a href="/industry/">Industry</a></li>
+                
+                <li><a href="/open-source/">Open Source</a></li>
+                
+                <li><a href="/citations/">Citations</a></li>
+                
+                <li><a href="/stories/">Stories</a></li>
+                
+                <li><a href="/contact/">Contact</a></li>
+                
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="container">
+            
+<article class="post">
+    <header class="post-header">
+        <h1 class="post-title">Deep face recognition with Keras, Dlib and OpenCV</h1>
+        
+        <p class="post-meta">
+            <time datetime="2018-02-07">
+                February 07, 2018
+            </time>
+            
+            <span class="post-author">by Martin Krasser</span>
+            
+        </p>
+    </header>
+
+    <div class="post-content">
+        <p><em>Sources:</em></p>
+<ul>
+<li><em><a href="http://nbviewer.jupyter.org/github/krasserm/face-recognition/blob/master/face-recognition.ipynb">Notebook</a></em></li>
+<li><em><a href="https://github.com/krasserm/face-recognition">Repository</a></em></li>
+</ul>
+<p>Face recognition identifies persons on face images or video frames. In a nutshell, a face recognition system extracts features from an input face image and compares them to the features of labeled faces in a database. Comparison is based on a feature similarity metric and the label of the most similar database entry is used to label the input image. If the similarity value is below a certain threshold the input image is labeled as <em>unknown</em>. Comparing two face images to determine if they show the same person is known as face verification.</p>
+<p>This article uses a deep convolutional neural network (CNN) to extract features from input images. It follows the approach described in <a href="https://arxiv.org/abs/1503.03832">[1]</a> with modifications inspired by the <a href="http://cmusatyalab.github.io/openface/">OpenFace</a> project. <a href="https://keras.io/">Keras</a> is used for implementing the CNN, <a href="http://dlib.net/">Dlib</a> and <a href="https://opencv.org/">OpenCV</a> for aligning faces on input images. Face recognition performance is evaluated on a small subset of the <a href="http://vis-www.cs.umass.edu/lfw/">LFW</a> dataset which you can replace with your own custom dataset e.g. with images of your family and friends if you want to further experiment with the <a href="https://github.com/krasserm/face-recognition">notebook</a>. After an overview of the CNN architecure and how the model can be trained, it is demonstrated how to:</p>
+<ul>
+<li>Detect, transform, and crop faces on input images. This ensures that faces are aligned before feeding them into the CNN. This preprocessing step is very important for the performance of the neural network.</li>
+<li>Use the CNN to extract 128-dimensional representations, or <em>embeddings</em>, of faces from the aligned input images. In embedding space, Euclidean distance directly corresponds to a measure of face similarity. </li>
+<li>Compare input embedding vectors to labeled embedding vectors in a database. Here, a support vector machine (SVM) and a KNN classifier, trained on labeled embedding vectors, play the role of a database. Face recognition in this context means using these classifiers to predict the labels i.e. identities of new inputs.</li>
+</ul>
+<h2 id="cnn-architecture-and-training">CNN architecture and training</h2>
+<p>The CNN architecture used here is a variant of the inception architecture <a href="https://arxiv.org/abs/1409.4842">[2]</a>. More precisely, it is a variant of the NN4 architecture described in <a href="https://arxiv.org/abs/1503.03832">[1]</a> and identified as <a href="https://cmusatyalab.github.io/openface/models-and-accuracies/#model-definitions">nn4.small2</a> model in the OpenFace project. This article uses a Keras implementation of that model whose definition was taken from the <a href="https://github.com/iwantooxxoox/Keras-OpenFace">Keras-OpenFace</a> project. The architecture details aren't too important here, it's only useful to know that there is a fully connected layer with 128 hidden units followed by an L2 normalization layer on top of the convolutional base. These two top layers are referred to as the <em>embedding layer</em> from which the 128-dimensional embedding vectors can be obtained. The complete model is defined in <a href="https://github.com/krasserm/face-recognition/blob/master/model.py">model.py</a> and a graphical overview is given in <a href="https://github.com/krasserm/face-recognition/blob/master/model.png">model.png</a>. A Keras version of the nn4.small2 model can be created with <code>create_model()</code>.</p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">model</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_model</span>
+
+<span class="n">nn4_small2</span> <span class="o">=</span> <span class="n">create_model</span><span class="p">()</span>
+</code></pre></div>
+<p>Model training aims to learn an embedding $f(x)$ of image $x$ such that the squared L2 distance between all faces of the same identity is small and the distance between a pair of faces from different identities is large. This can be achieved with a <em>triplet loss</em> $L$ that is minimized when the distance between an anchor image $x^a_i$ and a positive image $x^p_i$ (same identity) in embedding space is smaller than the distance between that anchor image and a negative image $x^n_i$ (different identity) by at least a margin $\alpha$.</p>
+<p>$$L = \sum^{m}_{i=1} \large[ \small {\mid \mid f(x_{i}^{a}) - f(x_{i}^{p})) \mid \mid_2^2} - {\mid \mid f(x_{i}^{a}) - f(x_{i}^{n})) \mid \mid_2^2} + \alpha \large ] \small_+$$</p>
+<p>$[z]_+$ means $max(z,0)$ and $m$ is the number of triplets in the training set. The triplet loss in Keras is best implemented with a custom layer as the loss function doesn't follow the usual <code>loss(input, target)</code> pattern. This layer calls <code>self.add_loss</code> to install the triplet loss:</p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">keras</span><span class="w"> </span><span class="kn">import</span> <span class="n">backend</span> <span class="k">as</span> <span class="n">K</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">keras.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">keras.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">Input</span><span class="p">,</span> <span class="n">Layer</span>
+
+<span class="c1"># Input for anchor, positive and negative images</span>
+<span class="n">in_a</span> <span class="o">=</span> <span class="n">Input</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">96</span><span class="p">,</span> <span class="mi">96</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="n">in_p</span> <span class="o">=</span> <span class="n">Input</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">96</span><span class="p">,</span> <span class="mi">96</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="n">in_n</span> <span class="o">=</span> <span class="n">Input</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">96</span><span class="p">,</span> <span class="mi">96</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+
+<span class="c1"># Output for anchor, positive and negative embedding vectors</span>
+<span class="c1"># The nn4_small model instance is shared (Siamese network)</span>
+<span class="n">emb_a</span> <span class="o">=</span> <span class="n">nn4_small2</span><span class="p">(</span><span class="n">in_a</span><span class="p">)</span>
+<span class="n">emb_p</span> <span class="o">=</span> <span class="n">nn4_small2</span><span class="p">(</span><span class="n">in_p</span><span class="p">)</span>
+<span class="n">emb_n</span> <span class="o">=</span> <span class="n">nn4_small2</span><span class="p">(</span><span class="n">in_n</span><span class="p">)</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">TripletLossLayer</span><span class="p">(</span><span class="n">Layer</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">TripletLossLayer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">triplet_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">):</span>
+        <span class="n">a</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="n">inputs</span>
+        <span class="n">p_dist</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">K</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">a</span><span class="o">-</span><span class="n">p</span><span class="p">),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">n_dist</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">K</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">a</span><span class="o">-</span><span class="n">n</span><span class="p">),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">K</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">K</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">p_dist</span> <span class="o">-</span> <span class="n">n_dist</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">):</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">triplet_loss</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_loss</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">loss</span>
+
+<span class="c1"># Layer that computes the triplet loss from anchor, positive and negative embedding vectors</span>
+<span class="n">triplet_loss_layer</span> <span class="o">=</span> <span class="n">TripletLossLayer</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;triplet_loss_layer&#39;</span><span class="p">)([</span><span class="n">emb_a</span><span class="p">,</span> <span class="n">emb_p</span><span class="p">,</span> <span class="n">emb_n</span><span class="p">])</span>
+
+<span class="c1"># Model that can be trained with anchor, positive negative images</span>
+<span class="n">nn4_small2_train</span> <span class="o">=</span> <span class="n">Model</span><span class="p">([</span><span class="n">in_a</span><span class="p">,</span> <span class="n">in_p</span><span class="p">,</span> <span class="n">in_n</span><span class="p">],</span> <span class="n">triplet_loss_layer</span><span class="p">)</span>
+</code></pre></div>
+<p>During training, it is important to select triplets whose positive pairs $(x^a_i, x^p_i)$ and negative pairs $(x^a_i, x^n_i)$ are hard to discriminate i.e. their distance difference in embedding space should be less than margin $\alpha$, otherwise, the network is unable to learn a useful embedding. Therefore, each training iteration should select a new batch of triplets based on the embeddings learned in the previous iteration. Assuming that a generator returned from a <code>triplet_generator()</code> call can generate triplets under these constraints, the network can be trained with:</p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">data</span><span class="w"> </span><span class="kn">import</span> <span class="n">triplet_generator</span>
+
+<span class="c1"># triplet_generator() creates a generator that continuously returns </span>
+<span class="c1"># ([a_batch, p_batch, n_batch], None) tuples where a_batch, p_batch </span>
+<span class="c1"># and n_batch are batches of anchor, positive and negative RGB images </span>
+<span class="c1"># each having a shape of (batch_size, 96, 96, 3).</span>
+<span class="n">generator</span> <span class="o">=</span> <span class="n">triplet_generator</span><span class="p">()</span> 
+
+<span class="n">nn4_small2_train</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">loss</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="s1">&#39;adam&#39;</span><span class="p">)</span>
+<span class="n">nn4_small2_train</span><span class="o">.</span><span class="n">fit_generator</span><span class="p">(</span><span class="n">generator</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+
+<span class="c1"># Please note that the current implementation of the generator only generates </span>
+<span class="c1"># random image data. The main goal of this code snippet is to demonstrate </span>
+<span class="c1"># the general setup for model training. In the following, we will anyway </span>
+<span class="c1"># use a pre-trained model so we don&#39;t need a generator here that operates </span>
+<span class="c1"># on real training data. I&#39;ll maybe provide a fully functional generator</span>
+<span class="c1"># later.</span>
+</code></pre></div>
+<p>The above code snippet should merely demonstrate how to setup model training. But instead of actually training a model from scratch we will now use a pre-trained model as training from scratch is very expensive and requires huge datasets to achieve good generalization performance. For example, <a href="https://arxiv.org/abs/1503.03832">[1]</a> uses a dataset of 200M images consisting of about 8M identities. </p>
+<p>The OpenFace project provides <a href="https://cmusatyalab.github.io/openface/models-and-accuracies/#pre-trained-models">pre-trained models</a> that were trained with the public face recognition datasets <a href="http://vintage.winklerbros.net/facescrub.html">FaceScrub</a> and <a href="http://arxiv.org/abs/1411.7923">CASIA-WebFace</a>. The Keras-OpenFace project converted the weights of the pre-trained nn4.small2.v1 model to <a href="https://github.com/iwantooxxoox/Keras-OpenFace/tree/master/weights">CSV files</a> which were then <a href="https://github.com/krasserm/face-recognition/blob/master/face-recognition-convert.ipynb">converted here</a> to a binary format that can be loaded by Keras with <code>load_weights</code>:</p>
+<div class="highlight"><pre><code><span class="n">nn4_small2_pretrained</span> <span class="o">=</span> <span class="n">create_model</span><span class="p">()</span>
+<span class="n">nn4_small2_pretrained</span><span class="o">.</span><span class="n">load_weights</span><span class="p">(</span><span class="s1">&#39;weights/nn4.small2.v1.h5&#39;</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="custom-dataset">Custom dataset</h2>
+<p>To demonstrate face recognition on a custom dataset, a small subset of the <a href="http://vis-www.cs.umass.edu/lfw/">LFW</a> dataset is used. It consists of 100 face images of <a href="https://github.com/krasserm/face-recognition/tree/master/images">10 identities</a>. The metadata for each image (file and identity name) are loaded into memory for later processing.</p>
+<div class="highlight"><pre><code><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">IdentityMetadata</span><span class="p">():</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">file</span><span class="p">):</span>
+        <span class="c1"># dataset base directory</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base</span> <span class="o">=</span> <span class="n">base</span>
+        <span class="c1"># identity name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="c1"># image file name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file</span> <span class="o">=</span> <span class="n">file</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">image_path</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">image_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="p">)</span> 
+
+<span class="k">def</span><span class="w"> </span><span class="nf">load_metadata</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="n">metadata</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">i</span><span class="p">)):</span>
+            <span class="n">metadata</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">IdentityMetadata</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">f</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
+
+<span class="n">metadata</span> <span class="o">=</span> <span class="n">load_metadata</span><span class="p">(</span><span class="s1">&#39;images&#39;</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="face-alignment">Face alignment</h2>
+<p>The nn4.small2.v1 model was trained with aligned face images, therefore, the face images from the custom dataset must be aligned too. Here, we use <a href="http://dlib.net/">Dlib</a> for face detection and <a href="https://opencv.org/">OpenCV</a> for image transformation and cropping to produce aligned 96x96 RGB face images. By using the <a href="https://github.com/krasserm/face-recognition/blob/master/align.py">AlignDlib</a> utility from the OpenFace project this is straightforward:</p>
+<div class="highlight"><pre><code><span class="kn">import</span><span class="w"> </span><span class="nn">cv2</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.patches</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">patches</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">align</span><span class="w"> </span><span class="kn">import</span> <span class="n">AlignDlib</span>
+
+<span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">load_image</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="n">img</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># OpenCV loads images with color channels</span>
+    <span class="c1"># in BGR order. So we need to reverse them</span>
+    <span class="k">return</span> <span class="n">img</span><span class="p">[</span><span class="o">...</span><span class="p">,::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+<span class="c1"># Initialize the OpenFace face alignment utility</span>
+<span class="n">alignment</span> <span class="o">=</span> <span class="n">AlignDlib</span><span class="p">(</span><span class="s1">&#39;models/landmarks.dat&#39;</span><span class="p">)</span>
+
+<span class="c1"># Load an image of Jacques Chirac</span>
+<span class="n">jc_orig</span> <span class="o">=</span> <span class="n">load_image</span><span class="p">(</span><span class="n">metadata</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">image_path</span><span class="p">())</span>
+
+<span class="c1"># Detect face and return bounding box</span>
+<span class="n">bb</span> <span class="o">=</span> <span class="n">alignment</span><span class="o">.</span><span class="n">getLargestFaceBoundingBox</span><span class="p">(</span><span class="n">jc_orig</span><span class="p">)</span>
+
+<span class="c1"># Transform image using specified face landmark indices and crop image to 96x96</span>
+<span class="n">jc_aligned</span> <span class="o">=</span> <span class="n">alignment</span><span class="o">.</span><span class="n">align</span><span class="p">(</span><span class="mi">96</span><span class="p">,</span> <span class="n">jc_orig</span><span class="p">,</span> <span class="n">bb</span><span class="p">,</span> <span class="n">landmarkIndices</span><span class="o">=</span><span class="n">AlignDlib</span><span class="o">.</span><span class="n">OUTER_EYES_AND_NOSE</span><span class="p">)</span>
+
+<span class="c1"># Show original image</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">131</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">jc_orig</span><span class="p">)</span>
+
+<span class="c1"># Show original image with bounding box</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">132</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">jc_orig</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span><span class="o">.</span><span class="n">add_patch</span><span class="p">(</span><span class="n">patches</span><span class="o">.</span><span class="n">Rectangle</span><span class="p">((</span><span class="n">bb</span><span class="o">.</span><span class="n">left</span><span class="p">(),</span> <span class="n">bb</span><span class="o">.</span><span class="n">top</span><span class="p">()),</span> <span class="n">bb</span><span class="o">.</span><span class="n">width</span><span class="p">(),</span> <span class="n">bb</span><span class="o">.</span><span class="n">height</span><span class="p">(),</span> <span class="n">fill</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">))</span>
+
+<span class="c1"># Show aligned image</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">133</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">jc_aligned</span><span class="p">);</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2018-02-07/output_15_0.png" /></p>
+<p>As described in the OpenFace <a href="https://cmusatyalab.github.io/openface/models-and-accuracies/#pre-trained-models">pre-trained models</a> section, landmark indices <code>OUTER_EYES_AND_NOSE</code> are required for model nn4.small2.v1. Let's implement face detection, transformation and cropping as <code>align_image</code> function for later reuse.</p>
+<div class="highlight"><pre><code><span class="k">def</span><span class="w"> </span><span class="nf">align_image</span><span class="p">(</span><span class="n">img</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">alignment</span><span class="o">.</span><span class="n">align</span><span class="p">(</span><span class="mi">96</span><span class="p">,</span> <span class="n">img</span><span class="p">,</span> <span class="n">alignment</span><span class="o">.</span><span class="n">getLargestFaceBoundingBox</span><span class="p">(</span><span class="n">img</span><span class="p">),</span> 
+                           <span class="n">landmarkIndices</span><span class="o">=</span><span class="n">AlignDlib</span><span class="o">.</span><span class="n">OUTER_EYES_AND_NOSE</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="embedding-vectors">Embedding vectors</h2>
+<p>Embedding vectors can now be calculated by feeding the aligned and scaled images into the pre-trained network.</p>
+<div class="highlight"><pre><code><span class="n">embedded</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">metadata</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">128</span><span class="p">))</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">metadata</span><span class="p">):</span>
+    <span class="n">img</span> <span class="o">=</span> <span class="n">load_image</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">image_path</span><span class="p">())</span>
+    <span class="n">img</span> <span class="o">=</span> <span class="n">align_image</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+    <span class="c1"># scale RGB values to interval [0,1]</span>
+    <span class="n">img</span> <span class="o">=</span> <span class="p">(</span><span class="n">img</span> <span class="o">/</span> <span class="mf">255.</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="c1"># obtain embedding vector for image</span>
+    <span class="n">embedded</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">nn4_small2_pretrained</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+</code></pre></div>
+<p>Let's verify on a single triplet example that the squared L2 distance between its anchor-positive pair is smaller than the distance between its anchor-negative pair.</p>
+<div class="highlight"><pre><code><span class="k">def</span><span class="w"> </span><span class="nf">distance</span><span class="p">(</span><span class="n">emb1</span><span class="p">,</span> <span class="n">emb2</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">emb1</span> <span class="o">-</span> <span class="n">emb2</span><span class="p">))</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">show_pair</span><span class="p">(</span><span class="n">idx1</span><span class="p">,</span> <span class="n">idx2</span><span class="p">):</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Distance = </span><span class="si">{</span><span class="n">distance</span><span class="p">(</span><span class="n">embedded</span><span class="p">[</span><span class="n">idx1</span><span class="p">],</span><span class="w"> </span><span class="n">embedded</span><span class="p">[</span><span class="n">idx2</span><span class="p">])</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">121</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">load_image</span><span class="p">(</span><span class="n">metadata</span><span class="p">[</span><span class="n">idx1</span><span class="p">]</span><span class="o">.</span><span class="n">image_path</span><span class="p">()))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">122</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">load_image</span><span class="p">(</span><span class="n">metadata</span><span class="p">[</span><span class="n">idx2</span><span class="p">]</span><span class="o">.</span><span class="n">image_path</span><span class="p">()));</span>    
+
+<span class="n">show_pair</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="n">show_pair</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">12</span><span class="p">)</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2018-02-07/output_22_0.png" /></p>
+<p><img alt="png" src="/img/2018-02-07/output_22_1.png" /></p>
+<p>As expected, the distance between the two images of Jacques Chirac is smaller than the distance between an image of Jacques Chirac and an image of Gerhard Schröder (0.30 &lt; 1.12). But we still do not know what distance threshold $\tau$ is the best boundary for making a decision between <em>same identity</em> and <em>different identity</em>.</p>
+<h2 id="distance-threshold">Distance threshold</h2>
+<p>To find the optimal value for $\tau$, the face verification performance must be evaluated on a range of distance threshold values. At a given threshold, all possible embedding vector pairs are classified as either <em>same identity</em> or <em>different identity</em> and compared to the ground truth. Since we're dealing with skewed classes (much more negative pairs than positive pairs), we use the <a href="https://en.wikipedia.org/wiki/F1_score">F1 score</a> as evaluation metric instead of <a href="http://scikit-learn.org/stable/modules/generated/sklearn.metrics.accuracy_score.html">accuracy</a>.</p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">f1_score</span><span class="p">,</span> <span class="n">accuracy_score</span>
+
+<span class="n">distances</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1"># squared L2 distance between pairs</span>
+<span class="n">identical</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1"># 1 if same identity, 0 otherwise</span>
+
+<span class="n">num</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">num</span><span class="p">):</span>
+        <span class="n">distances</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">distance</span><span class="p">(</span><span class="n">embedded</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">embedded</span><span class="p">[</span><span class="n">j</span><span class="p">]))</span>
+        <span class="n">identical</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">1</span> <span class="k">if</span> <span class="n">metadata</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">metadata</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">name</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span>
+
+<span class="n">distances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">distances</span><span class="p">)</span>
+<span class="n">identical</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">identical</span><span class="p">)</span>
+
+<span class="n">thresholds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">0.3</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">)</span>
+
+<span class="n">f1_scores</span> <span class="o">=</span> <span class="p">[</span><span class="n">f1_score</span><span class="p">(</span><span class="n">identical</span><span class="p">,</span> <span class="n">distances</span> <span class="o">&lt;</span> <span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">thresholds</span><span class="p">]</span>
+<span class="n">acc_scores</span> <span class="o">=</span> <span class="p">[</span><span class="n">accuracy_score</span><span class="p">(</span><span class="n">identical</span><span class="p">,</span> <span class="n">distances</span> <span class="o">&lt;</span> <span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">thresholds</span><span class="p">]</span>
+
+<span class="n">opt_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">f1_scores</span><span class="p">)</span>
+<span class="c1"># Threshold at maximal F1 score</span>
+<span class="n">opt_tau</span> <span class="o">=</span> <span class="n">thresholds</span><span class="p">[</span><span class="n">opt_idx</span><span class="p">]</span>
+<span class="c1"># Accuracy at maximal F1 score</span>
+<span class="n">opt_acc</span> <span class="o">=</span> <span class="n">accuracy_score</span><span class="p">(</span><span class="n">identical</span><span class="p">,</span> <span class="n">distances</span> <span class="o">&lt;</span> <span class="n">opt_tau</span><span class="p">)</span>
+
+<span class="c1"># Plot F1 score and accuracy as function of distance threshold</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">thresholds</span><span class="p">,</span> <span class="n">f1_scores</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;F1 score&#39;</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">thresholds</span><span class="p">,</span> <span class="n">acc_scores</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Accuracy&#39;</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">opt_tau</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;lightgrey&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Threshold&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Accuracy at threshold </span><span class="si">{</span><span class="n">opt_tau</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1"> = </span><span class="si">{</span><span class="n">opt_acc</span><span class="si">:</span><span class="s1">.3f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Distance threshold&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">();</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2018-02-07/output_26_0.png" /></p>
+<p>The face verification accuracy at $\tau$ = 0.56 is 95.7%. This is not bad given a baseline of 89% for a classifier that always predicts <em>different identity</em> (there are 450 pos. pairs and 4500 neg. pairs) but since nn4.small2.v1 is a relatively small model it is still less than what can be achieved by state-of-the-art models (&gt; 99%). </p>
+<p>The following two histograms show the distance distributions of positive and negative pairs and the location of the decision boundary. There is a clear separation of these distributions which explains the discriminative performance of the network. One can also spot some strong outliers in the positive pairs class but these are not further analyzed here.</p>
+<div class="highlight"><pre><code><span class="n">dist_pos</span> <span class="o">=</span> <span class="n">distances</span><span class="p">[</span><span class="n">identical</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+<span class="n">dist_neg</span> <span class="o">=</span> <span class="n">distances</span><span class="p">[</span><span class="n">identical</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">121</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">dist_pos</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">opt_tau</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;lightgrey&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Threshold&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Distances (pos. pairs)&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">();</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">122</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">dist_neg</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">opt_tau</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;lightgrey&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Threshold&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Distances (neg. pairs)&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">();</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2018-02-07/output_28_0.png" /></p>
+<h2 id="face-recognition">Face recognition</h2>
+<p>Given an estimate of the distance threshold $\tau$, face recognition is now as simple as calculating the distances between an input embedding vector and all embedding vectors in a database. The input is assigned the label (i.e. identity) of the database entry with the smallest distance if it is less than $\tau$ or label <em>unknown</em> otherwise. This procedure can also scale to large databases as it can be easily parallelized. It also supports one-shot learning, as adding only a single entry of a new identity might be sufficient to recognize new examples of that identity.</p>
+<p>A more robust approach is to label the input using the top $k$ scoring entries in the database which is essentially <a href="https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm">KNN classification</a> with a Euclidean distance metric. Alternatively, a linear <a href="https://en.wikipedia.org/wiki/Support_vector_machine">support vector machine</a> (SVM) can be trained with the database entries and used to classify i.e. identify new inputs. For training these classifiers we use 50% of the dataset, for evaluation the other 50%.</p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">LabelEncoder</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.neighbors</span><span class="w"> </span><span class="kn">import</span> <span class="n">KNeighborsClassifier</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.svm</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinearSVC</span>
+
+<span class="n">targets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">m</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">metadata</span><span class="p">])</span>
+
+<span class="n">encoder</span> <span class="o">=</span> <span class="n">LabelEncoder</span><span class="p">()</span>
+<span class="n">encoder</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">targets</span><span class="p">)</span>
+
+<span class="c1"># Numerical encoding of identities</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">encoder</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">targets</span><span class="p">)</span>
+
+<span class="n">train_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">metadata</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">!=</span> <span class="mi">0</span>
+<span class="n">test_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">metadata</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span>
+
+<span class="c1"># 50 train examples of 10 identities (5 examples each)</span>
+<span class="n">X_train</span> <span class="o">=</span> <span class="n">embedded</span><span class="p">[</span><span class="n">train_idx</span><span class="p">]</span>
+<span class="c1"># 50 test examples of 10 identities (5 examples each)</span>
+<span class="n">X_test</span> <span class="o">=</span> <span class="n">embedded</span><span class="p">[</span><span class="n">test_idx</span><span class="p">]</span>
+
+<span class="n">y_train</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="n">train_idx</span><span class="p">]</span>
+<span class="n">y_test</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="n">test_idx</span><span class="p">]</span>
+
+<span class="n">knn</span> <span class="o">=</span> <span class="n">KNeighborsClassifier</span><span class="p">(</span><span class="n">n_neighbors</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s1">&#39;euclidean&#39;</span><span class="p">)</span>
+<span class="n">svc</span> <span class="o">=</span> <span class="n">LinearSVC</span><span class="p">()</span>
+
+<span class="n">knn</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+<span class="n">svc</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+
+<span class="n">acc_knn</span> <span class="o">=</span> <span class="n">accuracy_score</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">knn</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">))</span>
+<span class="n">acc_svc</span> <span class="o">=</span> <span class="n">accuracy_score</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">svc</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">))</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;KNN accuracy = </span><span class="si">{</span><span class="n">acc_knn</span><span class="si">}</span><span class="s1">, SVM accuracy = </span><span class="si">{</span><span class="n">acc_svc</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+</code></pre></div>
+<pre><code>KNN accuracy = 0.96, SVM accuracy = 0.98
+</code></pre>
+<p>The KNN classifier achieves an accuracy of 96% on the test set, the SVM classifier 98%. Let's use the SVM classifier to illustrate face recognition on a single example.</p>
+<div class="highlight"><pre><code><span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="c1"># Suppress LabelEncoder warning</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+
+<span class="n">example_idx</span> <span class="o">=</span> <span class="mi">29</span>
+
+<span class="n">example_image</span> <span class="o">=</span> <span class="n">load_image</span><span class="p">(</span><span class="n">metadata</span><span class="p">[</span><span class="n">test_idx</span><span class="p">][</span><span class="n">example_idx</span><span class="p">]</span><span class="o">.</span><span class="n">image_path</span><span class="p">())</span>
+<span class="n">example_prediction</span> <span class="o">=</span> <span class="n">svc</span><span class="o">.</span><span class="n">predict</span><span class="p">([</span><span class="n">embedded</span><span class="p">[</span><span class="n">test_idx</span><span class="p">][</span><span class="n">example_idx</span><span class="p">]])</span>
+<span class="n">example_identity</span> <span class="o">=</span> <span class="n">encoder</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">example_prediction</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">example_image</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Recognized as </span><span class="si">{</span><span class="n">example_identity</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">);</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2018-02-07/output_33_0.png" /></p>
+<p>Seems reasonable :-) Classification results should actually be checked whether (a subset of) the database entries of the predicted identity have a distance less than $\tau$, otherwise one should assign an <em>unknown</em> label. This step is skipped here but can be easily added.</p>
+<h2 id="dataset-visualization">Dataset visualization</h2>
+<p>To embed the dataset into 2D space for displaying identity clusters, <a href="https://en.wikipedia.org/wiki/T-distributed_stochastic_neighbor_embedding">t-distributed Stochastic Neighbor Embedding</a> (t-SNE) is applied to the 128-dimensional embedding vectors. Except from a few outliers, identity clusters are well separated.</p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.manifold</span><span class="w"> </span><span class="kn">import</span> <span class="n">TSNE</span>
+
+<span class="n">X_embedded</span> <span class="o">=</span> <span class="n">TSNE</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">embedded</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">targets</span><span class="p">)):</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">targets</span> <span class="o">==</span> <span class="n">t</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X_embedded</span><span class="p">[</span><span class="n">idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">X_embedded</span><span class="p">[</span><span class="n">idx</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="n">t</span><span class="p">)</span>   
+
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">bbox_to_anchor</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">));</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2018-02-07/output_37_0.png" /></p>
+<h2 id="references">References</h2>
+<ul>
+<li>[1] <a href="https://arxiv.org/abs/1503.03832">FaceNet: A Unified Embedding for Face Recognition and Clustering</a></li>
+<li>[2] <a href="https://arxiv.org/abs/1409.4842">Going Deeper with Convolutions</a></li>
+</ul>
+    </div>
+
+    <nav class="post-nav">
+        
+        <a href="/2018/01/03/machine-learning-resources/" class="post-nav-link post-nav-older">
+            <span class="post-nav-label">&larr; Older</span>
+            <span class="post-nav-title">Resources for getting started with ML and DL</span>
+        </a>
+        
+        
+        <a href="/2018/03/19/gaussian-processes/" class="post-nav-link post-nav-newer">
+            <span class="post-nav-label">Newer &rarr;</span>
+            <span class="post-nav-title">Gaussian processes</span>
+        </a>
+        
+    </nav>
+
+    
+    <section class="comments">
+        <h2>Comments</h2>
+        <div id="disqus_thread"></div>
+    </section>
+    
+</article>
+
+        </div>
+    </main>
+
+    
+    <footer class="footer">
+        <div class="container">
+            
+<ul class="footer-social-links">
+    <li>
+        <a href="https://linkedin.com/in/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+    <rect x="2" y="9" width="4" height="12"/>
+    <circle cx="4" cy="4" r="2"/>
+</svg>
+
+            linkedin.com/in/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/gradion-ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/gradion-ai
+        </a>
+    </li>
+    <li>
+        <a href="https://gradion.ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
+    <path d="M9 22v-4h6v4"/>
+    <path d="M8 6h.01"/><path d="M16 6h.01"/>
+    <path d="M12 6h.01"/>
+    <path d="M12 10h.01"/><path d="M12 14h.01"/>
+    <path d="M16 10h.01"/><path d="M16 14h.01"/>
+    <path d="M8 10h.01"/><path d="M8 14h.01"/>
+</svg>
+
+            gradion.ai
+        </a>
+    </li>
+    <li>
+        <a href="/llms.txt">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 8V4H8"/>
+    <rect width="16" height="12" x="4" y="8" rx="2"/>
+    <path d="M2 14h2"/>
+    <path d="M20 14h2"/>
+    <path d="M15 13v2"/>
+    <path d="M9 13v2"/>
+</svg>
+
+            llms.txt
+        </a>
+    </li>
+    <li>
+        <a href="/feed.xml">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 11a9 9 0 0 1 9 9"/>
+    <path d="M4 4a16 16 0 0 1 16 16"/>
+    <circle cx="5" cy="19" r="1"/>
+</svg>
+
+            feed.xml
+        </a>
+    </li>
+</ul>
+
+            <p class="footer-copyright">// Martin Krasser, 2026</p>
+        </div>
+    </footer>
+
+    <script>
+    document.querySelectorAll('a[href^="http"]').forEach(link => {
+        if (!link.href.startsWith(location.origin)) {
+            link.target = '_blank';
+            link.rel = 'noopener';
+        }
+    });
+    </script>
+    
+
+<script>
+var disqus_config = function () {
+    this.page.url = 'https://krasserm.github.io/2018/02/07/deep-face-recognition/';
+    this.page.identifier = '/2018/02/07/deep-face-recognition/';
+};
+(function() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://krasserm.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+</body>
+</html>

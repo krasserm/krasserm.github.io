@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#0a0e14">
+    <title>Conditional generation via Bayesian optimization in latent space - Martin Krasser</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/pygments.css">
+    <link rel="alternate" type="application/atom+xml" title="Martin Krasser Feed" href="/feed.xml">
+    
+<script>
+MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="/" class="nav-brand">Martin Krasser</a>
+            <ul class="nav-links">
+                
+                <li><a href="/about/">About</a></li>
+                
+                <li><a href="/">Blog</a></li>
+                
+                <li><a href="/industry/">Industry</a></li>
+                
+                <li><a href="/open-source/">Open Source</a></li>
+                
+                <li><a href="/citations/">Citations</a></li>
+                
+                <li><a href="/stories/">Stories</a></li>
+                
+                <li><a href="/contact/">Contact</a></li>
+                
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="container">
+            
+<article class="post">
+    <header class="post-header">
+        <h1 class="post-title">Conditional generation via Bayesian optimization in latent space</h1>
+        
+        <p class="post-meta">
+            <time datetime="2018-04-07">
+                April 07, 2018
+            </time>
+            
+            <span class="post-author">by Martin Krasser</span>
+            
+        </p>
+    </header>
+
+    <div class="post-content">
+        <p><em>Sources:</em></p>
+<ul>
+<li><em><a href="http://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/dev/autoencoder-applications/variational_autoencoder_opt.ipynb">Notebook</a></em></li>
+<li><em><a href="https://github.com/krasserm/bayesian-machine-learning">Repository</a></em></li>
+</ul>
+<h2 id="introduction">Introduction</h2>
+<p>I recently read <a href="https://arxiv.org/abs/1610.02415">Automatic Chemical Design Using a Data-Driven Continuous Representation of Molecules</a> by Gómez-Bombarelli et. al.<sup>[1]</sup> and it motivated me to experiment with the approaches described in the paper. </p>
+<p>Here's a brief summary of the paper. It describes how they use a variational autoencoder<sup>[2]</sup> for generating new chemical compounds with properties that are of interest for drug discovery. For training, they used a large database of chemical compounds whose properties of interest are known. The variational auto-encoder can encode compounds into 196-dimensional latent space representations.</p>
+<p>By sampling from the continuous latent space new compounds can be generated e.g. by sampling near a known compound to generate slight variations of it or by interpolating between more distant compounds. By simply auto-encoding chemical compounds, however, they were not able organize latent space w.r.t. properties of interest.</p>
+<p>To additionally organize latent space w.r.t. these properties they jointly trained the variational autoencoder with a predictor that predicts these properties from latent space representations. Joint training with a predictor resulted in a latent space that reveals a gradient of these properties. This gradient can then be used to drive search for new chemical compounds into regions of desired properties. The following figure, copied from the paper<sup>[1]</sup>, summarizes the approach.</p>
+<p><img alt="vae-chem" src="/img/2018-04-07/vae-chem.png" /></p>
+<p>For representing compounds in structure space, they use <a href="https://en.wikipedia.org/wiki/Simplified_molecular-input_line-entry_system">SMILES</a> strings which can be converted to and from structural representations using standard computational chemistry software. For the encoder network, they experimented with both, 1D-CNNs and RNNs, for the decoder network they used a RNN. Architecure details are described in the paper. The predictor is a small dense neural network. For optimization in latent space i.e. for navigating into regions of desired properties they use a Bayesian optimization approach with Gaussian processes as surrogate model. </p>
+<p>The authors open-sourced their <a href="https://github.com/aspuru-guzik-group/chemical_vae">chemical variational autoencoder</a> but didn't publish code related to Bayesian optimization, at least not at the time of writing this article. So I decided to start some experiments but on a toy dataset that is not related to chemistry at all: the <a href="https://en.wikipedia.org/wiki/MNIST_database">MNIST handwritten digits dataset</a>. All methods described in the paper can be applied in this context too and results are easier to visualize and probably easier to grasp for people not familiar with chemistry. The only property associated with the MNIST dataset is the label or value of the digits. </p>
+<p>In the following, it will be shown how to conditionally generate new digits by following a gradient in latent space. In other words, it will be shown how to navigate into regions of latent space that decode into digit images of desired target label. I'm also going to adress the following questions:</p>
+<ul>
+<li>How does joint training with a predictor change the latent space of a variational autoencoder?</li>
+<li>How can useful optimization objectives be designed?</li>
+<li>How can application of Bayesian optimization methods be justified?</li>
+<li>What are possible alternatives to this approach? </li>
+</ul>
+<p>I'll leave experiments with the chemical compounds dataset and the public chemical VAE for another article. The following assumes some basic familiarity with <a href="/2018/04/03/variational-inference/">variational autoencoders</a>, <a href="/2018/03/21/bayesian-optimization/">Bayesian otpimization</a> and <a href="/2018/03/19/gaussian-processes/">Gaussian processes</a>. For more information on these topics you may want to read the linked articles.</p>
+<h2 id="architecture">Architecture</h2>
+<p>The high-level architecture of the joint VAE-predictor model is shown in the following figure.</p>
+<p><img alt="model" src="/img/2018-04-07/model.png" /></p>
+<h3 id="encoder">Encoder</h3>
+<p>The encoder is a CNN, identical to the one presented in the the <a href="https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/dev/autoencoder-applications/variational_autoencoder.ipynb">variational autoencoder</a> notebook.</p>
+<p><img alt="encoder" src="/img/2018-04-07/encoder.png" /> </p>
+<h3 id="decoder">Decoder</h3>
+<p>The decoder is a CNN, identical to the one presented in the the <a href="https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/dev/autoencoder-applications/variational_autoencoder.ipynb">variational autoencoder</a> notebook.</p>
+<p><img alt="decoder" src="/img/2018-04-07/decoder.png" /></p>
+<h3 id="predictor">Predictor</h3>
+<p>The predictor is a dense network with two hidden layers that predicts the probabilities of MNIST image labels 0-9 from the mean i.e. <code>t_mean</code> of the variational Gaussian distribution (details below). <code>t_mean</code> is one of the encoder outputs. The output layer of the predictor is a softmax layer with 10 units.</p>
+<p><img alt="predictor" src="/img/2018-04-07/predictor.png" /></p>
+<h2 id="implementation">Implementation</h2>
+<p>We will use a 2-dimensional latent space for easier visualization. By default, this notebook loads pre-trained models. If you want to train the models yourself set <code>use_pretrained</code> to <code>False</code>. Expects about 15 minutes on a GPU for training and much longer on a CPU.</p>
+<div class="highlight"><pre><code><span class="c1"># Use pre-trained models by default</span>
+<span class="n">use_pretrained</span> <span class="o">=</span> <span class="kc">True</span>
+
+<span class="c1"># Dimensionality of latent space</span>
+<span class="n">latent_dim</span> <span class="o">=</span> <span class="mi">2</span>
+
+<span class="c1"># Mini-batch size used for training</span>
+<span class="n">batch_size</span> <span class="o">=</span> <span class="mi">64</span>
+</code></pre></div>
+<p>Code for the encoder and decoder have already been presented <a href="https://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/dev/autoencoder-applications/variational_autoencoder.ipynb">elsewhere</a>, so only code for the predictor is shown here (see <a href="https://github.com/krasserm/bayesian-machine-learning/blob/dev/autoencoder-applications/variational_autoencoder_opt_util.py">variational_autoencoder_opt_util.py</a> for other function definitions):</p>
+<div class="highlight"><pre><code><span class="kn">import</span><span class="w"> </span><span class="nn">keras</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">keras</span><span class="w"> </span><span class="kn">import</span> <span class="n">layers</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">keras.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">create_predictor</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Creates a classifier that predicts digit image labels </span>
+<span class="sd">    from latent variables.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">predictor_input</span> <span class="o">=</span> <span class="n">layers</span><span class="o">.</span><span class="n">Input</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">latent_dim</span><span class="p">,),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;t_mean&#39;</span><span class="p">)</span>
+
+    <span class="n">x</span> <span class="o">=</span> <span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">)(</span><span class="n">predictor_input</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;softmax&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;label_probs&#39;</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">Model</span><span class="p">(</span><span class="n">predictor_input</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;predictor&#39;</span><span class="p">)</span>
+</code></pre></div>
+<pre><code>Using TensorFlow backend.
+</code></pre>
+<p>The following composes the joint VAE-predictor model. Note that input to the predictor is the mean i.e. <code>t_mean</code> of the variational distribution, not a sample from it.</p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">variational_autoencoder_opt_util</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">encoder</span> <span class="o">=</span> <span class="n">create_encoder</span><span class="p">(</span><span class="n">latent_dim</span><span class="p">)</span>
+<span class="n">decoder</span> <span class="o">=</span> <span class="n">create_decoder</span><span class="p">(</span><span class="n">latent_dim</span><span class="p">)</span>
+<span class="n">sampler</span> <span class="o">=</span> <span class="n">create_sampler</span><span class="p">()</span>
+<span class="n">predictor</span> <span class="o">=</span> <span class="n">create_predictor</span><span class="p">()</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">layers</span><span class="o">.</span><span class="n">Input</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="n">image_shape</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;image&#39;</span><span class="p">)</span>
+<span class="n">t_mean</span><span class="p">,</span> <span class="n">t_log_var</span> <span class="o">=</span> <span class="n">encoder</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="n">t</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">([</span><span class="n">t_mean</span><span class="p">,</span> <span class="n">t_log_var</span><span class="p">])</span>
+<span class="n">t_decoded</span> <span class="o">=</span> <span class="n">decoder</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+<span class="n">t_predicted</span> <span class="o">=</span> <span class="n">predictor</span><span class="p">(</span><span class="n">t_mean</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">[</span><span class="n">t_decoded</span><span class="p">,</span> <span class="n">t_predicted</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;composite&#39;</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="dataset">Dataset</h2>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">keras.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">mnist</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">keras.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">to_categorical</span>
+
+<span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">),</span> <span class="p">(</span><span class="n">x_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span> <span class="o">=</span> <span class="n">mnist</span><span class="o">.</span><span class="n">load_data</span><span class="p">()</span>
+
+<span class="n">x_train</span> <span class="o">=</span> <span class="n">x_train</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;float32&#39;</span><span class="p">)</span> <span class="o">/</span> <span class="mf">255.</span>
+<span class="n">x_train</span> <span class="o">=</span> <span class="n">x_train</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">x_train</span><span class="o">.</span><span class="n">shape</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="p">,))</span>
+<span class="n">y_train_cat</span> <span class="o">=</span> <span class="n">to_categorical</span><span class="p">(</span><span class="n">y_train</span><span class="p">)</span>
+
+<span class="n">x_test</span> <span class="o">=</span> <span class="n">x_test</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;float32&#39;</span><span class="p">)</span> <span class="o">/</span> <span class="mf">255.</span>
+<span class="n">x_test</span> <span class="o">=</span> <span class="n">x_test</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">x_test</span><span class="o">.</span><span class="n">shape</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="p">,))</span>
+<span class="n">y_test_cat</span> <span class="o">=</span> <span class="n">to_categorical</span><span class="p">(</span><span class="n">y_test</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="training">Training</h2>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">keras</span><span class="w"> </span><span class="kn">import</span> <span class="n">backend</span> <span class="k">as</span> <span class="n">K</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">keras.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_model</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">vae_loss</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">t_decoded</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Negative variational lower bound used as loss function for </span>
+<span class="sd">    training the variational autoencoder on the MNIST dataset.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1"># Reconstruction loss</span>
+    <span class="n">rc_loss</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">K</span><span class="o">.</span><span class="n">binary_crossentropy</span><span class="p">(</span>
+        <span class="n">K</span><span class="o">.</span><span class="n">batch_flatten</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> 
+        <span class="n">K</span><span class="o">.</span><span class="n">batch_flatten</span><span class="p">(</span><span class="n">t_decoded</span><span class="p">)),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Regularization term (KL divergence)</span>
+    <span class="n">kl_loss</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">K</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">t_log_var</span> \
+                             <span class="o">-</span> <span class="n">K</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">t_mean</span><span class="p">)</span> \
+                             <span class="o">-</span> <span class="n">K</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">t_log_var</span><span class="p">),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">K</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">rc_loss</span> <span class="o">+</span> <span class="n">kl_loss</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">use_pretrained</span><span class="p">:</span>
+    <span class="c1"># Load VAE that was jointly trained with a </span>
+    <span class="c1"># predictor returned from create_predictor()</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">load_model</span><span class="p">(</span><span class="s1">&#39;models/vae-opt/vae-predictor-softmax.h5&#39;</span><span class="p">,</span> 
+                        <span class="n">custom_objects</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;vae_loss&#39;</span><span class="p">:</span> <span class="n">vae_loss</span><span class="p">})</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="s1">&#39;rmsprop&#39;</span><span class="p">,</span> 
+                  <span class="n">loss</span><span class="o">=</span><span class="p">[</span><span class="n">vae_loss</span><span class="p">,</span> <span class="s1">&#39;categorical_crossentropy&#39;</span><span class="p">],</span>
+                  <span class="n">loss_weights</span><span class="o">=</span><span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">])</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x_train</span><span class="p">,</span> 
+              <span class="n">y</span><span class="o">=</span><span class="p">[</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y_train_cat</span><span class="p">],</span>
+              <span class="n">epochs</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span>
+              <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
+              <span class="n">validation_data</span><span class="o">=</span><span class="p">(</span><span class="n">x_test</span><span class="p">,</span> <span class="p">[</span><span class="n">x_test</span><span class="p">,</span> <span class="n">y_test_cat</span><span class="p">]),</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="results">Results</h2>
+<p><a name="Latent-space"></p>
+<h3 id="latent-space">Latent space</h3>
+<p>This sections addresses the question </p>
+<blockquote>
+<p>How does joint training with a predictor change the latent space of a variational autoencoder? </p>
+</blockquote>
+<p>To answer, three models have been trained:</p>
+<ul>
+<li>A VAE as described above but without a predictor (<code>model_predictor_off</code>).</li>
+<li>A VAE jointly trained with a classifier as predictor (<code>model_predictor_softmax</code>). This is the model described above where the predictor predicts the probabilities of labels 0-9 from encoded MNIST images.</li>
+<li>A VAE as described above but jointly trained with a regressor as predictor (<code>model_predictor_linear</code>). The predictor of this model is trained to predict digit values on a continuous scale i.e. predictions are floating point numbers that can also be less than 0 and greater than 9. See also <code>create_predictor_linear</code> in <a href="variational_autoencoder_opt_util.py">variational_autoencoder_opt_util.py</a>.</li>
+</ul>
+<div class="highlight"><pre><code><span class="n">model_predictor_softmax</span> <span class="o">=</span> <span class="n">model</span>
+
+<span class="n">model_predictor_linear</span> <span class="o">=</span> <span class="n">load_model</span><span class="p">(</span><span class="s1">&#39;models/vae-opt/vae-predictor-linear.h5&#39;</span><span class="p">,</span> 
+                                    <span class="n">custom_objects</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;vae_loss&#39;</span><span class="p">:</span> <span class="n">vae_loss</span><span class="p">})</span>
+<span class="n">model_predictor_off</span> <span class="o">=</span> <span class="n">load_model</span><span class="p">(</span><span class="s1">&#39;models/vae-opt/vae-predictor-off.h5&#39;</span><span class="p">,</span> 
+                                 <span class="n">custom_objects</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;vae_loss&#39;</span><span class="p">:</span> <span class="n">vae_loss</span><span class="p">})</span>
+</code></pre></div>
+<p>The following plots show the latent spaces of these three models and the distribution of the validation dataset <code>x_test</code> in these spaces. Validation data points are colored by their label.</p>
+<div class="highlight"><pre><code><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">encode</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">get_layer</span><span class="p">(</span><span class="s1">&#39;encoder&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+<span class="n">ts</span> <span class="o">=</span> <span class="p">[</span><span class="n">encode</span><span class="p">(</span><span class="n">x_test</span><span class="p">,</span> <span class="n">model_predictor_off</span><span class="p">),</span>
+      <span class="n">encode</span><span class="p">(</span><span class="n">x_test</span><span class="p">,</span> <span class="n">model_predictor_softmax</span><span class="p">),</span>
+      <span class="n">encode</span><span class="p">(</span><span class="n">x_test</span><span class="p">,</span> <span class="n">model_predictor_linear</span><span class="p">)]</span>
+
+<span class="n">titles</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;VAE latent space without predictor&#39;</span><span class="p">,</span>
+          <span class="s1">&#39;VAE latent space with classifier&#39;</span><span class="p">,</span>
+          <span class="s1">&#39;VAE latent space with regressor&#39;</span><span class="p">]</span>
+
+<span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">cmap</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span><span class="s1">&#39;viridis&#39;</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ts</span><span class="p">):</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">im</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">t</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">t</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="n">y_test</span><span class="p">,</span> 
+                     <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">,</span> 
+                     <span class="n">vmin</span><span class="o">=-</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">9.5</span><span class="p">,</span> 
+                     <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mf">0.4</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">titles</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">right</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im</span><span class="p">,</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_axes</span><span class="p">([</span><span class="mf">0.82</span><span class="p">,</span> <span class="mf">0.13</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">,</span> <span class="mf">0.74</span><span class="p">]),</span> <span class="n">ticks</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">));</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2018-04-07/output_15_0.png" /></p>
+<p>One can clearly see that the latent space of models with a predictor (middle and right plot) has more structure i.e. less overlap of regions with different labels than the latent space of the model without a predictor (left plot). Furthermore, when the predictor is a regressor it establishes a gradient in latent space. The right plot clearly shows a gradient from upper-right (lower vaues) to lower-left (higher values). </p>
+<p>This is exactly what the authors of the paper wanted to achieve: additionally organizing the latent space w.r.t. certain continuous properties so that gradient-based navigation into regions of desired properties becomes possible. If you want to train a model yourself with a regressor as predictor you should make the following modifications to the setup above:</p>
+<div class="highlight"><pre><code><span class="c1"># ...</span>
+<span class="n">predictor</span> <span class="o">=</span> <span class="n">create_predictor_linear</span><span class="p">(</span><span class="n">latent_dim</span><span class="p">)</span>
+<span class="c1"># ...</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="s1">&#39;rmsprop&#39;</span><span class="p">,</span> 
+              <span class="n">loss</span><span class="o">=</span><span class="p">[</span><span class="n">vae_loss</span><span class="p">,</span> <span class="s1">&#39;mean_squared_error&#39;</span><span class="p">],</span>
+              <span class="n">loss_weights</span><span class="o">=</span><span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">])</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x_train</span><span class="p">,</span> 
+          <span class="n">y</span><span class="o">=</span><span class="p">[</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">],</span>
+          <span class="n">epochs</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span>
+          <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+          <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
+          <span class="n">validation_data</span><span class="o">=</span><span class="p">(</span><span class="n">x_test</span><span class="p">,</span> <span class="p">[</span><span class="n">x_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">]))</span>
+</code></pre></div>
+<p>Note that in the case of the MNIST dataset the latent space in the left plot is already sufficiently organized to navigate into regions of desired labels. However, this is not the case for the chemical compound dataset (see paper for details) so that further structuring is required. For the MNIST dataset, the goal is merely to demonstrate that further structuring is possible too. In the following we will use the model that uses a classifier as predictor i.e. the model corresponding to the middle plot.</p>
+<h3 id="optimization-objectives">Optimization objectives</h3>
+<blockquote>
+<p>How can useful optimization objectives be designed?</p>
+</blockquote>
+<p>First of all, the optimization objective must be a function of the desired target label in addition to latent variable $\mathbf{t}$. For example, if the desired target label is 5 the optimization objective must have an optimum in that region of the latent space where images with a 5 are located. Also remember that the variational distributions i.e. the distributions of codes in latent space have been regularized to be close to the standard normal distribution during model training (see <em>regularization term</em> in <code>vae_loss</code>). This regularization term should also be considered in the optimization objective to avoid directing search too far from the origin.</p>
+<p>Hence the optimization objective should not only reflect the probability that a sample corresponds to an image of desired target label but also the standard normal probability distribution. In the following, we will use an optimization objective $f$ that is the negative logarithm of the product of these two terms:</p>
+<p>$$
+f(\mathbf{t}, target) = - \log p(y=target \lvert \mathbf{t}) 
+                        - \log \mathcal{N}(\mathbf{t} \lvert \mathbf{0}, \mathbf{I}) \tag{1}
+$$</p>
+<p>where $y$ follows a categorical distribution and $p(y=target \lvert \mathbf{t})$ is the probability that $y$ has the desired target value given latent vector $\mathbf{t}$. I'll show two alternatives for computing $p(y=target \lvert \mathbf{t})$. The first alternative simply uses the output of the predictor. The corresponding optimization objective is visualized in the following figure.</p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.colors</span><span class="w"> </span><span class="kn">import</span> <span class="n">LogNorm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">multivariate_normal</span>
+
+<span class="n">predictor</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_layer</span><span class="p">(</span><span class="s1">&#39;predictor&#39;</span><span class="p">)</span>
+
+<span class="n">rx</span><span class="p">,</span> <span class="n">ry</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mf">0.10</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mf">0.10</span><span class="p">)</span>
+<span class="n">gx</span><span class="p">,</span> <span class="n">gy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">rx</span><span class="p">,</span> <span class="n">ry</span><span class="p">)</span>
+
+<span class="n">t_flat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">gx</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">gy</span><span class="o">.</span><span class="n">ravel</span><span class="p">()]</span>
+<span class="n">y_flat</span> <span class="o">=</span> <span class="n">predictor</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">t_flat</span><span class="p">)</span>
+
+<span class="n">mvn</span> <span class="o">=</span> <span class="n">multivariate_normal</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">cov</span><span class="o">=</span><span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
+<span class="n">nll_prior</span> <span class="o">=</span> <span class="o">-</span><span class="n">mvn</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">t_flat</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">nll_predict</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Optimization objective based on predictor output.&#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">nll_prior</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">y_flat</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="n">plot_nll</span><span class="p">(</span><span class="n">gx</span><span class="p">,</span> <span class="n">gy</span><span class="p">,</span> <span class="n">nll_predict</span><span class="p">)</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2018-04-07/output_20_0.png" /></p>
+<p>One can clearly see how the minima in these plots overlap with the different target value regions in the previous figure (see section <a href="#Latent-space">Latent space</a>). We could now use a gradient-based optimizer for navigating into regions of high log-likelihood i.e. low negative log-likelihood and sample within that region to conditionally generate new digits of the desired target value.</p>
+<p>Another alternative is to design an optimization objective that can also include "external" results. To explain, let's assume for a moment that we are again in the latent space of chemical compounds. External results in this context can mean experimental results or externally computed results obtained for new compounds sampled from latent space. For example, experimental results can come from expensive drug discovery experiments and externally computed results from computational chemistry software.</p>
+<p>For working with external results we can use a Gaussian process model (a regression model) initialized with samples from the training set and let a Bayesian optimization algorithm propose new samples from latent space. Then we gather external results for these proposals and update the Gaussian process model with it. Based on the updated model, Bayesian optimization can now propose new samples. A Bayesian optimization approach is especially useful if experimental results are expensive to obtain as it is designed to optimize the objective in a minimum number of steps. This should answer the question</p>
+<blockquote>
+<p>How can application of Bayesian optimization methods be justified?</p>
+</blockquote>
+<p>But how can we transfer these ideas to the MNIST dataset? One option is to decode samples from latent space to real images and then let a separate MNIST image classifier compute the probability that a decoded image shows a digit equal to the desired target. For that purpose we use a small CNN that was trained to achieve 99.2% validation accuracy on <code>x_test</code>, enough for our purposes. </p>
+<div class="highlight"><pre><code><span class="k">if</span> <span class="n">use_pretrained</span><span class="p">:</span>
+    <span class="n">classifier</span> <span class="o">=</span> <span class="n">load_model</span><span class="p">(</span><span class="s1">&#39;models/vae-opt/classifier.h5&#39;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">classifier</span> <span class="o">=</span> <span class="n">create_classifier</span><span class="p">()</span>
+    <span class="n">classifier</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="s1">&#39;rmsprop&#39;</span><span class="p">,</span> 
+                       <span class="n">loss</span><span class="o">=</span><span class="s1">&#39;categorical_crossentropy&#39;</span><span class="p">,</span> 
+                       <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">])</span>
+
+    <span class="n">classifier</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x_train</span><span class="p">,</span> 
+                   <span class="n">y_train_cat</span><span class="p">,</span> 
+                   <span class="n">epochs</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> 
+                   <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                   <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> 
+                   <span class="n">validation_data</span><span class="o">=</span><span class="p">(</span><span class="n">x_test</span><span class="p">,</span> <span class="n">y_test_cat</span><span class="p">),</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</code></pre></div>
+<p>If we combine the negative log-likelihood computed with the separate image classifier with the regularization term mentioned before, we obtain the following optimization objective:</p>
+<div class="highlight"><pre><code><span class="n">decoder</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_layer</span><span class="p">(</span><span class="s1">&#39;decoder&#39;</span><span class="p">)</span>
+
+<span class="c1"># Decode latent vector into image</span>
+<span class="n">d_flat</span> <span class="o">=</span> <span class="n">decoder</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">t_flat</span><span class="p">)</span>
+
+<span class="c1"># Predict probabilities with separate classifier</span>
+<span class="n">y_flat</span> <span class="o">=</span> <span class="n">classifier</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">d_flat</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">nll_decode_classify</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Optimization objective based on separate image classifier output.&#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">nll_prior</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">y_flat</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="n">plot_nll</span><span class="p">(</span><span class="n">gx</span><span class="p">,</span> <span class="n">gy</span><span class="p">,</span> <span class="n">nll_decode_classify</span><span class="p">)</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2018-04-07/output_24_0.png" /></p>
+<p>The locations of the minima closely match those of the previous optimization objective but the new optimization objective is more fuzzy. It also shows moderately low negative log-likelihood in regions outside of the desired target as well as in regions that are sparsely populated by validation examples. Anyway, let's use it and see if we can achieve reasonable results.</p>
+<h3 id="bayesian-optimization">Bayesian optimization</h3>
+<p>For Bayesian optimization, we use <a href="http://sheffieldml.github.io/GPyOpt/">GPyOpt</a> with more or less default settings and constrain the the search space as given by <code>bounds</code> below. Note that the underlying Gaussian process model is initialized with only two random samples from latent space.</p>
+<div class="highlight"><pre><code><span class="kn">import</span><span class="w"> </span><span class="nn">GPyOpt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">GPyOpt.methods</span><span class="w"> </span><span class="kn">import</span> <span class="n">BayesianOptimization</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">nll</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Bayesian optimization objective.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1"># Decode latent vector into image</span>
+    <span class="n">decoded</span> <span class="o">=</span> <span class="n">decoder</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+    <span class="c1"># Predict probabilities with separate classifier</span>
+    <span class="n">c_probs</span> <span class="o">=</span> <span class="n">classifier</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">decoded</span><span class="p">)</span>
+
+    <span class="n">nll_prior</span> <span class="o">=</span> <span class="o">-</span><span class="n">mvn</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">t</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">nll_pred</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">c_probs</span><span class="p">[:,</span><span class="n">target</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1e-8</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">nll_prior</span> <span class="o">+</span> <span class="n">nll_pred</span>
+
+<span class="n">bounds</span> <span class="o">=</span> <span class="p">[{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;t1&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;continuous&#39;</span><span class="p">,</span> <span class="s1">&#39;domain&#39;</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="mf">4.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">)},</span>
+          <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;t2&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;continuous&#39;</span><span class="p">,</span> <span class="s1">&#39;domain&#39;</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="mf">4.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">)}]</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">optimizer_for</span><span class="p">(</span><span class="n">target</span><span class="p">):</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">nll_target</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">nll</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">BayesianOptimization</span><span class="p">(</span><span class="n">f</span><span class="o">=</span><span class="n">nll_target</span><span class="p">,</span> 
+                                <span class="n">domain</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+                                <span class="n">model_type</span><span class="o">=</span><span class="s1">&#39;GP&#39;</span><span class="p">,</span>
+                                <span class="n">acquisition_type</span> <span class="o">=</span><span class="s1">&#39;EI&#39;</span><span class="p">,</span>
+                                <span class="n">acquisition_jitter</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span>
+                                <span class="n">initial_design_numdata</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+                                <span class="n">exact_feval</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</code></pre></div>
+<p>We start by running Bayesian optimization for a desired target value of 4 and then visualize the Gaussian process posterior mean, variance and the acquisition function using the built-in <code>plot_acquisition()</code> method.</p>
+<div class="highlight"><pre><code><span class="n">optimizer</span> <span class="o">=</span> <span class="n">optimizer_for</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="n">optimizer</span><span class="o">.</span><span class="n">run_optimization</span><span class="p">(</span><span class="n">max_iter</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="n">optimizer</span><span class="o">.</span><span class="n">plot_acquisition</span><span class="p">()</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2018-04-07/output_29_0.png" /></p>
+<p>By comparing with previous figures, we can see that most samples are located around the minimum corresponding to target value 4 (left plot). The acquisition function has high values in this region (right plot). Because Bayesian optimization makes a compromise between <em>exploration</em> of regions with high uncertainty and <em>exploitation</em> of regions with (locally) optimal values high acquisition function values also exist in regions outside the desired target value. This is also the reason why some samples are broadly scattered across the search space. We finally have to verify that the samples with the lowest optimization objective values actually correspond to images with number 4.</p>
+<div class="highlight"><pre><code><span class="k">def</span><span class="w"> </span><span class="nf">plot_top</span><span class="p">(</span><span class="n">optimizer</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+    <span class="n">top_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">optimizer</span><span class="o">.</span><span class="n">Y</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="n">top_y</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">Y</span><span class="p">[</span><span class="n">top_idx</span><span class="p">]</span>
+    <span class="n">top_x</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">X</span><span class="p">[</span><span class="n">top_idx</span><span class="p">]</span>
+    <span class="n">top_dec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">decoder</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">top_x</span><span class="p">),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num</span><span class="p">):</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">num</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">top_dec</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;Greys_r&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">top_y</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">&#39;off&#39;</span><span class="p">)</span>
+</code></pre></div>
+<div class="highlight"><pre><code><span class="n">plot_top</span><span class="p">(</span><span class="n">optimizer</span><span class="p">)</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2018-04-07/output_32_0.png" /></p>
+<p>Indeed, they do! The numbers on top of the images are the optimization objective values of the corresponding points in latent space. To generate more images of desired target value we also could select the top scoring samples and continue sampling in a more or less narrow region around them (not shown here). How does conditional sampling for other desired target values work?</p>
+<div class="highlight"><pre><code><span class="n">optimizer</span> <span class="o">=</span> <span class="n">optimizer_for</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">optimizer</span><span class="o">.</span><span class="n">run_optimization</span><span class="p">(</span><span class="n">max_iter</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="n">plot_top</span><span class="p">(</span><span class="n">optimizer</span><span class="p">)</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2018-04-07/output_34_0.png" /></p>
+<div class="highlight"><pre><code><span class="n">optimizer</span> <span class="o">=</span> <span class="n">optimizer_for</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">optimizer</span><span class="o">.</span><span class="n">run_optimization</span><span class="p">(</span><span class="n">max_iter</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="n">plot_top</span><span class="p">(</span><span class="n">optimizer</span><span class="p">)</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2018-04-07/output_35_0.png" /></p>
+<div class="highlight"><pre><code><span class="n">optimizer</span> <span class="o">=</span> <span class="n">optimizer_for</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">optimizer</span><span class="o">.</span><span class="n">run_optimization</span><span class="p">(</span><span class="n">max_iter</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="n">plot_top</span><span class="p">(</span><span class="n">optimizer</span><span class="p">)</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2018-04-07/output_36_0.png" /></p>
+<div class="highlight"><pre><code><span class="n">optimizer</span> <span class="o">=</span> <span class="n">optimizer_for</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
+<span class="n">optimizer</span><span class="o">.</span><span class="n">run_optimization</span><span class="p">(</span><span class="n">max_iter</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="n">plot_top</span><span class="p">(</span><span class="n">optimizer</span><span class="p">)</span>
+</code></pre></div>
+<p><img alt="png" src="/img/2018-04-07/output_37_0.png" /></p>
+<p>This looks pretty good! Also note how for targets 3 and 5 the negative log-likelihood significantly increases for images that are hard to be recognized as their desired targets.</p>
+<h2 id="alternatives">Alternatives</h2>
+<blockquote>
+<p>What are possible alternatives to this approach?</p>
+</blockquote>
+<p>The approach presented here is one possible approach for conditionally generating images i.e. images with desired target values. In the case of MNIST images, this is actually a very expensive approach. A conditional variational autoencoder<sup>[3]</sup> (CVAE) would be a much better choice here. Anyway, the goal was to demonstrate the approach taken in the paper<sup>[1]</sup> and it worked reasonably well on the MNIST dataset too.</p>
+<p>Another interesting approach is described in [4]. The proposed approach identifies regions in latent space with desired properties without training the corresponding models with these properties in advance. This should help to prevent expensive model retraining and allows post-hoc learning of so-called <em>latent constraints</em>, value functions that identify regions in latent space that generate outputs with desired properties. Definitely one of my next papers to read.</p>
+<h2 id="references">References</h2>
+<ul>
+<li>[1] Rafael Gómez-Bombarelli et. al. <a href="https://arxiv.org/abs/1610.02415">Automatic chemical design using a data-driven continuous representation of molecules</a>.  </li>
+<li>[2] Diederik P Kingma, Max Welling <a href="https://arxiv.org/abs/1312.6114">Auto-Encoding Variational Bayes</a>.  </li>
+<li>[3] Carl Doersch <a href="https://arxiv.org/abs/1606.05908">Tutorial on Variational Autoencoders</a>.  </li>
+<li>[4] Jesse Engel et. al. <a href="https://arxiv.org/abs/1711.05772">Latent Constraints: Learning to Generate Conditionally from Unconditional Generative Models</a>.</li>
+</ul>
+    </div>
+
+    <nav class="post-nav">
+        
+        <a href="/2018/04/03/variational-inference/" class="post-nav-link post-nav-older">
+            <span class="post-nav-label">&larr; Older</span>
+            <span class="post-nav-title">From expectation maximization to stochastic variational inference</span>
+        </a>
+        
+        
+        <a href="/2018/07/27/dfc-vae/" class="post-nav-link post-nav-newer">
+            <span class="post-nav-label">Newer &rarr;</span>
+            <span class="post-nav-title">Deep feature consistent variational autoencoder</span>
+        </a>
+        
+    </nav>
+
+    
+    <section class="comments">
+        <h2>Comments</h2>
+        <div id="disqus_thread"></div>
+    </section>
+    
+</article>
+
+        </div>
+    </main>
+
+    
+    <footer class="footer">
+        <div class="container">
+            
+<ul class="footer-social-links">
+    <li>
+        <a href="https://linkedin.com/in/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+    <rect x="2" y="9" width="4" height="12"/>
+    <circle cx="4" cy="4" r="2"/>
+</svg>
+
+            linkedin.com/in/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/gradion-ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/gradion-ai
+        </a>
+    </li>
+    <li>
+        <a href="https://gradion.ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
+    <path d="M9 22v-4h6v4"/>
+    <path d="M8 6h.01"/><path d="M16 6h.01"/>
+    <path d="M12 6h.01"/>
+    <path d="M12 10h.01"/><path d="M12 14h.01"/>
+    <path d="M16 10h.01"/><path d="M16 14h.01"/>
+    <path d="M8 10h.01"/><path d="M8 14h.01"/>
+</svg>
+
+            gradion.ai
+        </a>
+    </li>
+    <li>
+        <a href="/llms.txt">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 8V4H8"/>
+    <rect width="16" height="12" x="4" y="8" rx="2"/>
+    <path d="M2 14h2"/>
+    <path d="M20 14h2"/>
+    <path d="M15 13v2"/>
+    <path d="M9 13v2"/>
+</svg>
+
+            llms.txt
+        </a>
+    </li>
+    <li>
+        <a href="/feed.xml">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 11a9 9 0 0 1 9 9"/>
+    <path d="M4 4a16 16 0 0 1 16 16"/>
+    <circle cx="5" cy="19" r="1"/>
+</svg>
+
+            feed.xml
+        </a>
+    </li>
+</ul>
+
+            <p class="footer-copyright">// Martin Krasser, 2026</p>
+        </div>
+    </footer>
+
+    <script>
+    document.querySelectorAll('a[href^="http"]').forEach(link => {
+        if (!link.href.startsWith(location.origin)) {
+            link.target = '_blank';
+            link.rel = 'noopener';
+        }
+    });
+    </script>
+    
+
+<script>
+var disqus_config = function () {
+    this.page.url = 'https://krasserm.github.io/2018/04/07/latent-space-optimization/';
+    this.page.identifier = '/2018/04/07/latent-space-optimization/';
+};
+(function() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://krasserm.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+</body>
+</html>

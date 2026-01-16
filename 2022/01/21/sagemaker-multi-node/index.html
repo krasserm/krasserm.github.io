@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#0a0e14">
+    <title>Using AWS SageMaker with minimal dependencies, part 1 - Martin Krasser</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/pygments.css">
+    <link rel="alternate" type="application/atom+xml" title="Martin Krasser Feed" href="/feed.xml">
+    
+<script>
+MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="/" class="nav-brand">Martin Krasser</a>
+            <ul class="nav-links">
+                
+                <li><a href="/about/">About</a></li>
+                
+                <li><a href="/">Blog</a></li>
+                
+                <li><a href="/industry/">Industry</a></li>
+                
+                <li><a href="/open-source/">Open Source</a></li>
+                
+                <li><a href="/citations/">Citations</a></li>
+                
+                <li><a href="/stories/">Stories</a></li>
+                
+                <li><a href="/contact/">Contact</a></li>
+                
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="container">
+            
+<article class="post">
+    <header class="post-header">
+        <h1 class="post-title">Using AWS SageMaker with minimal dependencies, part 1</h1>
+        
+        <p class="post-subtitle">Distributed model training with PyTorch Lightning</p>
+        
+        <p class="post-meta">
+            <time datetime="2022-01-21">
+                January 21, 2022
+            </time>
+            
+            <span class="post-author">by Martin Krasser</span>
+            
+        </p>
+    </header>
+
+    <div class="post-content">
+        <ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#introduction">SageMaker basics</a></li>
+<li><a href="#example-application">Example application</a><ul>
+<li><a href="#conda-environment">Conda environment</a></li>
+<li><a href="#model">Model</a></li>
+<li><a href="#data">Data</a></li>
+<li><a href="#training-script">Training script</a></li>
+</ul>
+</li>
+<li><a href="#extensions-required-by-sagemaker">Extensions required by SageMaker</a><ul>
+<li><a href="#dependencies">Dependencies</a></li>
+<li><a href="#training-script-extensions">Training script extensions</a></li>
+<li><a href="#computing-cluster-configuration">Computing cluster configuration</a></li>
+<li><a href="#docker-image">Docker image</a></li>
+</ul>
+</li>
+<li><a href="#training">Training</a><ul>
+<li><a href="#without-sagemaker">Without SageMaker</a></li>
+<li><a href="#with-sagemaker-in-a-local-environment">With SageMaker in a local environment</a></li>
+<li><a href="#with-sagemaker-in-the-cloud">With SageMaker in the cloud</a></li>
+</ul>
+</li>
+</ul>
+<h2 id="introduction">Introduction</h2>
+<p>Most of my deep learning projects are PyTorch projects, with <a href="https://www.pytorchlightning.ai/">PyTorch Lightning</a>
+for distributed training. I wondered which extensions are needed to support multi-node, multi-GPU training on 
+<a href="https://aws.amazon.com/de/sagemaker/">AWS SageMaker</a> but with minimal changes to the codebase and with minimal 
+dependencies to SageMaker's <a href="https://docs.aws.amazon.com/sagemaker/latest/dg/whatis.html#whatis-features">feature set</a>.</p>
+<p>For example, how do I train models without using <a href="https://docs.aws.amazon.com/sagemaker/latest/dg/studio.html">SageMaker Studio</a>
+or <a href="https://docs.aws.amazon.com/sagemaker/latest/dg/nbi.html">Notebook instances</a>? How do I start a training run on 
+SageMaker from a Python script on my local computer? How can I use my own Docker image for model training and not one 
+of the prebuilt Docker images provided by SageMaker? Also, how does PyTorch Lightning fit into the SageMaker ecosystem?</p>
+<p>This article answers these questions for distributed data-parallel training. It starts from a toy PyTorch Lightning 
+application (training <a href="https://arxiv.org/abs/1512.03385">ResNet-18</a> on <a href="https://www.cs.toronto.edu/~kriz/cifar.html">CIFAR-10</a>) 
+and then describes the necessary steps for running it on SageMaker. First, training is tested in a local environment 
+with <a href="https://sagemaker.readthedocs.io/en/stable/overview.html#local-mode">SageMaker local mode</a> and then moved to the
+cloud. </p>
+<p>Cloud-based training is described using <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-on-demand-instances.html">on-demand instances</a>.
+Fault-tolerant training on <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-spot-instances.html">spot instances</a> 
+is covered in a <a href="/2022/02/26/sagemaker-fault-tolerance/">follow-up article</a>. You'll also see how training on SageMaker 
+can be tracked with Tensorboard and how CPU/GPU usage can be monitored with <a href="https://aws.amazon.com/cloudwatch/">AWS CloudWatch</a>. 
+Source code and instructions for running the examples are <a href="https://github.com/krasserm/sagemaker-tutorial/tree/wip-part-1">available on Github</a>.</p>
+<h2 id="sagemaker-basics">SageMaker basics</h2>
+<p>If you are new to training on AWS SageMaker I recommend reading this <a href="https://docs.aws.amazon.com/sagemaker/latest/dg/how-it-works-training.html">high-level overview</a>
+first. In a nutshell, training code is provided as Docker image and uploaded to the <a href="https://aws.amazon.com/ecr/">AWS Elastic Container Registry</a>.
+SageMaker uses this image to run the training code as Docker container(s) on one or more nodes.</p>
+<p>Training input data are downloaded from a user-defined S3 bucket and made accessible to the container. Training results
+are uploaded to a user-defined S3 bucket. This is usually the final model plus additional training artifacts like logs
+and other summaries.</p>
+<p>For development and testing purposes, the <a href="https://sagemaker.readthedocs.io/">SageMaker Python SDK</a> supports a local
+mode which runs training code in one or more Docker containers in a local environment. Also, training input data can
+be read from local disk and training output data written to a local destination. You don't even need an AWS account
+for running SageMaker in local mode.</p>
+<h2 id="example-application">Example application</h2>
+<p>This section briefly introduces code and configuration of the example application (training ResNet-18 on CIFAR-10). The
+<a href="#extensions-required-by-sagemaker">next section</a> describes the extensions required to run this application on SageMaker.
+These extensions are general enough to be applicable to any other PyTorch Lightning (or plain PyTorch) application.</p>
+<h3 id="conda-environment">Conda environment</h3>
+<p>We'll use a conda environment to install dependencies and run training.</p>
+<div class="highlight"><pre><code><span class="c1">#</span>
+<span class="c1"># File: environment.yml</span>
+<span class="c1">#</span>
+
+<span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sagemaker-tutorial</span>
+<span class="nt">channels</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pytorch</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">conda-forge</span>
+<span class="nt">dependencies</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">python=3.9</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cudatoolkit=10.2</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pytorch=1.10</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">torchvision=0.11</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pip</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">pip</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pytorch-lightning==1.5.*</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">jsonargparse[signatures]==4.0.*</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">lightning-bolts==0.4.*</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">torchmetrics==0.6.*</span>
+</code></pre></div>
+<h3 id="model">Model</h3>
+<p>The <code>resnet18</code> implementation provided by <code>torchvision</code> is wrapped into a more or less generic PyTorch Lightning module
+with a configurable <code>num_classes</code> hyperparameter. The full source code is in <a href="https://github.com/krasserm/sagemaker-tutorial/blob/wip-part-1/app/model.py">app/model.py</a>.</p>
+<div class="highlight"><pre><code><span class="c1">#</span>
+<span class="c1"># File: app/model.py</span>
+<span class="c1">#</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">torchvision.models</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tvm</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pytorch_lightning</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pl</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ResNet18</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">LightningModule</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_classes</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_hyperparameters</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">tvm</span><span class="o">.</span><span class="n">resnet18</span><span class="p">(</span><span class="n">num_classes</span><span class="o">=</span><span class="n">num_classes</span><span class="p">)</span>
+        <span class="o">...</span>
+
+    <span class="o">...</span>
+</code></pre></div>
+<h3 id="data">Data</h3>
+<p>The CIFAR-10 data module is taken from <a href="https://lightning-bolts.readthedocs.io/en/latest/">PyTorch Lightning Bolts</a> and
+the constructor is overridden to redefine some hyperparameter defaults and transformations. The full source code is in
+<a href="https://github.com/krasserm/sagemaker-tutorial/blob/wip-part-1/app/data.py">app/data.py</a>.</p>
+<div class="highlight"><pre><code><span class="c1">#</span>
+<span class="c1"># File: app/data.py</span>
+<span class="c1">#</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pl_bolts.datamodules</span><span class="w"> </span><span class="kn">import</span> <span class="n">cifar10_datamodule</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pytorch_lightning.utilities.cli</span><span class="w"> </span><span class="kn">import</span> <span class="n">DATAMODULE_REGISTRY</span>
+
+
+<span class="nd">@DATAMODULE_REGISTRY</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CIFAR10DataModule</span><span class="p">(</span><span class="n">cifar10_datamodule</span><span class="o">.</span><span class="n">CIFAR10DataModule</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">val_split</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">,</span> <span class="n">normalize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">num_workers</span><span class="o">=</span><span class="n">num_workers</span><span class="p">,</span> <span class="n">val_split</span><span class="o">=</span><span class="n">val_split</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="n">normalize</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_extend_train_transforms</span><span class="p">()</span>  <span class="c1"># configure training data augmentation</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extend_train_transforms</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="o">...</span>
+</code></pre></div>
+<p>It is registered at the <a href="https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_cli.html#multiple-models-and-or-datasets">PyTorch Lightning CLI registry</a>
+so that the data module can be specified and configured dynamically on the command line with
+<code>--data=CIFAR10DataModule --data.data_dir=.cache ...</code>, for example.</p>
+<h3 id="training-script">Training script</h3>
+<p>The <a href="https://github.com/krasserm/sagemaker-tutorial/blob/wip-part-1/app/train.py">training script</a> uses the 
+<a href="https://pytorch-lightning.readthedocs.io/en/stable/common/lightning_cli.html">PyTorch Lightning CLI</a> to configure 
+and instantiate the model, data module and <a href="https://pytorch-lightning.readthedocs.io/en/stable/common/trainer.html">trainer</a>
+from command line arguments. For training and validation, the trainer API is used directly.</p>
+<div class="highlight"><pre><code><span class="c1">#</span>
+<span class="c1"># File: app/train.py</span>
+<span class="c1">#</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pytorch_lightning.loggers</span><span class="w"> </span><span class="kn">import</span> <span class="n">TensorBoardLogger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pytorch_lightning.utilities.cli</span><span class="w"> </span><span class="kn">import</span> <span class="n">LightningCLI</span><span class="p">,</span> <span class="n">LightningArgumentParser</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">app.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">ResNet18</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">CLI</span><span class="p">(</span><span class="n">LightningCLI</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_arguments_to_parser</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parser</span><span class="p">:</span> <span class="n">LightningArgumentParser</span><span class="p">):</span>
+        <span class="c1"># Bind num_classes property of the data module to model&#39;s num_classes parameter.</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">link_arguments</span><span class="p">(</span><span class="s2">&quot;data.num_classes&quot;</span><span class="p">,</span> <span class="s2">&quot;model.num_classes&quot;</span><span class="p">,</span> <span class="n">apply_on</span><span class="o">=</span><span class="s2">&quot;instantiate&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Make TensorBoardLogger configurable under the &#39;logger&#39; namespace and</span>
+        <span class="c1"># expose flush_secs keyword argument as additional command line option.</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_class_arguments</span><span class="p">(</span><span class="n">TensorBoardLogger</span><span class="p">,</span> <span class="s2">&quot;logger&quot;</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--logger.flush_secs&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">instantiate_trainer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># Instantiate trainer with configured logger as argument.</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">instantiate_trainer</span><span class="p">(</span><span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config_init</span><span class="p">[</span><span class="s2">&quot;logger&quot;</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">trainer_defaults</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="c1"># Trainer default configuration is defined in file app/trainer.yaml.</span>
+        <span class="s2">&quot;default_config_files&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;app&quot;</span><span class="p">,</span> <span class="s2">&quot;trainer.yaml&quot;</span><span class="p">)]</span>
+    <span class="p">}</span>
+
+    <span class="c1"># Instantiate trainer, model and data module.</span>
+    <span class="n">cli</span> <span class="o">=</span> <span class="n">CLI</span><span class="p">(</span><span class="n">model_class</span><span class="o">=</span><span class="n">ResNet18</span><span class="p">,</span> <span class="n">parser_kwargs</span><span class="o">=</span><span class="n">trainer_defaults</span><span class="p">,</span> <span class="n">save_config_overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">run</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="c1"># Run training and validation</span>
+    <span class="n">cli</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">cli</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">cli</span><span class="o">.</span><span class="n">datamodule</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</code></pre></div>
+<h2 id="extensions-required-by-sagemaker">Extensions required by SageMaker</h2>
+<p>For running the example application on SageMaker, several extensions are needed:</p>
+<ul>
+<li>The <a href="https://sagemaker.readthedocs.io/">SageMaker Python SDK</a> and the <a href="https://github.com/aws/sagemaker-training-toolkit">SageMaker training toolkit</a>
+  as additional dependencies in <code>environment.yml</code>.</li>
+<li>Training script extensions to configure SageMaker-specific input and output paths.</li>
+<li>A training script wrapper to configure a multi-node computing cluster.</li>
+<li>A <code>Dockerfile</code> for creating a Docker image of the example application.</li>
+</ul>
+<h3 id="dependencies">Dependencies</h3>
+<p>The SageMaker Python SDK provides an API for training and deploying models on SageMaker. The SageMaker training toolkit
+makes a Docker container compatible with the SageMaker training environment. Both are Python libraries and are added
+as dependencies to <code>environment.yml</code>:</p>
+<div class="highlight"><pre><code><span class="c1">#</span>
+<span class="c1"># File: environment.yml</span>
+<span class="c1">#</span>
+
+<span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sagemaker-tutorial</span>
+<span class="nn">...</span>
+<span class="nt">dependencies</span><span class="p">:</span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">- pip</span><span class="p p-Indicator">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sagemaker</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sagemaker-training</span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">...</span>
+</code></pre></div>
+<h3 id="training-script-extensions">Training script extensions</h3>
+<p>The training script must be extended to read training input data from and write training output data to SageMaker-specific
+directories. SageMaker copies training input data to a directory defined by environment variable <code>SM_CHANNEL_TRAINING</code>. The
+application should write training output data to a directory defined by environment variable <code>SM_OUTPUT_DATA_DIR</code> and write
+the final model to a directory defined by environment variable <code>SM_MODEL_DIR</code>. SageMaker copies data from these directories
+to a user-defined target location. This can be a local directory in SageMaker local mode or an S3 bucket, for example.</p>
+<div class="highlight"><pre><code><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pytorch_lightning.utilities.cli</span><span class="w"> </span><span class="kn">import</span> <span class="n">LightningCLI</span><span class="p">,</span> <span class="n">LightningArgumentParser</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">CLI</span><span class="p">(</span><span class="n">LightningCLI</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sm_training_data_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;SM_CHANNEL_TRAINING&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sm_output_data_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;SM_OUTPUT_DATA_DIR&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sm_model_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;SM_MODEL_DIR&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Names and number of hosts SageMaker is running.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sm_hosts</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;SM_HOSTS&quot;</span><span class="p">,</span> <span class="s2">&quot;[</span><span class="se">\&quot;</span><span class="s2">localhost</span><span class="se">\&quot;</span><span class="s2">]&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_nodes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sm_hosts</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">before_instantiate_classes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sm_training_data_dir</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">][</span><span class="s2">&quot;init_args&quot;</span><span class="p">][</span><span class="s2">&quot;data_dir&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sm_training_data_dir</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_arguments_to_parser</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parser</span><span class="p">:</span> <span class="n">LightningArgumentParser</span><span class="p">):</span>
+        <span class="o">...</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sm_output_data_dir</span><span class="p">:</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">({</span>
+                <span class="s2">&quot;trainer.weights_save_path&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sm_output_data_dir</span><span class="p">,</span> <span class="s2">&quot;checkpoints&quot;</span><span class="p">),</span>
+                <span class="s2">&quot;logger.save_dir&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sm_output_data_dir</span><span class="p">,</span> <span class="s2">&quot;tensorboard&quot;</span><span class="p">)</span>
+            <span class="p">})</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">instantiate_trainer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># Instantiate trainer with configured logger and number of nodes as arguments.</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">instantiate_trainer</span><span class="p">(</span><span class="n">logger</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config_init</span><span class="p">[</span><span class="s2">&quot;logger&quot;</span><span class="p">],</span> <span class="n">num_nodes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">num_nodes</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="o">...</span>
+
+    <span class="c1"># Instantiate trainer, model and data module.</span>
+    <span class="n">cli</span> <span class="o">=</span> <span class="o">...</span>
+
+    <span class="c1"># Run training and validation</span>
+    <span class="n">cli</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">cli</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">cli</span><span class="o">.</span><span class="n">datamodule</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">cli</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">is_global_zero</span> <span class="ow">and</span> <span class="n">cli</span><span class="o">.</span><span class="n">sm_model_dir</span><span class="p">:</span>
+        <span class="c1"># Load best checkpoint.</span>
+        <span class="n">ckpt_path</span> <span class="o">=</span> <span class="n">cli</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">checkpoint_callback</span><span class="o">.</span><span class="n">best_model_path</span>
+        <span class="n">ckpt</span> <span class="o">=</span> <span class="n">ResNet18</span><span class="o">.</span><span class="n">load_from_checkpoint</span><span class="p">(</span><span class="n">ckpt_path</span><span class="p">)</span>
+
+        <span class="c1"># Write best model to SageMaker model directory.</span>
+        <span class="n">model_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cli</span><span class="o">.</span><span class="n">sm_model_dir</span><span class="p">,</span> <span class="s2">&quot;model.pt&quot;</span><span class="p">)</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">ckpt</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">(),</span> <span class="n">model_path</span><span class="p">)</span>
+
+        <span class="c1"># Checkpoint not needed (yet), delete it.</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">ckpt_path</span><span class="p">)</span>
+</code></pre></div>
+<p>Here, the training script configures the data module to read training data from <code>SM_CHANNEL_TRAINING</code>. The trainer is
+configured to write checkpoints to a subdirectory of <code>SM_OUTPUT_DATA_DIR</code> and the Tensorboard logger to write logs to
+another subdirectory of <code>SM_OUTPUT_DATA_DIR</code>. After training completes, the best model is written to <code>SM_MODEL_DIR</code> and
+the corresponding checkpoint is deleted.</p>
+<p>Writing Tensorboard data to <code>SM_OUTPUT_DATA_DIR</code> has one disadvantage though: the logs aren't accessible until the end
+of training. This can be fixed by configuring the logger to write to an S3 bucket directly so that training progress can 
+be monitored during training (see also <a href="#with-sagemaker-in-the-cloud">this section</a>).</p>
+<p>The trainer must also be configured with the correct number of nodes SageMaker is running. This is done by counting the
+number of host names in the <code>SM_HOSTS</code> environment variable. A complete <a href="https://github.com/aws/sagemaker-training-toolkit/blob/master/ENVIRONMENT_VARIABLES.md">reference on environment variables</a>
+used by SageMaker is part of the training toolkit documentation.</p>
+<h3 id="computing-cluster-configuration">Computing cluster configuration</h3>
+<p>Without further configuration, the <code>app/train.py</code> script is able to run multi-GPU training on a single node (using a
+distributed data-parallel strategy). For running distributed training on multiple nodes, PyTorch Lightning supports 
+<a href="https://pytorch-lightning.readthedocs.io/en/latest/clouds/cluster.html">several options</a>. Here, we use the simplest 
+one: setting <code>torch.distributed</code> specific <a href="https://pytorch.org/docs/stable/distributed.html#environment-variable-initialization">environment variables</a>.
+These are set from SageMaker specific environment variables (<code>SM_*</code>) in a <a href="https://github.com/krasserm/sagemaker-tutorial/blob/wip-part-1/app/train_multi_node.py">training script wrapper</a>:</p>
+<div class="highlight"><pre><code><span class="c1">#</span>
+<span class="c1"># File: app/train_multi_node.py</span>
+<span class="c1">#</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">socket</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">app</span><span class="w"> </span><span class="kn">import</span> <span class="n">train</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;NCCL_DEBUG&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;INFO&quot;</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;NCCL_SOCKET_IFNAME&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;SM_NETWORK_INTERFACE_NAME&quot;</span><span class="p">]</span>
+
+    <span class="c1"># List of nodes that participate in multi-node training.</span>
+    <span class="n">hosts</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;SM_HOSTS&quot;</span><span class="p">])</span>
+
+    <span class="c1"># Name and rank of current node</span>
+    <span class="n">host_c</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;SM_CURRENT_HOST&#39;</span><span class="p">]</span>
+    <span class="n">rank_c</span> <span class="o">=</span> <span class="n">hosts</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">host_c</span><span class="p">)</span>
+
+    <span class="c1"># Name and IP address of master node.</span>
+    <span class="n">host_0</span> <span class="o">=</span> <span class="n">hosts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">host_0_ip</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">gethostbyname</span><span class="p">(</span><span class="n">host_0</span><span class="p">)</span>
+
+    <span class="c1"># Set torch.distributed specific environment variables.</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;MASTER_ADDR&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">host_0_ip</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;MASTER_PORT&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;29400&quot;</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;WORLD_SIZE&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">hosts</span><span class="p">))</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;NODE_RANK&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">rank_c</span><span class="p">)</span>
+
+    <span class="c1"># Call training script on current node</span>
+    <span class="n">train</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</code></pre></div>
+<p>The actual training script (<code>app/train.py</code>) is imported and executed via <code>train.main()</code>. Also part of the source code is 
+<a href="https://github.com/krasserm/sagemaker-tutorial/blob/wip-part-1/app/train_multi_node_torchrun.py">another training script wrapper</a>
+(<code>app/train_multi_node_torchrun.py</code>) that uses <a href="https://pytorch.org/docs/stable/distributed.elastic.html">torchrun</a> for 
+running the training script on multiple nodes. The elasticity provided by this option is not needed in this specific
+example though.</p>
+<h3 id="docker-image">Docker image</h3>
+<p>For this tutorial, we create a Docker image of the example application from an <code>ubuntu:20.04</code> base image instead of
+using one of the existing SageMaker Docker images. The corresponding <a href="https://github.com/krasserm/sagemaker-tutorial/blob/wip-part-1/docker/Dockerfile">Dockerfile</a> 
+first installs Miniconda3 and then creates a conda environment from <code>environment.yml</code>.</p>
+<div class="highlight"><pre><code><span class="c1">#</span>
+<span class="c1"># File: docker/Dockerfile</span>
+<span class="c1">#</span>
+
+FROM<span class="w"> </span>ubuntu:20.04
+
+RUN<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>--no-install-recommends<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>python3.8<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>python3-pip<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>python3.8-dev<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>build-essential<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>wget
+
+ARG<span class="w"> </span><span class="nv">CONDA_VERSION</span><span class="o">=</span>latest
+
+<span class="c1"># Install latest version of Miniconda3</span>
+RUN<span class="w"> </span>wget<span class="w"> </span>--quiet<span class="w"> </span>https://repo.anaconda.com/miniconda/Miniconda3-<span class="si">${</span><span class="nv">CONDA_VERSION</span><span class="si">}</span>-Linux-x86_64.sh<span class="w"> </span>-O<span class="w"> </span>miniconda.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>mkdir<span class="w"> </span>-p<span class="w"> </span>/opt<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>sh<span class="w"> </span>miniconda.sh<span class="w"> </span>-b<span class="w"> </span>-p<span class="w"> </span>/opt/conda<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>rm<span class="w"> </span>miniconda.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>ln<span class="w"> </span>-s<span class="w"> </span>/opt/conda/etc/profile.d/conda.sh<span class="w"> </span>/etc/profile.d/conda.sh<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;. /opt/conda/etc/profile.d/conda.sh&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>~/.bashrc<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;conda activate base&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>~/.bashrc<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>find<span class="w"> </span>/opt/conda/<span class="w"> </span>-follow<span class="w"> </span>-type<span class="w"> </span>f<span class="w"> </span>-name<span class="w"> </span><span class="s1">&#39;*.a&#39;</span><span class="w"> </span>-delete<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>find<span class="w"> </span>/opt/conda/<span class="w"> </span>-follow<span class="w"> </span>-type<span class="w"> </span>f<span class="w"> </span>-name<span class="w"> </span><span class="s1">&#39;*.js.map&#39;</span><span class="w"> </span>-delete<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>/opt/conda/bin/conda<span class="w"> </span>clean<span class="w"> </span>-afy
+
+ENV<span class="w"> </span><span class="nv">PATH</span><span class="o">=</span>/opt/conda/bin:<span class="nv">$PATH</span>
+
+<span class="c1"># Location of application code as required by SageMaker.</span>
+ARG<span class="w"> </span><span class="nv">CODEPATH</span><span class="o">=</span>/opt/ml/code
+
+<span class="c1"># Create sagemaker-tutorial conda environment.</span>
+COPY<span class="w"> </span>environment.yml<span class="w"> </span><span class="nv">$CODEPATH</span>/environment.yml
+RUN<span class="w"> </span>conda<span class="w"> </span>update<span class="w"> </span>-n<span class="w"> </span>base<span class="w"> </span>-c<span class="w"> </span>defaults<span class="w"> </span>conda
+RUN<span class="w"> </span>conda<span class="w"> </span>env<span class="w"> </span>create<span class="w"> </span>-f<span class="w"> </span><span class="nv">$CODEPATH</span>/environment.yml
+
+<span class="c1"># Copy application files.</span>
+COPY<span class="w"> </span>app<span class="w"> </span><span class="nv">$CODEPATH</span>/app/
+
+
+<span class="c1"># Expose training script to SageMaker and support overriding</span>
+<span class="c1"># at build-time. This can either be app/train_multi_node.py</span>
+<span class="c1"># (default) or app/train_multi_node_torchrun.py.</span>
+ARG<span class="w"> </span><span class="nv">SAGEMAKER_PROGRAM</span><span class="o">=</span>app/train_multi_node.py
+ENV<span class="w"> </span><span class="nv">SAGEMAKER_PROGRAM</span><span class="o">=</span><span class="si">${</span><span class="nv">SAGEMAKER_PROGRAM</span><span class="si">}</span>
+
+<span class="c1"># Make all local GPUs visible</span>
+ENV<span class="w"> </span><span class="nv">NVIDIA_VISIBLE_DEVICES</span><span class="o">=</span><span class="s2">&quot;all&quot;</span>
+
+<span class="c1"># Set working directory to root directory of application code</span>
+WORKDIR<span class="w"> </span><span class="nv">$CODEPATH</span>
+
+ENTRYPOINT<span class="w"> </span><span class="o">[</span><span class="s2">&quot;app/train.sh&quot;</span><span class="o">]</span>
+</code></pre></div>
+<p>With the <code>SAGEMAKER_PROGRAM</code> environment variable, the SageMaker training toolkit is configured to run <code>app/train_multi_node.py</code> 
+on each node. This can be <a href="https://github.com/krasserm/sagemaker-tutorial/blob/wip-part-1/README.md#training">overridden at build time</a>
+to use <code>app/train_multi_node_torchrun.py</code> instead. </p>
+<p>The training script , as well as the training toolkit itself, need an activated <code>sagemaker-tutorial</code> conda environment 
+for running. Activation of the conda environment is done in the container's entrypoint <code>app/train.sh</code>:</p>
+<div class="highlight"><pre><code><span class="ch">#!/bin/bash --login</span>
+
+<span class="c1">#</span>
+<span class="c1"># File: app/train.sh</span>
+<span class="c1">#</span>
+
+conda<span class="w"> </span>activate<span class="w"> </span>sagemaker-tutorial
+<span class="nb">export</span><span class="w"> </span><span class="nv">PYTHONPATH</span><span class="o">=</span>.
+
+<span class="nv">$@</span>
+</code></pre></div>
+<p>For training, SageMaker runs Docker containers with <code>train</code> as command. This command is the first argument to the
+<code>app/train.sh</code> entrypoint and can therefore the referenced and executed as <code>$@</code>, after having activated the conda
+environment.</p>
+<p>The <code>train</code> executable is implemented by the SageMaker training toolkit (which is completely independent of the
+application-specific <code>train*</code> scripts). It loads and runs the script defined by the <code>SAGEMAKER_PROGRAM</code> environment
+variable.</p>
+<h2 id="training">Training</h2>
+<h3 id="without-sagemaker">Without SageMaker</h3>
+<p>Before running <code>app/train.py</code> on SageMaker (via <code>app/train_multi_node.py</code>), it is useful to run it directly within
+the <code>sagemaker-tutorial</code> conda environment to check if everything works as expected. Assuming there are one or more
+GPUs available, single-node (multi-)GPU training for 5 epochs can be started e.g. with:</p>
+<div class="highlight"><pre><code>python<span class="w"> </span>app/train.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--data<span class="o">=</span>CIFAR10DataModule<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--data.data_dir<span class="o">=</span>.cache<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--optimizer<span class="o">=</span>Adam<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--optimizer.lr<span class="o">=</span>1e-3<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--trainer.accelerator<span class="o">=</span>gpu<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--trainer.devices<span class="o">=</span>-1<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--trainer.max_epochs<span class="o">=</span><span class="m">5</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--trainer.weights_save_path<span class="o">=</span>logs/checkpoints<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--logger.save_dir<span class="o">=</span>logs/tensorboard<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--logger.name<span class="o">=</span>tutorial
+</code></pre></div>
+<p>The <code>CIFAR10DataModule</code> is configured to download the CIFAR-10 dataset to a local <code>.cache</code> directory. Checkpoints and
+Tensorboard logs are written to subdirectories of <code>logs</code>. With the command line option <code>--trainer.devices=-1</code> the trainer
+is configured to run training on all available GPUs (using a distributed data-parallel <code>trainer.strategy</code>, as configured
+in <a href="https://github.com/krasserm/sagemaker-tutorial/blob/wip-part-1/app/trainer.yaml">app/trainer.yaml</a>).</p>
+<h3 id="with-sagemaker-in-a-local-environment">With SageMaker in a local environment</h3>
+<p>Training on SageMaker in a local environment can be done with SageMaker local mode. In local mode, SageMaker uses <a href="https://docs.docker.com/compose/">Docker
+Compose</a> to manage the lifecycle of the Docker container(s).</p>
+<p>The central <a href="https://sagemaker.readthedocs.io/en/stable/api/training/index.html">API</a> for coordinating training is
+<code>sagemaker.estimator.Estimator</code>. This is the place where the Docker image URI, the location of input and output data
+as well as the training script arguments i.e. hyperparameters are configured.</p>
+<p>Calling <code>fit()</code> on an <code>estimator</code> instance, with the location of training data passed as <code>inputs</code> argument, finally
+starts training on SageMaker. For example, training on all available local GPUs can be started with:</p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">sagemaker</span><span class="w"> </span><span class="kn">import</span> <span class="n">LocalSession</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sagemaker.estimator</span><span class="w"> </span><span class="kn">import</span> <span class="n">Estimator</span>
+
+
+<span class="n">session</span> <span class="o">=</span> <span class="n">LocalSession</span><span class="p">()</span>
+<span class="n">estimator</span> <span class="o">=</span> <span class="n">Estimator</span><span class="p">(</span><span class="n">image_uri</span><span class="o">=</span><span class="s2">&quot;sagemaker-tutorial&quot;</span><span class="p">,</span>
+                      <span class="n">role</span><span class="o">=</span><span class="s2">&quot;arn:aws:iam::000000000000:role/dummy&quot;</span><span class="p">,</span>
+                      <span class="n">instance_type</span><span class="o">=</span><span class="s2">&quot;local_gpu&quot;</span><span class="p">,</span>
+                      <span class="n">instance_count</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                      <span class="n">output_path</span><span class="o">=</span><span class="s2">&quot;file://output&quot;</span><span class="p">,</span>
+                      <span class="n">sagemaker_session</span><span class="o">=</span><span class="n">session</span><span class="p">,</span>
+                      <span class="n">hyperparameters</span><span class="o">=</span><span class="p">{</span>
+                        <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="s2">&quot;CIFAR10DataModule&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;data.batch_size&quot;</span><span class="p">:</span> <span class="mi">32</span><span class="p">,</span>
+                        <span class="s2">&quot;optimizer&quot;</span><span class="p">:</span> <span class="s2">&quot;Adam&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;optimizer.lr&quot;</span><span class="p">:</span> <span class="mf">1e-3</span><span class="p">,</span>
+                        <span class="s2">&quot;trainer.accelerator&quot;</span><span class="p">:</span> <span class="s2">&quot;gpu&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;trainer.devices&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                        <span class="s2">&quot;trainer.max_epochs&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+                        <span class="s2">&quot;logger.name&quot;</span><span class="p">:</span> <span class="s2">&quot;tutorial&quot;</span>
+                      <span class="p">})</span>
+
+<span class="n">estimator</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="s2">&quot;file://.cache&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p>Training input data are taken from the local <code>.cache</code> directory and provided to the container in a SageMaker-specific
+directory defined by the <code>SM_CHANNEL_TRAINING</code> environment variable. Training output data, written to directories defined
+by environment variables <code>SM_OUTPUT_DATA_DIR</code> and <code>SM_MODEL_DIR</code>, are zipped and copied to a user-defined local target
+directory named <code>output</code>.</p>
+<p>SageMaker local mode does not yet support training with multiple instances (= containers) if <code>instance_type=local_gpu</code>
+but multi-node training can be emulated on CPU by setting <code>instance_type=local</code>, <code>instance_count=n</code> with <code>n</code> greater
+than <code>1</code> and setting the <code>trainer.accelerator</code> hyperparameter to <code>cpu</code>.</p>
+<p>The SageMaker execution <code>role</code> can be a dummy IAM role when running in local mode. You don't even need an AWS account
+or a local <code>.aws</code> configuration in your home directory for running in local mode. If the <code>.aws</code> configuration is missing,
+SageMaker only requires the environment variable <code>AWS_DEFAULT_REGION</code> to be set to a valid region such as <code>us-east-1</code>,
+for example.</p>
+<h3 id="with-sagemaker-in-the-cloud">With SageMaker in the cloud</h3>
+<p>The prerequisites for running SageMaker in the cloud are described <a href="https://github.com/krasserm/sagemaker-tutorial/blob/wip-part-1/README.md#prerequisites">here</a>. 
+Before training can be started, the <code>sagemaker-tutorial</code> Docker image must be uploaded to the AWS Elastic Container 
+Registry and the training dataset to S3 (instructions <a href="https://github.com/krasserm/sagemaker-tutorial/blob/wip-part-1/README.md#with-sagemaker-in-the-cloud">here</a>). 
+Switching to multi-node, multi-GPU training is then trivial. The differences to local mode w.r.t. <code>Estimator</code> 
+configuration are:</p>
+<ul>
+<li><code>image_uri</code> must be the URI of the <code>sagemaker-tutorial</code> image in the AWS Elastic Container Registry.</li>
+<li><code>role</code> must be a valid SageMaker execution role, created during <a href="https://docs.aws.amazon.com/sagemaker/latest/dg/gs-studio-onboard.html">onboarding</a>,
+  for example.</li>
+<li><code>instance_type</code> should be an accelerated computing instance type (<code>ml.g*.*</code> or <code>ml.p*.*</code>).</li>
+<li><code>output_path</code> should be a valid S3 path (or any other supported remote destination).</li>
+<li>the <code>inputs</code> argument of the estimator's <code>fit</code> method should be an S3 path containing training input data.</li>
+</ul>
+<p>This is shown in the following code template. Replace <code>&lt;account-id&gt;</code>, <code>&lt;region&gt;</code>, <code>&lt;role-name&gt;</code> and <code>&lt;my-bucket&gt;</code>
+with appropriate values for your AWS environment:</p>
+<div class="highlight"><pre><code><span class="kn">from</span><span class="w"> </span><span class="nn">sagemaker</span><span class="w"> </span><span class="kn">import</span> <span class="n">Session</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sagemaker.estimator</span><span class="w"> </span><span class="kn">import</span> <span class="n">Estimator</span>
+
+
+<span class="n">session</span> <span class="o">=</span> <span class="n">Session</span><span class="p">()</span> 
+<span class="n">estimator</span> <span class="o">=</span> <span class="n">Estimator</span><span class="p">(</span><span class="n">image_uri</span><span class="o">=</span><span class="s2">&quot;&lt;account-id&gt;.dkr.ecr.&lt;region&gt;.amazonaws.com/sagemaker-tutorial:latest&quot;</span><span class="p">,</span>
+                      <span class="n">role</span><span class="o">=</span><span class="s2">&quot;arn:aws:iam:&lt;account-id&gt;::role/&lt;role-name&gt;&quot;</span><span class="p">,</span>
+                      <span class="n">instance_type</span><span class="o">=</span><span class="s2">&quot;ml.g4dn.12xlarge&quot;</span><span class="p">,</span>
+                      <span class="n">instance_count</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                      <span class="n">output_path</span><span class="o">=</span><span class="s2">&quot;s3://&lt;my-bucket&gt;/output&quot;</span><span class="p">,</span>
+                      <span class="n">sagemaker_session</span><span class="o">=</span><span class="n">session</span><span class="p">,</span>
+                      <span class="n">hyperparameters</span><span class="o">=</span><span class="p">{</span>
+                        <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="s2">&quot;CIFAR10DataModule&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;data.batch_size&quot;</span><span class="p">:</span> <span class="mi">32</span><span class="p">,</span>
+                        <span class="s2">&quot;optimizer&quot;</span><span class="p">:</span> <span class="s2">&quot;Adam&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;optimizer.lr&quot;</span><span class="p">:</span> <span class="mf">1e-3</span><span class="p">,</span>
+                        <span class="s2">&quot;trainer.accelerator&quot;</span><span class="p">:</span> <span class="s2">&quot;gpu&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;trainer.devices&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                        <span class="s2">&quot;trainer.max_epochs&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+                        <span class="s2">&quot;logger.save_dir&quot;</span><span class="p">:</span> <span class="s2">&quot;s3://&lt;my-bucket&gt;/tensorboard&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;logger.flush_secs&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+                        <span class="s2">&quot;logger.name&quot;</span><span class="p">:</span> <span class="s2">&quot;tutorial&quot;</span>
+                      <span class="p">})</span>
+
+<span class="n">estimator</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="s2">&quot;s3://&lt;my-bucket&gt;/datasets/cifar-10&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p>The hyperparameters passed to the training script are identical to local mode except that the Tensorboard logger
+is configured to write logs directly to an S3 destination and flush its buffer every 5 seconds (default is 120). This
+allows monitoring progress while training is running. Tensorboard can read logs directly from an S3 path:</p>
+<div class="highlight"><pre><code>tensorboard<span class="w"> </span>--logdir<span class="w"> </span>s3://&lt;my-bucket&gt;/tensorboard
+</code></pre></div>
+<p>SageMaker automatically logs GPU and CPU usage together with other metrics to AWS CloudWatch. These can be tracked
+while training on SageMaker is in progress. The following output was taken from a training run on 2 <code>ml.g4dn.xlarge</code>
+instances (with only 1 GPU per instance, for testing purposes). GPU usage is on the left y-axis, CPU usage on the right
+y-axis.</p>
+<p><img alt="cloudwatch" src="/img/2022-01-21/cloudwatch.png" /></p>
+<h2 id="conclusion">Conclusion</h2>
+<p>Migrating an existing PyTorch Lightning application to multi-node, multi-GPU training on SageMaker can be done with
+relatively little effort. This article described a simple approach for which several alternatives and optimizations
+exist. However, the outlined approach should work quite well for a good number of use cases.</p>
+<p>I should also mention that <a href="https://www.grid.ai/">grid.ai</a>, the company founded by the original creators of PyTorch
+Lightning, provides an alternative solution for distributed training of PyTorch Lightning applications in the cloud.</p>
+<h2 id="acknowledgements">Acknowledgements</h2>
+<p>Many thanks to Christoph Stumpf for useful feedback on this article and associated code.</p>
+    </div>
+
+    <nav class="post-nav">
+        
+        <a href="/2020/12/12/gaussian-processes-sparse/" class="post-nav-link post-nav-older">
+            <span class="post-nav-label">&larr; Older</span>
+            <span class="post-nav-title">Sparse Gaussian processes</span>
+        </a>
+        
+        
+        <a href="/2022/02/26/sagemaker-fault-tolerance/" class="post-nav-link post-nav-newer">
+            <span class="post-nav-label">Newer &rarr;</span>
+            <span class="post-nav-title">Using AWS SageMaker with minimal dependencies, part 2</span>
+        </a>
+        
+    </nav>
+
+    
+    <section class="comments">
+        <h2>Comments</h2>
+        <div id="disqus_thread"></div>
+    </section>
+    
+</article>
+
+        </div>
+    </main>
+
+    
+    <footer class="footer">
+        <div class="container">
+            
+<ul class="footer-social-links">
+    <li>
+        <a href="https://linkedin.com/in/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+    <rect x="2" y="9" width="4" height="12"/>
+    <circle cx="4" cy="4" r="2"/>
+</svg>
+
+            linkedin.com/in/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/gradion-ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/gradion-ai
+        </a>
+    </li>
+    <li>
+        <a href="https://gradion.ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
+    <path d="M9 22v-4h6v4"/>
+    <path d="M8 6h.01"/><path d="M16 6h.01"/>
+    <path d="M12 6h.01"/>
+    <path d="M12 10h.01"/><path d="M12 14h.01"/>
+    <path d="M16 10h.01"/><path d="M16 14h.01"/>
+    <path d="M8 10h.01"/><path d="M8 14h.01"/>
+</svg>
+
+            gradion.ai
+        </a>
+    </li>
+    <li>
+        <a href="/llms.txt">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 8V4H8"/>
+    <rect width="16" height="12" x="4" y="8" rx="2"/>
+    <path d="M2 14h2"/>
+    <path d="M20 14h2"/>
+    <path d="M15 13v2"/>
+    <path d="M9 13v2"/>
+</svg>
+
+            llms.txt
+        </a>
+    </li>
+    <li>
+        <a href="/feed.xml">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 11a9 9 0 0 1 9 9"/>
+    <path d="M4 4a16 16 0 0 1 16 16"/>
+    <circle cx="5" cy="19" r="1"/>
+</svg>
+
+            feed.xml
+        </a>
+    </li>
+</ul>
+
+            <p class="footer-copyright">// Martin Krasser, 2026</p>
+        </div>
+    </footer>
+
+    <script>
+    document.querySelectorAll('a[href^="http"]').forEach(link => {
+        if (!link.href.startsWith(location.origin)) {
+            link.target = '_blank';
+            link.rel = 'noopener';
+        }
+    });
+    </script>
+    
+
+<script>
+var disqus_config = function () {
+    this.page.url = 'https://krasserm.github.io/2022/01/21/sagemaker-multi-node/';
+    this.page.identifier = '/2022/01/21/sagemaker-multi-node/';
+};
+(function() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://krasserm.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+</body>
+</html>

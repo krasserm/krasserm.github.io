@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#0a0e14">
+    <title>Impact of prompt masking on LLM agent planning performance - Martin Krasser</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/pygments.css">
+    <link rel="alternate" type="application/atom+xml" title="Martin Krasser Feed" href="/feed.xml">
+    
+<script>
+MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="/" class="nav-brand">Martin Krasser</a>
+            <ul class="nav-links">
+                
+                <li><a href="/about/">About</a></li>
+                
+                <li><a href="/">Blog</a></li>
+                
+                <li><a href="/industry/">Industry</a></li>
+                
+                <li><a href="/open-source/">Open Source</a></li>
+                
+                <li><a href="/citations/">Citations</a></li>
+                
+                <li><a href="/stories/">Stories</a></li>
+                
+                <li><a href="/contact/">Contact</a></li>
+                
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main">
+        <div class="container">
+            
+<article class="post">
+    <header class="post-header">
+        <h1 class="post-title">Impact of prompt masking on LLM agent planning performance</h1>
+        
+        <p class="post-meta">
+            <time datetime="2024-06-26">
+                June 26, 2024
+            </time>
+            
+            <span class="post-author">by Martin Krasser</span>
+            
+        </p>
+    </header>
+
+    <div class="post-content">
+        <p>I recently experimented with <a href="/2024/05/31/planner-fine-tuning/">fine-tuning an LLM agent on synthetic trajectories</a>. 
+During fine-tuning, a planner module learns to create a task description for the next step and select an appropriate tool to execute that step. 
+The selected tool is responsible for translating the informal task description into tool-specific executable actions and returning a (summarized) observation to the planner. </p>
+<p><a href="https://github.com/krasserm/bot-with-plan/tree/master/train#gba-planner-7b-v01">Fine-tuning</a> was done with a loss over the full sequence i.e. prompt and completion tokens. <a href="https://sebastianraschka.com/blog/2024/llm-research-insights-instruction-copy.html#11-instruction-masking-during-instruction-finetuning">Common practice</a> however is to compute the loss over completion tokens only and masking the prompt. This difference is illustrated in the Figures 1 and 2:</p>
+<p><a href="/img/2024-06-26/masking-1.png" target="_blank"><img src="/img/2024-06-26/masking-1.png" alt="masking-1"></a></p>
+<p><em>Figure 1</em>. Training example with loss over prompt and completion tokens.</p>
+<p><a href="/img/2024-06-26/masking-2.png" target="_blank"><img src="/img/2024-06-26/masking-2.png" alt="masking-2"></a></p>
+<p><em>Figure 2</em>. Training example with loss over completion tokens only.</p>
+<p>Motivation for computing the loss over the full sequence was to learn from previous task-observation pairs available in a prompt, a pattern that might be useful for predicting the next step in an agent trajectory.
+This is related to <a href="https://arxiv.org/abs/2405.14394">Instruction Tuning With Loss Over Instructions</a>, a paper that reports improved downstream tasks performance when applying a loss function to the instruction (= prompt) and completion part of training data.  </p>
+<p>To investigate if prompt masking has a significant impact on LLM agent planning performance, I <a href="https://github.com/krasserm/bot-with-plan/tree/master/train#gba-planner-7b-v02">fine-tuned two planner models</a>, one with prompt masking and the other without, and <a href="https://github.com/krasserm/bot-with-plan/tree/master/simulation#prompt-masking">evaluated their performance</a> in a <a href="https://github.com/krasserm/bot-with-plan#environments">simulation environment</a>, with a GPT-4 based planner as reference.
+The reported metrics are <code>pass_rate</code>, <code>bad_task_rate</code> and <code>completion_rate</code> (details <a href="https://github.com/krasserm/bot-with-plan/tree/master#evaluation">here</a>):</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">series</th>
+<th style="text-align: center;">pass_rate</th>
+<th style="text-align: center;">bad_task_rate</th>
+<th style="text-align: center;">completion_rate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">fine-tuned w/ masking</td>
+<td style="text-align: center;">0.85 ± 0.01</td>
+<td style="text-align: center;">0.14 ± 0.01</td>
+<td style="text-align: center;">0.98 ± 0.01</td>
+</tr>
+<tr>
+<td style="text-align: left;">fine-tuned w/o masking</td>
+<td style="text-align: center;">0.88 ± 0.01</td>
+<td style="text-align: center;">0.12 ± 0.01</td>
+<td style="text-align: center;">0.99 ± 0.01</td>
+</tr>
+<tr>
+<td style="text-align: left;">gpt-4</td>
+<td style="text-align: center;">0.90 ± 0.01</td>
+<td style="text-align: center;">0.11 ± 0.01</td>
+<td style="text-align: center;">0.98 ± 0.01</td>
+</tr>
+</tbody>
+</table>
+<p>Observations made in the simulation environment have high variance, incl. missing or partial observations with a configurable probability. Therefore, metric statistics (mean and standard error) are calculated from 12 evaluations runs. </p>
+<p>Fine-tuning with prompt masking seems to result in decreased planner performance but with only weak support from a statistical significance test: a t-test on the metrics of series <code>fine-tuned w/ masking</code> and <code>fine-tuned w/o masking</code> gives a p-value of 0.10 for <code>pass_rate</code> and 0.22 for <code>bad_task_rate</code>. 
+Using a p-value of 0.05 as significance threshold, a preliminary conclusion is that prompt masking doesn't have significant impact on planner performance, at least in the used simulation environment.</p>
+    </div>
+
+    <nav class="post-nav">
+        
+        <a href="/2024/05/31/planner-fine-tuning/" class="post-nav-link post-nav-older">
+            <span class="post-nav-label">&larr; Older</span>
+            <span class="post-nav-title">Planner fine-tuning on synthetic agent trajectories</span>
+        </a>
+        
+        
+        <a href="/2025/02/05/deepseek-r1-agent/" class="post-nav-link post-nav-newer">
+            <span class="post-nav-label">Newer &rarr;</span>
+            <span class="post-nav-title">DeepSeek-R1 agents with code actions</span>
+        </a>
+        
+    </nav>
+
+    
+    <section class="comments">
+        <h2>Comments</h2>
+        <div id="disqus_thread"></div>
+    </section>
+    
+</article>
+
+        </div>
+    </main>
+
+    
+    <footer class="footer">
+        <div class="container">
+            
+<ul class="footer-social-links">
+    <li>
+        <a href="https://linkedin.com/in/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+    <rect x="2" y="9" width="4" height="12"/>
+    <circle cx="4" cy="4" r="2"/>
+</svg>
+
+            linkedin.com/in/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/krasserm">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/krasserm
+        </a>
+    </li>
+    <li>
+        <a href="https://github.com/gradion-ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+</svg>
+
+            github.com/gradion-ai
+        </a>
+    </li>
+    <li>
+        <a href="https://gradion.ai">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="2" ry="2"/>
+    <path d="M9 22v-4h6v4"/>
+    <path d="M8 6h.01"/><path d="M16 6h.01"/>
+    <path d="M12 6h.01"/>
+    <path d="M12 10h.01"/><path d="M12 14h.01"/>
+    <path d="M16 10h.01"/><path d="M16 14h.01"/>
+    <path d="M8 10h.01"/><path d="M8 14h.01"/>
+</svg>
+
+            gradion.ai
+        </a>
+    </li>
+    <li>
+        <a href="/llms.txt">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 8V4H8"/>
+    <rect width="16" height="12" x="4" y="8" rx="2"/>
+    <path d="M2 14h2"/>
+    <path d="M20 14h2"/>
+    <path d="M15 13v2"/>
+    <path d="M9 13v2"/>
+</svg>
+
+            llms.txt
+        </a>
+    </li>
+    <li>
+        <a href="/feed.xml">
+            
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 11a9 9 0 0 1 9 9"/>
+    <path d="M4 4a16 16 0 0 1 16 16"/>
+    <circle cx="5" cy="19" r="1"/>
+</svg>
+
+            feed.xml
+        </a>
+    </li>
+</ul>
+
+            <p class="footer-copyright">// Martin Krasser, 2026</p>
+        </div>
+    </footer>
+
+    <script>
+    document.querySelectorAll('a[href^="http"]').forEach(link => {
+        if (!link.href.startsWith(location.origin)) {
+            link.target = '_blank';
+            link.rel = 'noopener';
+        }
+    });
+    </script>
+    
+
+<script>
+var disqus_config = function () {
+    this.page.url = 'https://krasserm.github.io/2024/06/26/planner-prompt-masking/';
+    this.page.identifier = '/2024/06/26/planner-prompt-masking/';
+};
+(function() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://krasserm.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+</body>
+</html>
