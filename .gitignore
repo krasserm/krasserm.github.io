@@ -3,3 +3,4 @@ node_modules
 .jekyll-cache
 *.idea
 *.iml
+resume.pdf
