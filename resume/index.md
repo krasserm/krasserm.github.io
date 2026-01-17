@@ -4,7 +4,7 @@
 
 Freelance AI engineer and architect
 
-Freelance AI engineer and architect with a proven track-record in agentic systems, machine learning, distributed systems, and system integration. 20+ years of experience in architecting, developing and operating production software systems at scale. Extensive industry experience in both technical and leadership roles. Active open source contributor.
+Freelance AI engineer and architect with a proven track-record in agentic systems, machine learning, distributed systems, and system integration. 20+ years of experience in architecting, developing, and operating production software systems at scale. Extensive industry experience in both technical and leadership roles. Active open source contributor.
 
 ## Industry Experience
 
@@ -19,7 +19,7 @@ Freelance AI engineer and architect with a proven track-record in agentic system
 
 
 
-We draw from 20+ years of experience in production-grade software development, with 8+ years in AI/ML engineering. Solutions we've built for clients serve thousands of B2B customers worldwide. We are active open source contributors, currently focused on multi-party conversational AI and on code action agents that evolve their own tool libraries.
+We draw from 8+ years of AI/ML engineering experience and 20+ years of architecting, developing, and operating production software systems at scale. Solutions we've built for clients serve thousands of B2B customers worldwide. We are active open source contributors, currently focused on multi-party conversational AI and on code action agents that evolve their own tool libraries.
 
 
 
