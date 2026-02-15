@@ -3,9 +3,9 @@
 - [Code Actions as Tools](https://krasserm.github.io/2025/12/16/code-actions/index.md): Evolving Tool Libraries for Agents
 - [From single-user to multi-party conversational AI](https://krasserm.github.io/2025/11/12/multi-party-ai/index.md)
 - [DeepSeek-R1 agents with code actions](https://krasserm.github.io/2025/02/05/deepseek-r1-agent/index.md)
-- [Impact of prompt masking on LLM agent planning performance](https://krasserm.github.io/2024/06/26/planner-prompt-masking/index.md)
+- [Impact of prompt masking on LLM agent step planning performance](https://krasserm.github.io/2024/06/26/planner-prompt-masking/index.md)
 - [Planner fine-tuning on synthetic agent trajectories](https://krasserm.github.io/2024/05/31/planner-fine-tuning/index.md)
-- [Separation of planning concerns in ReAct-style LLM agents](https://krasserm.github.io/2024/03/06/modular-agent/index.md)
+- [Separation of step planning concerns in ReAct-style LLM agents](https://krasserm.github.io/2024/03/06/modular-agent/index.md)
 - [Schema-guided generation with open LLMs](https://krasserm.github.io/2023/12/18/llm-json-mode/index.md)
 - [Schema-guided generation in LangChain agents](https://krasserm.github.io/2023/12/10/grammar-based-agents/index.md)
 - [Extending Visual ChatGPT with image search engines](https://krasserm.github.io/2023/04/03/visual-chatgpt-search/index.md)

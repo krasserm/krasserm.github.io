@@ -1,13 +1,13 @@
-# Separation of planning concerns in ReAct-style LLM agents
+# Separation of step planning concerns in ReAct-style LLM agents
 
 [Notebook](https://github.com/krasserm/bot-with-plan/blob/wip-article-2/example_agent.ipynb)  
 [Repository](https://github.com/krasserm/bot-with-plan/tree/wip-article-2)
 
-LLM agents require a wide range of capabilities for executing tasks autonomously. They must be able to decompose complex user instructions, plan actions, interact with their environment using tools, call tools with correct arguments, reason about observations and adjust planning if needed.
+LLM agents require a wide range of capabilities for executing tasks autonomously. They must be able to decompose complex user instructions, plan next actions, interact with their environment using tools, call tools with correct arguments, reason about observations and adjust planning if needed.
 
 Instructing an LLM to behave like an agent is often done with comprehensive, sometimes monolithic prompts. Commercial LLMs like GPT-4 are more capable of understanding such complex prompts and have important features like [function calling](https://platform.openai.com/docs/guides/function-calling) already built in. Open LLMs, especially smaller ones, still struggle to do so. An alternative is to fine-tune smaller open LLMs on agent trajectories created by larger models. Common to both approaches however is that it’s still a monolithic expert providing all the diverse capabilites of an agent (Figure 1, left).
 
-Inspired by [prompt chaining](https://docs.anthropic.com/claude/docs/chain-prompts), I experimented with separating planning from function calling in [ReAct](https://arxiv.org/abs/2210.03629)-style agents. This separation of concerns makes the planner module of an agent responsible only for describing the task of the next step in an informal way and selecting an appropriate tool for that step, without having to deal with function calling details. The main idea is to reduce the responsibilites of a planner module as far as possible so that smaller LLMs can be better utilized for planning.
+Inspired by [prompt chaining](https://docs.anthropic.com/claude/docs/chain-prompts), I experimented with separating step planning from function calling in [ReAct](https://arxiv.org/abs/2210.03629)-style agents. This separation of concerns makes the planner module of an agent responsible only for describing the task of the next step in an informal way and selecting an appropriate tool for that step, without having to deal with function calling details. The main idea is to reduce the responsibilites of a planner module as far as possible so that smaller LLMs can be better utilized for step planning.
 
 Translating the task description into a function call is the responsibility of the selected tool. It encapsulates all the tool-specific detailed knowledge required for extracting function call arguments from the task description and previous agent activities. Call argument extraction can either be done in a generic way with specialized function calling models, like NexusRaven-v2 for example, or in a very tool-specific way, for example when a task description must be translated into code for numeric calculations.
 
@@ -19,7 +19,7 @@ Figure 1. Monolithic approach (left) vs modular approach, as used in this articl
 
 ## Modules
 
-At the core of the system is a [ReAct](https://arxiv.org/abs/2210.03629)-style agent loop that uses a planning module to plan actions. An action is defined by a selected tool and a task description. Executing the selected tool results in an observation. The agent uses short-term memory for recording task-observation pairs (scratchpad) and conversational memory for recording interactions with the user.
+At the core of the system is a [ReAct](https://arxiv.org/abs/2210.03629)-style agent loop that uses a step planning module to plan the next action. An action is defined by a selected tool and a task description. Executing the selected tool results in an observation. The agent uses short-term memory for recording task-observation pairs (scratchpad) and conversational memory for recording interactions with the user.
 
 ### Planner
 
@@ -255,7 +255,7 @@ conversational_agent.run("Find an image with two of them")
 
 The current implementation is very simple and minimalistic. Potential improvements, in addition to [planner fine-tuning](https://krasserm.github.io/2024/05/31/planner-fine-tuning/index.md), include but are not limited to:
 
-- Better planning via with tree search like in [DFSDT](https://arxiv.org/abs/2307.16789) or [LATS](https://arxiv.org/abs/2310.04406), for example.
+- Better planning via tree search like in [DFSDT](https://arxiv.org/abs/2307.16789) or [LATS](https://arxiv.org/abs/2310.04406), for example.
 - Self-improvement via [self-reflection](https://arxiv.org/abs/2303.11366) or [action learning](https://arxiv.org/abs/2402.15809), for example.
 - Function or API selection from a large database instead of enumerating them in the planner prompt.
 - Better code LLM for the calculator tool to supporting more complex instructions and result types.
@@ -267,4 +267,4 @@ Improvements can be implemented via prompt engineering and/or fine-tuning. A lat
 
 ## Conclusion
 
-Separating planning from function calling concerns reduces the responsibilities of a planner module and supports usage of smaller LLMs for planner implementation. This article demonstrated how to elicit multi-step planning behavior from a general-purpose instruction-tuned LLM like Mistral-7B-Instruct-v0.2, without further fine-tuning. In a [follow-up article](https://krasserm.github.io/2024/05/31/planner-fine-tuning/index.md), I'll show how a planner module can be fine-tuned on synthetic data.
+Separating step planning from function calling concerns reduces the responsibilities of a planner module and supports usage of smaller LLMs for planner implementation. This article demonstrated how to elicit step planning behavior from a general-purpose instruction-tuned LLM like Mistral-7B-Instruct-v0.2, without further fine-tuning. In a [follow-up article](https://krasserm.github.io/2024/05/31/planner-fine-tuning/index.md), I'll show how a planner module can be fine-tuned on synthetic data.

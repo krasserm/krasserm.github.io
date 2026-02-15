@@ -68,9 +68,9 @@ MathJax = {
     <div class="post-content">
         <p><a href="https://github.com/krasserm/bot-with-plan/blob/master/planner_finetuned.ipynb">Notebook</a><br />
 <a href="https://github.com/krasserm/bot-with-plan/tree/master">Repository</a></p>
-<p>In a <a href="/2024/03/06/modular-agent/">previous article</a> I experimented with separating planning from function calling in <a href="https://arxiv.org/abs/2210.03629">ReAct</a>-style LLM agents. A central planner module is responsible for describing the task for the next step and selecting an appropriate tool. The selected tool is responsible for translating the informal task description into tool-specific executable actions. Reducing the planner's responsibility to task formulation and tool selection only, without having to deal with function calling details, enables usage of smaller, less capable LLMs for planning. It also eases the generation of datasets for planner fine-tuning.</p>
+<p>In a <a href="/2024/03/06/modular-agent/">previous article</a> I experimented with separating step planning from function calling in <a href="https://arxiv.org/abs/2210.03629">ReAct</a>-style LLM agents. A central planner module is responsible for describing the task for the next step and selecting an appropriate tool. The selected tool is responsible for translating the informal task description into tool-specific executable actions. Reducing the planner's responsibility to task formulation and tool selection only, without having to deal with function calling details, enables usage of smaller, less capable LLMs for step planning. It also eases the generation of datasets for planner fine-tuning.</p>
 <p>This article first outlines how to generate a synthetic dataset for planner fine-tuning and how to fine-tune a 7B LLM to reach the performance of a GPT-4 based planner. To generate a synthetic dataset, we run an agent with a GPT-4 based planner in a simulation environment and record its trajectories. The interface to the environment is a set of simulated tools, instead of real ones. For example, a simulated <code>search_internet</code> tool, backed by GPT-4, generates search results from GPT-4's internal memory instead of actually searching the internet. </p>
-<p>For fine-tuning it is less important if observations are made in a simulation or a real environment. A planner has to learn to use these observations as-is, regardless whether they are hallucinated or not, and appropriately plan the next steps. The last part of this article runs the fine-tuned planner in a real environment, with a corresponding set of real tools as interface. The planner learns the available tools from the generated dataset so that they don't need to be specified in the prompt which can significantly reduce inference latencies. </p>
+<p>For fine-tuning it is less important if observations are made in a simulation or a real environment. A planner has to learn to use these observations as-is, regardless whether they are hallucinated or not, and appropriately plan each next step. The last part of this article runs the fine-tuned planner in a real environment, with a corresponding set of real tools as interface. The planner learns the available tools from the generated dataset so that they don't need to be specified in the prompt which can significantly reduce inference latencies. </p>
 <p>The predefined set of <a href="https://github.com/krasserm/bot-with-plan/tree/master/simulation/tools">simulated tools</a> and their corresponding <a href="https://github.com/krasserm/bot-with-plan/tree/master/gba/tools">real tools</a> used in this article are just examples and can be adjusted to whatever is needed for other applications. <a href="https://github.com/krasserm/bot-with-plan/tree/master/simulation/README.md#generate-trajectories">Generating trajectories</a> in a simulation environment and <a href="https://github.com/krasserm/bot-with-plan/tree/master/train/README.md#planner-fine-tuning">planner fine-tuning</a> with a different set of tools is straightforward with the framework provided by the <a href="https://github.com/krasserm/bot-with-plan">bot-with-plan</a> project. The currently used tools are:</p>
 <table>
 <thead>
@@ -340,13 +340,13 @@ Observation: 5.120547945205479
         
         <a href="/2024/03/06/modular-agent/" class="post-nav-link post-nav-older">
             <span class="post-nav-label">&larr; Older</span>
-            <span class="post-nav-title">Separation of planning concerns in ReAct-style LLM agents</span>
+            <span class="post-nav-title">Separation of step planning concerns in ReAct-style LLM agents</span>
         </a>
         
         
         <a href="/2024/06/26/planner-prompt-masking/" class="post-nav-link post-nav-newer">
             <span class="post-nav-label">Newer &rarr;</span>
-            <span class="post-nav-title">Impact of prompt masking on LLM agent planning performance</span>
+            <span class="post-nav-title">Impact of prompt masking on LLM agent step planning performance</span>
         </a>
         
     </nav>

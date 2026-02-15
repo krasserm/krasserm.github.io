@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="dark">
     <meta name="theme-color" content="#0a0e14">
-    <title>Impact of prompt masking on LLM agent planning performance - Martin Krasser</title>
+    <title>Impact of prompt masking on LLM agent step planning performance - Martin Krasser</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
@@ -53,7 +53,7 @@ MathJax = {
             
 <article class="post">
     <header class="post-header">
-        <h1 class="post-title">Impact of prompt masking on LLM agent planning performance</h1>
+        <h1 class="post-title">Impact of prompt masking on LLM agent step planning performance</h1>
         
         <p class="post-meta">
             <time datetime="2024-06-26">
@@ -66,8 +66,8 @@ MathJax = {
     </header>
 
     <div class="post-content">
-        <p>I recently experimented with <a href="/2024/05/31/planner-fine-tuning/">fine-tuning an LLM agent on synthetic trajectories</a>. 
-During fine-tuning, a planner module learns to create a task description for the next step and select an appropriate tool to execute that step. 
+        <p>I recently experimented with <a href="/2024/05/31/planner-fine-tuning/">fine-tuning an LLM agent's step planner on synthetic trajectories</a>.
+During fine-tuning, the step planner module learns to create a task description for the next step and select an appropriate tool to execute that step. 
 The selected tool is responsible for translating the informal task description into tool-specific executable actions and returning a (summarized) observation to the planner. </p>
 <p><a href="https://github.com/krasserm/bot-with-plan/tree/master/train#gba-planner-7b-v01">Fine-tuning</a> was done with a loss over the full sequence i.e. prompt and completion tokens. <a href="https://sebastianraschka.com/blog/2024/llm-research-insights-instruction-copy.html#11-instruction-masking-during-instruction-finetuning">Common practice</a> however is to compute the loss over completion tokens only and masking the prompt. This difference is illustrated in the Figures 1 and 2:</p>
 <p><a href="/img/2024-06-26/masking-1.png" target="_blank"><img src="/img/2024-06-26/masking-1.png" alt="masking-1"></a></p>
@@ -76,7 +76,7 @@ The selected tool is responsible for translating the informal task description i
 <p><em>Figure 2</em>. Training example with loss over completion tokens only.</p>
 <p>Motivation for computing the loss over the full sequence was to learn from previous task-observation pairs available in a prompt, a pattern that might be useful for predicting the next step in an agent trajectory.
 This is related to <a href="https://arxiv.org/abs/2405.14394">Instruction Tuning With Loss Over Instructions</a>, a paper that reports improved downstream tasks performance when applying a loss function to the instruction (= prompt) and completion part of training data.  </p>
-<p>To investigate if prompt masking has a significant impact on LLM agent planning performance, I <a href="https://github.com/krasserm/bot-with-plan/tree/master/train#gba-planner-7b-v02">fine-tuned two planner models</a>, one with prompt masking and the other without, and <a href="https://github.com/krasserm/bot-with-plan/tree/master/simulation#prompt-masking">evaluated their performance</a> in a <a href="https://github.com/krasserm/bot-with-plan#environments">simulation environment</a>, with a GPT-4 based planner as reference.
+<p>To investigate if prompt masking has a significant impact on LLM agent step planning performance, I <a href="https://github.com/krasserm/bot-with-plan/tree/master/train#gba-planner-7b-v02">fine-tuned two planner models</a>, one with prompt masking and the other without, and <a href="https://github.com/krasserm/bot-with-plan/tree/master/simulation#prompt-masking">evaluated their performance</a> in a <a href="https://github.com/krasserm/bot-with-plan#environments">simulation environment</a>, with a GPT-4 based planner as reference.
 The reported metrics are <code>pass_rate</code>, <code>bad_task_rate</code> and <code>completion_rate</code> (details <a href="https://github.com/krasserm/bot-with-plan/tree/master#evaluation">here</a>):</p>
 <table>
 <thead>
