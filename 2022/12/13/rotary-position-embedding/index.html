@@ -66,7 +66,7 @@ MathJax = {
     </header>
 
     <div class="post-content">
-        <p><a href="https://colab.research.google.com/github/krasserm/krasserm.github.io/blob/master/notebooks/2022-12-13-rotary-position-embedding.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a></p>
+        <p><a href="https://colab.research.google.com/github/krasserm/krasserm.github.io/blob/gh-pages/notebooks/2022-12-13-rotary-position-embedding.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a></p>
 <p>The <a href="https://arxiv.org/abs/1706.03762">Transformer</a> model is invariant to reordering of the input sequence. For sequence modeling, position information must therefore be explicitly included. <a href="https://arxiv.org/abs/2104.09864">Rotary position embedding</a> is an approach for including relative position information. It is a multiplicative approach, in contrast to most other approaches which are additive.</p>
 <h2 id="position-information-basics">Position information basics</h2>
 <p>This article assumes that you have a basic understanding of the Transformer architecture and the scaled dot product attention mechanism. An excellent introduction is given <a href="https://jalammar.github.io/illustrated-transformer/">here</a>. To recap, self-attention first transforms token embeddings $\mathbf{x}_m$ and $\mathbf{x}_n$ at positions $m$ and $n$ to query $\mathbf{q}_m$, key $\mathbf{k}_n$ and value $\mathbf{v}_n$.</p>
