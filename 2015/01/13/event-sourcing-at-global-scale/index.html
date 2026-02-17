@@ -84,10 +84,16 @@ Also, we support event aggregation from several (even globally distributed) prod
 <p>We distinguish two types of actors that interact with the event log: <a href="http://rbmhtechnology.github.io/eventuate/architecture.html#event-sourced-actors"><code>EventsourcedActor</code></a> and <a href="http://rbmhtechnology.github.io/eventuate/architecture.html#event-sourced-views"><code>EventsourcedView</code></a>. They correspond to <code>PersistentActor</code> and <code>PersistentView</code> in akka-persistence, respectively, but with a major difference in event consumption.</p>
 <p>Like in akka-persistence, <code>EventsourcedActor</code>s (EAs) produce events to the event log (during command processing) and consume events from the event log. A major difference is that EAs do not only consume events they produce themselves but also consume events that other EAs produce to the same event log (which can be customized by filter criteria). In other words, EAs do not only consume events to reconstruct internal state but also to collaborate with each other by exchanging events which is at the heart of <a href="http://en.wikipedia.org/wiki/Event-driven_architecture">event-driven architectures</a> and <a href="http://martinfowler.com/eaaDev/EventCollaboration.html">event collaboration</a>. </p>
 <p>From this perspective, a replicated event log is the backbone of a distributed, durable and causality-preserving event bus that also provides the full history of events, so that event consumers can reconstruct application state any time by replaying events. For exchanging events, EAs may be co-located at the same site (Fig. 1) or distributed across sites (Fig. 2)</p>
-<p><img alt="Intra-site EA collaboration" src="/img/2015-01-13/intra-site.png" title="Intra-site EA collaboration" />
-Fig. 1: Intra-site EA collaboration</p>
-<p><img alt="Inter-site EA collaboration" src="/img/2015-01-13/inter-site.png" title="Inter-site EA collaboration" />
-Fig. 2: Inter-site EA collaboration</p>
+<figure style="text-align:center">
+<img src="/img/2015-01-13/intra-site.png" alt="Intra-site EA collaboration">
+<figcaption>Fig. 1. Intra-site EA collaboration.</figcaption>
+</figure>
+
+<figure style="text-align:center">
+<img src="/img/2015-01-13/inter-site.png" alt="Inter-site EA collaboration">
+<figcaption>Fig. 2. Inter-site EA collaboration.</figcaption>
+</figure>
+
 <p>We think that our distributed event bus might be an interesting implementation option of Akka’s <a href="http://doc.akka.io/docs/akka/2.3.8/scala/event-bus.html">event bus</a>, especially for distributed event-based collaboration in an Akka <a href="http://doc.akka.io/docs/akka/2.3.8/scala/cluster-usage.html">cluster</a>. In this case, Akka cluster applications could also rely on causal ordering of events. </p>
 <p>One special mode of collaboration is state replication: EA instances of the same type consume each other’s events to reconstruct application state on different sites (more on that later). A related example is to maintain hot-standby instances of EAs on the same site to achieve fail-over times of milliseconds. Another example of collaboration is a distributed business process: EAs of different type process each other’s events to achieve a common goal. Reliability of the distributed business process is given by durability of events in the event log and event replay in case of failures. </p>
 <p>For sending messages to other non-event-sourced actors (external services, …), EAs have several options:</p>

@@ -29,9 +29,10 @@ $L_{rec}$ is the expected reconstruction error of an image $\mathbf{x}$, $\mathb
 
 $L_{kl}$ is the [KL divergence](https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence) between the variational distribution $q(\mathbf{t} \lvert \mathbf{x})$ and the prior $p(\mathbf{t})$ over latent variables. $q(\mathbf{t} \lvert \mathbf{x})$ is the *probabilistic encoder* of the VAE. The probabilistic encoder $q(\mathbf{t} \lvert \mathbf{x})$ is a multivariate Gaussian distribution whose mean and variance is computed by an encoder neural network from an input image. Prior $p(\mathbf{t})$ is chosen to be a mutlivariate standard normal distribution. $L_{kl}$ acts as a regularization term ensuring that $q(\mathbf{t} \lvert \mathbf{x})$ doesn't diverge too much from prior $p(\mathbf{t})$.
 
-![vae](https://krasserm.github.io/img/2018-07-27/vae-4.png)
-
-*Fig. 1: Plain variational autoencoder*
+<figure style="text-align:center">
+<img src="/img/2018-07-27/vae-4.png" alt="vae">
+<figcaption>Fig. 1. Plain variational autoencoder.</figcaption>
+</figure>
 
 ### DFC VAE
 
@@ -51,17 +52,19 @@ L_{vae_{dfc}} = L_{p} + L_{kl}
 $$
 
 
-![vae](https://krasserm.github.io/img/2018-07-27/vae-dfc-4.png)
-
-*Fig. 2. Deep feature consistent variational autoencoder*
+<figure style="text-align:center">
+<img src="/img/2018-07-27/vae-dfc-4.png" alt="vae">
+<figcaption>Fig. 2. Deep feature consistent variational autoencoder.</figcaption>
+</figure>
 
 ## Training
 
 In contrast to the original paper we will use the MNIST handwritten digits dataset for training and for demonstrating how a perceptual loss improves over a pixel-by-pixel reconstruction loss. We can therefore reuse the VAE [encoder](https://github.com/krasserm/bayesian-machine-learning/blob/dev/autoencoder-applications/variational_autoencoder_opt_util.py#L15-L36) and [decoder](https://github.com/krasserm/bayesian-machine-learning/blob/dev/autoencoder-applications/variational_autoencoder_opt_util.py#L38-L53) architectures from the already mentioned [previous article](https://krasserm.github.io/2018/04/03/variational-inference/index.md). The perceptual model is a [small CNN](https://github.com/krasserm/bayesian-machine-learning/blob/6962f02168fd82cd01ed6dfe3937e98b10a58b02/variational_autoencoder_opt_util.py#L91-L105) (Fig. 3) that has already been trained in [another context](http://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/dev/variational_autoencoder_opt.ipynb#Optimization-objectives) to classify MNIST images.
 
-![pm](https://krasserm.github.io/img/2018-07-27/classifier-3.png)
-
-*Fig. 3: Perceptual model used for DFC VAE training*
+<figure style="text-align:center">
+<img src="/img/2018-07-27/classifier-3.png" alt="pm">
+<figcaption>Fig. 3. Perceptual model used for DFC VAE training.</figcaption>
+</figure>
 
 Depending on the value of the `use_pretrained` variable either pre-trained weights for the plain VAE and DFC VAE are loaded (default) or they are trained from scratch. The dimensionality of the latent space is 5 by default.
 

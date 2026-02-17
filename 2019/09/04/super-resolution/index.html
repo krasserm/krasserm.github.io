@@ -79,31 +79,41 @@ MathJax = {
 <p>A more detailed overview on single image super-resolution is given in <a href="https://arxiv.org/abs/1902.06068">these</a> <a href="https://arxiv.org/abs/1904.07523">papers</a>. A higher-level training API for the example code in this article is implemented in <a href="https://github.com/krasserm/super-resolution">this repository</a>.</p>
 <h2 id="high-level-architecture">High-level architecture</h2>
 <p>Many state-of-the-art super-resolution models learn most of the mapping function in LR space followed by one or more upsampling layers at the end of the network. This is called <em>post-upsampling SR</em> in Fig. 1. Upsampling layers are learnable and trained together with the preceding convolution layers in an end-to-end manner. </p>
-<center><img src="/img/2019-09-04/figure_1.png"></center>
-<center>Fig. 1. Upsampling layers positions.</center>
+<figure style="text-align:center">
+<img src="/img/2019-09-04/figure_1.png">
+<figcaption>Fig. 1. Upsampling layers positions.</figcaption>
+</figure>
 
 <p>Earlier approaches first upsampled the LR image with a pre-defined upsampling operation and then learned the mapping in HR space (<em>pre-upsampling SR</em>). A disadvantage of this approach is that more parameters per layer are required which leads to higher computational costs and limits the construction of deeper neural networks. </p>
 <h3 id="residual-design">Residual design</h3>
 <p>Super-resolution requires that most of the information contained in an LR image must be preserved in the SR image. Super-resolution models therefore mainly learn the residuals between LR and HR images. <a href="https://en.wikipedia.org/wiki/Residual_neural_network">Residual network designs</a> are therefore of high importance: identity information is conveyed via skip connections whereas reconstruction of high frequency content is done on the main path of the network.</p>
-<center><img src="/img/2019-09-04/figure_2.png"></center>
-<center>Fig. 2. Global skip connection.</center>
+<figure style="text-align:center">
+<img src="/img/2019-09-04/figure_2.png">
+<figcaption>Fig. 2. Global skip connection.</figcaption>
+</figure>
 
 <p>Fig. 2. shows a global skip connection over several layers. These layers are often residual blocks as in <a href="https://arxiv.org/abs/1512.03385">ResNet</a> or specialized variants (see sections <a href="#edsr">EDSR</a> and <a href="#wdsr">WDSR</a>). Local skip connections in residual blocks make the network easier to optimize and therefore support the construction of deeper networks.</p>
 <h3 id="upsampling-layer">Upsampling layer</h3>
 <p>The upsampling layer used in this article is a <a href="https://arxiv.org/abs/1609.05158">sub-pixel convolution</a> layer. Given an input of size $H \times W \times C$ and an upsampling factor $s$, the sub-pixel convolution layer first creates a representation of size $H \times W \times s^2C$ via a convolution operation and then reshapes it to $sH \times sW \times C$, completing the upsampling operation. The result is an output spatially scaled by factor $s$.</p>
-<center><img src="/img/2019-09-04/figure_3.png"></center>
-<center>Fig. 3. Sub-pixel convolution.</center>
+<figure style="text-align:center">
+<img src="/img/2019-09-04/figure_3.png">
+<figcaption>Fig. 3. Sub-pixel convolution.</figcaption>
+</figure>
 
 <p>An alternative are <a href="https://towardsdatascience.com/types-of-convolutions-in-deep-learning-717013397f4d">transposed convolution</a> layers. Transposed convolutions can be learned too but have the disadvantage that they have a smaller receptive field than sub-pixel convolutions and can therefore process less contextual information which often results in less accurate predictions.</p>
 <h2 id="super-resolution-models">Super-resolution models</h2>
 <h3 id="edsr">EDSR</h3>
 <p>One super-resolution model that follows this high-level architecture is described in the paper <a href="https://arxiv.org/abs/1707.02921">Enhanced Deep Residual Networks for Single Image Super-Resolution</a> (EDSR). It is a winner of the <a href="http://www.vision.ee.ethz.ch/ntire17/">NTIRE 2017</a> super-resolution challenge. Here's an overview of the EDSR architecture:</p>
-<center><img src="/img/2019-09-04/figure_4.png"></center>
-<center>Fig. 4. EDSR architecture.</center>
+<figure style="text-align:center">
+<img src="/img/2019-09-04/figure_4.png">
+<figcaption>Fig. 4. EDSR architecture.</figcaption>
+</figure>
 
 <p>Its residual block design differs from that of ResNet. Batch normalization layers have been removed together with the final ReLU activation as shown on the right side of Fig. 5.  </p>
-<center><img src="/img/2019-09-04/figure_5.png"></center>
-<center>Fig. 5. Residual block design in ResNet (left) and in EDSR (right).</center>
+<figure style="text-align:center">
+<img src="/img/2019-09-04/figure_5.png">
+<figcaption>Fig. 5. Residual block design in ResNet (left) and in EDSR (right).</figcaption>
+</figure>
 
 <p>The EDSR authors argue that batch normalization loses scale information of images and reduces the range flexibility of activations. Removal of batch normalization layers not only increases super-resolution performance but also reduces GPU memory up to 40% so that significantly larger models can be trained.</p>
 <p>EDSR uses a single sub-pixel upsampling layer for super-resolution scales (i.e. upsampling factors) $\times 2$ and $\times 3$ and two upsampling layers for scale $\times 4$. The following <code>edsr</code> function implements the EDSR model with Tensorflow 2.0. The default arguments correspond to the EDSR baseline described in the paper. Model training is described further below.</p>
@@ -174,8 +184,10 @@ MathJax = {
 </code></pre></div>
 <h3 id="wdsr">WDSR</h3>
 <p>Another super-resolution model is a derivative of EDSR and is described in the paper <a href="https://arxiv.org/abs/1808.08718">Wide Activation for Efficient and Accurate Image Super-Resolution</a>, a winner in the realistic tracks of the <a href="http://www.vision.ee.ethz.ch/ntire18/">NTIRE 2018</a> super-resolution challenge. It makes further changes to the residual block design by reducing the number of channels on the identity mapping path and increasing the number of channels in each residual block without increasing the total number of parameters. The residual block design of their WDSR-A and WDSR-B models is shown in Fig. 6, a Tensorflow 2.0 implementation is available <a href="https://github.com/krasserm/super-resolution/blob/master/model/wdsr.py">here</a>.</p>
-<center><img src="/img/2019-09-04/figure_6.png"></center>
-<center>Fig. 6. Residual block design in EDSR (left), WDSR-A (middle) and WDSR-B (right).</center>
+<figure style="text-align:center">
+<img src="/img/2019-09-04/figure_6.png">
+<figcaption>Fig. 6. Residual block design in EDSR (left), WDSR-A (middle) and WDSR-B (right).</figcaption>
+</figure>
 
 <p>The authors conjecture that increasing the number of channels before ReLU in residual blocks allows more information to pass through the activation function which further increases model performance. They also found that the implementation of <a href="https://arxiv.org/abs/1602.07868">weight normalization</a> further eases training and convergence of deeper models so that they could use learning rates that are an order of magnitude higher compared to those used in EDSR training.</p>
 <p>This is not surprising as the removal of weight normalization layers in EDSR makes it more difficult to train deeper models. Weight normalization is just a reparameterization of neural network weights that decouples the direction of weight vectors from their magnitude which improves the conditioning of the optimization problem and speeds up convergence. </p>

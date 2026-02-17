@@ -77,11 +77,9 @@ Perceiver AR is a simple extension of a plain decoder-only transformer such as G
 
 Perceiver AR additionally cross-attends to a longer prefix of the input sequence in its first attention layer. This layer is a hybrid self- and cross-attention layer. Self-attention is over the last n positions of the input sequence, with a causal attention mask, cross-attention is from the last $n$ positions to the first $m$ positions. The length of the input sequence is $m + n$. This allows a Perceiver AR to process a much larger context than decoder-only transformers which are based on self-attention only.
 
-<figure>
-<p/>
+<figure style="text-align:center">
 <img src="/img/2023-01-23/perceiver-ar.png" style="width:100%"/>
-<i>Fig. 1</i>. Attention in Perceiver AR with $m = 8$ prefix tokens and $n = 3$ latent tokens.
-<p/>
+<figcaption>Fig. 1. Attention in Perceiver AR with $m = 8$ prefix tokens and $n = 3$ latent tokens.</figcaption>
 </figure>
 
 The output of the hybrid attention layer are $n$ latent arrays corresponding to the last $n$ tokens of the input sequence. These are further processed by a stack of $L - 1$ decoder layers where the total number of attention layers is $L$. A final layer (not shown in Fig. 1) predicts the target token for each latent position. The weights of the final layer are shared with the input embedding layer.
@@ -277,9 +275,8 @@ experiment_setup(models, c_ref=c_ref, batch_size=batch_size)
 
 
 <figure>
-<i>Table 1</i>: Experiment 1 setup.  <code>num_channels</code>: model dimension, <code>num_layers</code>: number of attention layers: $N = N_{cross} + N_{self}$: number of model parameters, $C = C_{cross} + C_{self}$: training FLOPs, $\hat{C}_{self}$: training FLOPs with $6 N_{self} D_{iso}$ approximation,  $D_{iso}$: number of latent training tokens required for compute budget $N_{self}$, <code>num_steps</code>: number of training steps required for compute budget $N_{self}$.
+<figcaption>Table 1: Experiment 1 setup. <code>num_channels</code>: model dimension, <code>num_layers</code>: number of attention layers: $N = N_{cross} + N_{self}$: number of model parameters, $C = C_{cross} + C_{self}$: training FLOPs, $\hat{C}_{self}$: training FLOPs with $6 N_{self} D_{iso}$ approximation, $D_{iso}$: number of latent training tokens required for compute budget $N_{self}$, <code>num_steps</code>: number of training steps required for compute budget $N_{self}$.</figcaption>
 </figure>
-<p/>
 
 ```python
 from article import experiment_ratios
@@ -315,7 +312,7 @@ experiment_ratios(models)
 
 
 <figure>
-<i>Table 2</i>: Experiment 1 ratios. Contribution of the cross-attention part to the total number of parameters $N$ and the full compute $C$. $C_{self} / \hat{C}_{self}$ ratios are similar to those in Table A4 in [1].
+<figcaption>Table 2: Experiment 1 ratios. Contribution of the cross-attention part to the total number of parameters $N$ and the full compute $C$. $C_{self} / \hat{C}_{self}$ ratios are similar to those in Table A4 in [1].</figcaption>
 </figure>
 
 When training these models under the same self-attention compute budget $C_{self} = C_{ref}$, we can see that the final validation loss of the compute-optimal model is actually less than that of the two other models, consistent with the prediction from the scaling law. The self-attention compute budget $C_{self}$ is indicated by a vertical dashed line.
@@ -440,7 +437,7 @@ experiment_setup(models, c_ref=c_ref, batch_size=batch_size)
 
 
 <figure>
-<i>Table 3</i>: Experiment 2a setup.
+<figcaption>Table 3: Experiment 2a setup.</figcaption>
 </figure>
 
 The reference model (model 1 in Table 3) has the same number of channels and layers as the reference model in Experiment 1 but is significantly smaller because of the smaller vocabulary. Optimal model sizes are predicted with scaling laws from approaches 1 and 2: 
@@ -502,7 +499,7 @@ experiment_ratios(models)
 
 
 <figure>
-<i>Table 4</i>: Experiment 2a ratios.
+<figcaption>Table 4: Experiment 2a ratios.</figcaption>
 </figure>
 
 When training these models, the reference model is the one with the lowest loss. The predicted compute-optimal models, which are bigger, have a higher loss but are still very close to the reference model. It seems that the scaling laws overestimate the optimal model size when using a UTF-8 bytes tokenizer with a much smaller vocabulary, at least on this small scale.
@@ -577,7 +574,7 @@ experiment_setup(models, c_ref=c_ref, batch_size=batch_size)
 
 
 <figure>
-<i>Table 5</i>: Experiment 2b setup.
+<figcaption>Table 5: Experiment 2b setup.</figcaption>
 </figure>
 
 [Training](https://github.com/krasserm/perceiver-io/blob/main/examples/scaling/clm/train.md#experiment-2b) these two models results again in a higher loss for the predicted compute-optimal model i.e. the scaling laws also overestimate the optimal model size here. This suggest that the smaller vocabulary rather than a longer prefix sequence is the reason why the experimental results do not match the prediction.

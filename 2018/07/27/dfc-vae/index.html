@@ -86,8 +86,11 @@ L_{kl} &= \mathrm{KL}(q(\mathbf{t} \lvert \mathbf{x}) \mid\mid p(\mathbf{t}))
 $$</p>
 <p>$L_{rec}$ is the expected reconstruction error of an image $\mathbf{x}$, $\mathbf{t}$ is a latent vector and $p(\mathbf{x} \lvert \mathbf{t})$ is the <em>probabilistic decoder</em> of the VAE. When trained with images from the MNIST dataset, it makes sense to define the probabilistic decoder $p(\mathbf{x} \lvert \mathbf{t})$ as multivariate Bernoulli distribution. The corresponding decoder neural network computes the single parameter $\mathbf{k}$ of this distribution from a latent vector. The values of $\mathbf{k}$ are the expected pixel values of a reconstructed image. The reconstruction loss can be obtained by computing the binary cross-entropy between the original image and the reconstructed image which is a pixel-by-pixel comparison (Fig. 1).</p>
 <p>$L_{kl}$ is the <a href="https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence">KL divergence</a> between the variational distribution $q(\mathbf{t} \lvert \mathbf{x})$ and the prior $p(\mathbf{t})$ over latent variables. $q(\mathbf{t} \lvert \mathbf{x})$ is the <em>probabilistic encoder</em> of the VAE. The probabilistic encoder $q(\mathbf{t} \lvert \mathbf{x})$ is a multivariate Gaussian distribution whose mean and variance is computed by an encoder neural network from an input image. Prior $p(\mathbf{t})$ is chosen to be a mutlivariate standard normal distribution. $L_{kl}$ acts as a regularization term ensuring that $q(\mathbf{t} \lvert \mathbf{x})$ doesn't diverge too much from prior $p(\mathbf{t})$.</p>
-<p><img alt="vae" src="/img/2018-07-27/vae-4.png" /></p>
-<p><em>Fig. 1: Plain variational autoencoder</em></p>
+<figure style="text-align:center">
+<img src="/img/2018-07-27/vae-4.png" alt="vae">
+<figcaption>Fig. 1. Plain variational autoencoder.</figcaption>
+</figure>
+
 <h3 id="dfc-vae">DFC VAE</h3>
 <p>A plain VAE can be converted to a DFC VAE by replacing the pixel-by-pixel reconstruction loss $L_{rec}$ with a feature perceptual loss $L_{p}$ during training. At each layer of the perceptual model, the hidden representations of the original and the reconstructed image are taken and their squared Euclidean distance is calculated. This gives a perceptual loss component $L_{p}^i$ at each layer $i$. The overall perceptual loss $L_{p}$ is a weighted sum of the losses computed at each layer (Fig. 2)</p>
 <p>$$
@@ -100,12 +103,18 @@ $$</p>
 <p>$$
 L_{vae_{dfc}} = L_{p} + L_{kl}
 $$</p>
-<p><img alt="vae" src="/img/2018-07-27/vae-dfc-4.png" /></p>
-<p><em>Fig. 2. Deep feature consistent variational autoencoder</em></p>
+<figure style="text-align:center">
+<img src="/img/2018-07-27/vae-dfc-4.png" alt="vae">
+<figcaption>Fig. 2. Deep feature consistent variational autoencoder.</figcaption>
+</figure>
+
 <h2 id="training">Training</h2>
 <p>In contrast to the original paper we will use the MNIST handwritten digits dataset for training and for demonstrating how a perceptual loss improves over a pixel-by-pixel reconstruction loss. We can therefore reuse the VAE <a href="https://github.com/krasserm/bayesian-machine-learning/blob/dev/autoencoder-applications/variational_autoencoder_opt_util.py#L15-L36">encoder</a> and <a href="https://github.com/krasserm/bayesian-machine-learning/blob/dev/autoencoder-applications/variational_autoencoder_opt_util.py#L38-L53">decoder</a> architectures from the already mentioned <a href="/2018/04/03/variational-inference/">previous article</a>. The perceptual model is a <a href="https://github.com/krasserm/bayesian-machine-learning/blob/6962f02168fd82cd01ed6dfe3937e98b10a58b02/variational_autoencoder_opt_util.py#L91-L105">small CNN</a> (Fig. 3) that has already been trained in <a href="http://nbviewer.jupyter.org/github/krasserm/bayesian-machine-learning/blob/dev/variational_autoencoder_opt.ipynb#Optimization-objectives">another context</a> to classify MNIST images.</p>
-<p><img alt="pm" src="/img/2018-07-27/classifier-3.png" /></p>
-<p><em>Fig. 3: Perceptual model used for DFC VAE training</em></p>
+<figure style="text-align:center">
+<img src="/img/2018-07-27/classifier-3.png" alt="pm">
+<figcaption>Fig. 3. Perceptual model used for DFC VAE training.</figcaption>
+</figure>
+
 <p>Depending on the value of the <code>use_pretrained</code> variable either pre-trained weights for the plain VAE and DFC VAE are loaded (default) or they are trained from scratch. The dimensionality of the latent space is 5 by default.</p>
 <div class="highlight"><pre><code><span class="c1"># True if pre-trained weights for the VAEs shall be</span>
 <span class="c1"># loaded, False for training the VAEs from scratch.</span>

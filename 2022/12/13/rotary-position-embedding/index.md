@@ -91,11 +91,9 @@ $$
 
 where $\theta$ is a non-zero constant. So the rotation of $f_q(\mathbf{x}_m, m)$ and $f_k(\mathbf{x}_n, n)$ by an angle that is a function of absolute position $m$ and $n$, respectively, results in an inner product $\mathbf{q}_m^\mathsf{T} \mathbf{k}_n$ that encodes relative position information $n - m$ only (see Fig. 1). Values do not encode position information i.e. $\mathbf{v}_n = \mathbf{W}_v\mathbf{x}_n$.
 
-<figure>
-<p/>
+<figure style="text-align:center">
 <img src="/notebooks/2022-12-13-rotary-position-embedding/overview.png" style="width:80%"/>
-<i>Fig. 1. Overview of rotary position embedding</i>.
-<p/>
+<figcaption>Fig. 1. Overview of rotary position embedding.</figcaption>
 </figure>
 
 A generalization of the 2D rotation matrix to $d$-dimensional space is a block-diagonal matrix 
