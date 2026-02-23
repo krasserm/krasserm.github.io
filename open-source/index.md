@@ -4,11 +4,8 @@
 
 | Project | Description |
 |---------|-------------|
-| [ipybox](https://github.com/gradion-ai/ipybox) | Python code execution sandbox with first-class support for programmatic MCP tool calling. Generates typed Python APIs from MCP server schemas and executes code in a stateful IPython kernel. Features programmatic tool call approval workflows and lightweight sandboxing via Anthropic's sandbox-runtime. |
 | [freeact](https://github.com/gradion-ai/freeact) | Lightweight, general-purpose agent that acts via code actions rather than JSON tool calls. Progressively discovers and loads tools and skills as needed, preserving context for complex tasks. Creates new tools from successful code actions, evolving its own tool library over time. |
-| [group-sense](https://github.com/gradion-ai/group-sense) | Library for detecting patterns in group chat message streams and transforming them into self-contained queries for downstream AI systems. Enables single-user AI agents to engage in group conversations based on criteria defined in natural language, eliminating the need for specialized multi-party conversation training. |
-| [group-genie](https://github.com/gradion-ai/group-genie) | Combines group-sense's intelligent pattern detection with a flexible agent integration layer, allowing single-user agents to join group chats without modification. Provides technology-agnostic agent support with default implementations for Pydantic AI and OpenAI's Agents SDK. |
-| [hybrid-groups](https://github.com/gradion-ai/hybrid-groups) | Platform that integrates group-genie into Slack and GitHub, allowing single-user AI agents to participate in group conversations without modification. Agents act on behalf of individual group members using user-specific credentials, enabling secure access to private resources. |
+| [ipybox](https://github.com/gradion-ai/ipybox) | Python code execution sandbox with first-class support for programmatic MCP tool calling. Generates typed Python APIs from MCP server schemas and executes code in a stateful IPython kernel. Features programmatic tool call approval workflows and lightweight sandboxing via Anthropic's sandbox-runtime. |
 
 
 ## Personal Projects
