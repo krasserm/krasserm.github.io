@@ -11,7 +11,7 @@
 
 
 
-We automate manual processes with AI agents that understand your business logic, collaborate with your team, and learn from your expertise. We draw on 8+ years of AI/ML engineering and 20+ years of architecting, developing, and operating production software systems at scale. Solutions we've built for clients serve thousands of B2B customers worldwide. We are active open source contributors, currently focused on multi-party conversational AI and on agents that act and self-improve via code actions.
+We automate manual processes with AI agents that understand your business logic, collaborate with your team, and learn from your expertise. We draw on 8+ years of AI/ML engineering and 20+ years of architecting, developing, and operating production software systems at scale.
 
 
 
