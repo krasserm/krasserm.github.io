@@ -14,6 +14,9 @@
 We automate manual processes with AI agents that understand your business logic, collaborate with your team, and learn from your expertise. We draw on 8+ years of AI/ML engineering and 20+ years of architecting, developing, and operating production software systems at scale.
 
 
+Solutions we've built for clients serve thousands of B2B customers worldwide. We are active open source contributors, currently focused on multi-party conversational AI and on agents that act and self-improve via code actions.
+
+
 
 ## AI-powered visual search platform
 
@@ -27,6 +30,9 @@ We automate manual processes with AI agents that understand your business logic,
 
 
 Development of an AI-powered <a href="https://www.canto.com/product/ai-visual-search/">visual and hybrid search</a> platform built as a cloud-native solution with horizontal scalability as a key feature. Training of custom query processing models with synthetic data to deliver accurate search results across diverse content types.
+
+
+Running in production for 2000+ B2B customers. Responsible for all ML research and development efforts at Canto.
 
 
 
@@ -44,6 +50,9 @@ Development of an AI-powered <a href="https://www.canto.com/product/ai-visual-se
 Conception and development of a multimodal, agentic AI search engine with semantic understanding of images, videos, documents, and audio, enhanced through domain-specific model fine-tuning for media organizations. Supports facial recognition for identity-constrained searches, and image aesthetics assessment for selecting images with perceived highest quality.
 
 
+Running in production at several customer sites, including the publicly accessible <a href="https://newsroom.ap.org/">AP Newsroom</a> (see also <a href="https://www.ap.org/media-center/press-releases/2023/millions-of-ap-images-and-video-now-available-on-single-platform-with-ai-powered-search/">press release</a>). Responsible for all ML research and development efforts at MerlinOne. The success of the Merlin AI Suite was a major factor in the acquisition of MerlinOne by Canto in 2023.
+
+
 
 ## Applied machine learning study
 
@@ -56,6 +65,7 @@ Conception and development of a multimodal, agentic AI search engine with semant
 
 
 Focused on deep learning and traditional machine learning, supported by a detailed review of statistics and mathematics. Work included completing <a href="/courses/">online certifications</a> and publishing <a href="/">technical articles</a> and <a href="/open-source/">open-source projects</a>. Balanced the study of scientific theory with ML engineering best-practices.
+
 
 
 
@@ -73,6 +83,9 @@ Focused on deep learning and traditional machine learning, supported by a detail
 Global distribution of the data management layer of RBMH's in-house DAM system for low-latency and partition-tolerant access to local datacenters. The developed inter-datacenter replication mechanism provides causal consistency guarantees and supports convergence of application state under concurrent updates via <a href="https://rbmhtechnology.github.io/eventuate/architecture.html#operation-based-crdts">operation-based CRDTs</a>. The generic part of the solution was open-sourced as <a href="https://rbmhtechnology.github.io/eventuate/overview.html">Eventuate</a> toolkit.
 
 
+Production deployment to multiple datacenters world-wide. Responsible for conception, architecture, design and implementation of Eventuate and its in-house applications. Eventuate is an evolution of <a href="https://doc.akka.io/docs/akka/current/persistence.html">Akka Persistence</a> which I developed in another project.
+
+
 
 ## Streaming platform for sports betting applications
 
@@ -86,6 +99,9 @@ Global distribution of the data management layer of RBMH's in-house DAM system f
 
 
 Development of a streaming platform for calculating <a href="https://www.agido.com/projekte">real-time odds and risk models</a> in sports betting applications. Bets on odds from up to hundred bookmakers, each with several thousand constantly changing odds, are used to calculate models for adjusting a bookmaker's odds such that their risk is minimized. Development of streaming data analytics extensions for Eventuate.
+
+
+Consultation on event sourcing best practices for all relevant use cases and responsible for their implementation with the <a href="https://rbmhtechnology.github.io/eventuate/overview.html">Eventuate</a> toolkit.
 
 
 
@@ -103,6 +119,9 @@ Development of a streaming platform for calculating <a href="https://www.agido.c
 Development of <a href="https://doc.akka.io/docs/akka/current/persistence.html">Akka Persistence</a> which enables stateful <a href="https://akka.io/">Akka</a> actors to persist their state via event sourcing. Events are written to append-only storage which allows for very high transaction rates and efficient replication. A stateful actor is recovered by replaying stored events to the actor, allowing it to rebuild its internal state.
 
 
+Implementation in <a href="https://github.com/search?q=%22akka-persistence%22&amp;type=repositories">numerous</a> commercial and open-source projects. Responsible for all phases of the project, from initial idea to production quality code. Akka Persistence is an evolution of <a href="https://github.com/eligosource/eventsourced">Eventsourced</a>, a predecessor that I developed in a prior project.
+
+
 
 ## Low-latency, high-throughput e-wallet management web service
 
@@ -116,6 +135,9 @@ Development of <a href="https://doc.akka.io/docs/akka/current/persistence.html">
 
 
 Developmenent of the persistence layer of an e-wallet management web service for customers in the online gambling industry. Implementation of an event sourcing architecture for supporting low-latency and high-throughput transactions. The core components of the persistence layer were open-sourced as <a href="https://github.com/eligosource/eventsourced">Eventsourced</a> library.
+
+
+Responsible for conception, design and implementation of Eventsourced and its integration into Eligotech products.
 
 
 
@@ -134,6 +156,7 @@ I partner with clients to develop and operate software systems at scale, with a 
 
 
 
+
 ## E-Health integration platform based on HL7 and IHE standards
 
 **Company:** [InterComponentWare AG](https://icw-global.com/)
@@ -145,6 +168,9 @@ I partner with clients to develop and operate software systems at scale, with a 
 
 
 Development of the <a href="https://oehf.github.io/ipf-docs/">Open eHealth Integration Platform</a> (IPF), a platform for integrating healthcare information systems. IPF was open sourced in 2008 after several years of in-house development and application in customer projects. IPF's programming model is a domain-specific language (DSL) for implementing <a href="https://www.enterpriseintegrationpatterns.com/">enterprise integration patterns</a> in healthcare-specific integration solutions, based on <a href="http://www.hl7.org/">HL7</a> and <a href="https://www.ihe.net/">IHE</a> standards.
+
+
+Production deployments in many healthcare integration solution world-wide. IPF is still actively maintained today, by contributors from several healthcare integration providers. Responsible for conception, design and implementation of IPF and its application in customer projects. Founder of the open source project and lead developer until 2010.
 
 
 
@@ -159,6 +185,9 @@ Development of the <a href="https://oehf.github.io/ipf-docs/">Open eHealth Integ
 
 
 Development of a distributed computing solution for integrating chemical analysis tools in a drug discovery pipeline, with fault-tolerant scheduling of tool executions and aggregation of analysis results, for unified experience across research locations in different countries. Implementation of high-performance hierarchical clustering algorithms that reduced analysis times by 1-2 orders of magnitude.
+
+
+Running for several years in production at <a href="https://www.bayer.com/">Bayer AG</a>. Responsible for architecture, design and implementation of the solution and its continuous improvement based on close collaboration with researchers.
 
 
 
@@ -176,6 +205,7 @@ Development of algorithms and software for ab-initio protein structure predictio
 
 
 
+
 ## Patient transportation management system
 
 **Company:** [Austrian Red Cross](http://www.roteskreuz.at/)
@@ -187,4 +217,5 @@ Development of algorithms and software for ab-initio protein structure predictio
 
 
 Development of a patient transportation management system in the IT department of the Red Cross in Graz, Austria. Work done during my civil service at the Red Cross.
+
 
