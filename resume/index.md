@@ -46,7 +46,7 @@ Running in production for 2000+ B2B customers. Responsible for all ML research a
 
 ### Merlin Accelerated Intelligence (AI) Suite
 
-**Company:** [MerlinOne](https://merlinone.com/)
+**Company:** [MerlinOne](https://www.canto.com/press-releases/canto-merlinone/)
 
 **Roles:** Director Machine Learning, Lead Machine Learning Engineer
 
