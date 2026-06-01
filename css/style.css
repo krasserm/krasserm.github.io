@@ -691,6 +691,52 @@ td a:hover {
 }
 
 /* --------------------------------------------------------------------------
+   Post Grid (two-column text + figure layout in blog posts)
+   -------------------------------------------------------------------------- */
+.post-grid {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: inherit;
+}
+
+.post-grid td {
+    border: none;
+    padding: 0;
+    color: inherit;
+    vertical-align: top;
+    width: 50%;
+}
+
+.post-grid td:first-child {
+    padding-right: 1.5rem;
+}
+
+.post-grid tr:hover td {
+    background: transparent;
+}
+
+.post-grid td > :first-child {
+    margin-top: 0;
+}
+
+.post-grid img {
+    width: 100%;
+    height: auto;
+}
+
+.post-grid sub {
+    bottom: 0;
+    font-size: 0.85rem;
+    color: var(--text-muted, inherit);
+}
+
+.post-content .footnote {
+    font-size: 0.8em;
+    color: var(--text-muted);
+}
+
+/* --------------------------------------------------------------------------
    Contact Form
    -------------------------------------------------------------------------- */
 .contact-form {
