@@ -30,7 +30,7 @@ Solutions we've built for clients serve thousands of B2B customers worldwide. We
 
 **Company:** [Canto](https://www.canto.com/)
 
-**Roles:** Senior Director Machine Learning, Lead Machine Learning Engineer
+**Roles:** Senior Director Machine Learning, Lead ML/AI Engineer and Architect
 
 **Period:** 2023 - 2024
 
@@ -48,7 +48,7 @@ Running in production for 2000+ B2B customers. Responsible for all ML research a
 
 **Company:** [MerlinOne](https://www.canto.com/press-releases/canto-merlinone/)
 
-**Roles:** Director Machine Learning, Lead Machine Learning Engineer
+**Roles:** Director Machine Learning, Lead ML/AI Engineer and Architect
 
 **Period:** 2018 - 2023
 
