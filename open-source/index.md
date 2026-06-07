@@ -4,8 +4,8 @@
 
 | Project | Description |
 |---------|-------------|
-| [freeact](https://github.com/gradion-ai/freeact) | Lightweight, general-purpose agent that acts via code actions rather than JSON tool calls. Progressively discovers and loads tools and skills as needed, preserving context for complex tasks. Creates new tools from successful code actions, evolving its own tool library over time. |
-| [ipybox](https://github.com/gradion-ai/ipybox) | Python code execution sandbox with first-class support for programmatic MCP tool calling. Generates typed Python APIs from MCP server schemas and executes code in a stateful IPython kernel. Features programmatic tool call approval workflows and lightweight sandboxing via Anthropic's sandbox-runtime. |
+| [freeact](https://github.com/gradion-ai/freeact) | Lightweight, general-purpose agent that acts via code actions combining Python code, shell commands, and programmatic MCP tool calls, generated in a single inference pass. For programmatic MCP tool calling ("code mode"), it generates typed Python APIs from MCP server schemas and discovers task-relevant tools via agentic and semantic search, loading only what's needed into the context window. Saves successful code actions as reusable tools, supports subagent delegation and application-level approval, and runs locally as both a CLI tool and Python SDK. |
+| [ipybox](https://github.com/gradion-ai/ipybox) | Unified execution environment for Python code, shell commands, and programmatic MCP tool calls, all combinable within a single code block executed in a stateful IPython kernel. Generates typed Python APIs from MCP server schemas ("code mode") and supports application-level approval of individual tool calls and shell commands during execution. Runs locally with optional lightweight sandboxing via Anthropic's sandbox-runtime, and is available as a Python SDK, MCP server, and Claude Code plugin. |
 
 
 ## Personal Projects

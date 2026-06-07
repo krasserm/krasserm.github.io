@@ -73,7 +73,7 @@
                                 <path d="M12 8h.01"></path>
                             </svg>
                         </span>
-                        <span class="project-tooltip">Lightweight, general-purpose agent that acts via code actions rather than JSON tool calls. Progressively discovers and loads tools and skills as needed, preserving context for complex tasks. Creates new tools from successful code actions, evolving its own tool library over time.</span>
+                        <span class="project-tooltip">Lightweight, general-purpose agent that acts via code actions combining Python code, shell commands, and programmatic MCP tool calls, generated in a single inference pass. For programmatic MCP tool calling ("code mode"), it generates typed Python APIs from MCP server schemas and discovers task-relevant tools via agentic and semantic search, loading only what's needed into the context window. Saves successful code actions as reusable tools, supports subagent delegation and application-level approval, and runs locally as both a CLI tool and Python SDK.</span>
                     </span>
                 </td>
             </tr>
@@ -101,7 +101,7 @@
                                 <path d="M12 8h.01"></path>
                             </svg>
                         </span>
-                        <span class="project-tooltip">Python code execution sandbox with first-class support for programmatic MCP tool calling. Generates typed Python APIs from MCP server schemas and executes code in a stateful IPython kernel. Features programmatic tool call approval workflows and lightweight sandboxing via Anthropic's sandbox-runtime.</span>
+                        <span class="project-tooltip">Unified execution environment for Python code, shell commands, and programmatic MCP tool calls, all combinable within a single code block executed in a stateful IPython kernel. Generates typed Python APIs from MCP server schemas ("code mode") and supports application-level approval of individual tool calls and shell commands during execution. Runs locally with optional lightweight sandboxing via Anthropic's sandbox-runtime, and is available as a Python SDK, MCP server, and Claude Code plugin.</span>
                     </span>
                 </td>
             </tr>
@@ -718,7 +718,7 @@
     });
     </script>
     
-<script id="stars-data" data-stars='{"gradion-ai/freeact": 128, "gradion-ai/ipybox": 74, "krasserm/bayesian-machine-learning": 1917, "krasserm/perceiver-io": 530, "krasserm/super-resolution": 1511, "krasserm/fairseq-image-captioning": 318, "krasserm/face-recognition": 384, "krasserm/streamz": 278, "krasserm/akka-stream-eventsourcing": 102, "anthropic-experimental/sandbox-runtime": 4320, "ggerganov/llama.cpp": 114974, "rbmhtechnology/eventuate": 704, "akka/akka": 13276, "akka/alpakka": 1269, "akka/akka-persistence-cassandra": 328, "eligosource/eventsourced": 825, "oehf/ipf": 192, "apache/camel": 6222}' data-build-time="1780762876120"></script>
+<script id="stars-data" data-stars='{"gradion-ai/freeact": 128, "gradion-ai/ipybox": 74, "krasserm/bayesian-machine-learning": 1917, "krasserm/perceiver-io": 530, "krasserm/super-resolution": 1511, "krasserm/fairseq-image-captioning": 318, "krasserm/face-recognition": 384, "krasserm/streamz": 278, "krasserm/akka-stream-eventsourcing": 102, "anthropic-experimental/sandbox-runtime": 4330, "ggerganov/llama.cpp": 115045, "rbmhtechnology/eventuate": 704, "akka/akka": 13276, "akka/alpakka": 1269, "akka/akka-persistence-cassandra": 328, "eligosource/eventsourced": 825, "oehf/ipf": 192, "apache/camel": 6224}' data-build-time="1780813595385"></script>
 <script src="/js/stars.js"></script>
 
 </body>
