@@ -22,7 +22,7 @@ AI engineer and architect with a proven track-record in agentic systems, machine
 We automate business processes with AI agents grounded in your business logic, integrated into your existing workflows with graduated autonomy (supervised mode progressing to autonomous handling), and improving through human and agentic feedback loops.
 
 
-We are active open source contributors, currently focused on self-improving code-action agents and group-conversational AI; selected components are open-sourced in the <a href="https://github.com/gradion-ai">gradion-ai</a> GitHub organization.
+We are active open source contributors, currently focused on self-improving code-action agents and group-conversational AI.
 
 
 
