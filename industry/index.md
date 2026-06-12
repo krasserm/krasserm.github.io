@@ -5,16 +5,16 @@
 
 **Company:** [Gradion AI](https://gradion.ai)
 
-**Roles:** Founder
+**Roles:** Lead AI Engineer and Architect, Founder
 
 **Period:** 2025 - present
 
 
 
-We automate manual processes with AI agents that understand your business logic, collaborate with your team, and learn from your expertise. We draw on 8+ years of AI/ML engineering and 20+ years of architecting, developing, and operating production software systems at scale.
+We automate business processes with AI agents grounded in your business logic, integrated into your existing workflows with graduated autonomy (supervised mode progressing to autonomous handling), and improving through human and agentic feedback loops.
 
 
-Solutions we've built for clients serve thousands of B2B customers worldwide. We are active open source contributors, currently focused on multi-party conversational AI and on agents that act and self-improve via code actions.
+We are active open source contributors, currently focused on self-improving code-action agents and group-conversational AI; selected components are open-sourced in the <a href="https://github.com/gradion-ai">gradion-ai</a> GitHub organization.
 
 
 
@@ -22,7 +22,7 @@ Solutions we've built for clients serve thousands of B2B customers worldwide. We
 
 **Company:** [Canto](https://www.canto.com/)
 
-**Roles:** Senior Director Machine Learning, Lead ML Engineer and Architect
+**Roles:** Lead ML Engineer and Architect, Senior Director Machine Learning
 
 **Period:** 2023 - 2024
 
@@ -40,7 +40,7 @@ Running in production for 2000+ B2B customers. Responsible for all ML research a
 
 **Company:** [MerlinOne](https://www.canto.com/press-releases/canto-merlinone/)
 
-**Roles:** Director Machine Learning, Lead ML Engineer and Architect
+**Roles:** Lead ML Engineer and Architect, Director Machine Learning
 
 **Period:** 2018 - 2023
 
@@ -152,7 +152,7 @@ Responsible for conception, design and implementation of Eventsourced and its in
 **Type:** Freelance
 
 
-I partner with clients to develop and operate software systems at scale, with a focus on artificial intelligence, distributed systems, event sourcing and system integration. See <a href="/industry/">industry experience</a> for a selected list of projects, and <a href="/stories/">stories</a> for selected open source contributions.
+I partner with clients to develop and operate software systems at scale, with a focus on artificial intelligence, distributed systems, event sourcing and system integration. Solutions I built for clients serve thousands of B2B customers worldwide. See <a href="/industry/">industry experience</a> for a selected list of projects, and <a href="/stories/">stories</a> for selected open source contributions.
 
 
 
