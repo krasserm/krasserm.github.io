@@ -13,7 +13,7 @@ AI engineer and architect with a proven track-record in agentic systems, machine
 
 **Company:** [Gradion AI](https://gradion.ai)
 
-**Roles:** Lead AI Engineer and Architect, Founder
+**Roles:** Founder, AI Engineer and Architect
 
 **Period:** 2025 - present
 
@@ -30,7 +30,7 @@ We are active open source contributors, currently focused on self-improving code
 
 **Company:** [Canto](https://www.canto.com/)
 
-**Roles:** Lead ML Engineer and Architect, Senior Director Machine Learning
+**Roles:** Principal ML Engineer and Architect, Senior Director Machine Learning
 
 **Period:** 2023 - 2024
 
@@ -48,7 +48,7 @@ Running in production for 2000+ B2B customers. Responsible for all ML research a
 
 **Company:** [MerlinOne](https://www.canto.com/press-releases/canto-merlinone/)
 
-**Roles:** Lead ML Engineer and Architect, Director Machine Learning
+**Roles:** Principal ML Engineer and Architect, Director Machine Learning
 
 **Period:** 2018 - 2023
 
