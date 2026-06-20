@@ -167,7 +167,7 @@ I partner with clients to develop and operate software systems at scale, with a 
 
 ### E-Health integration platform based on HL7 and IHE standards
 
-**Company:** [InterComponentWare AG](https://icw-global.com/)
+**Company:** [InterComponentWare AG](http://www.icw-global.com/)
 
 **Roles:** Lead Software Architect, Senior Software Engineer
 
