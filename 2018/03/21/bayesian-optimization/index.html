@@ -91,7 +91,7 @@ MathJax = {
 <h3 id="expected-improvement">Expected improvement</h3>
 <p>Expected improvement is defined as</p>
 <p>$$\operatorname{EI}(\mathbf{x}) = \mathbb{E}\max(f(\mathbf{x}) - f(\mathbf{x}^+), 0)\tag{1}$$</p>
-<p>where $f(\mathbf{x}^+)$ is the value of the best sample so far and $\mathbf{x}^+$ is the location of that sample i.e. $\mathbf{x}^+ = \operatorname{argmax}_{\mathbf{x}_i \in \mathbf{x}_{1:t}} f(\mathbf{x}_i)$. The expected improvement can be evaluated analytically under the GP model<sup>[3]</sup>:</p>
+<p>where $f(\mathbf{x}^+)$ is the value of the best sample so far and $\mathbf{x}^+$ is the location of that sample i.e. $\mathbf{x}^+ = \operatorname{argmax}_{\mathbf{x}_i \in \mathbf{x}_{1:t}} f(\mathbf{x}_i)$.<sup id="fnref:incumbent"><a class="footnote-ref" href="#fn:incumbent">1</a></sup> The expected improvement can be evaluated analytically under the GP model<sup>[3]</sup>:</p>
 <p>$$
 \operatorname{EI}(\mathbf{x}) =
 \begin{cases}
@@ -413,7 +413,16 @@ Bayesian optimization neg. MSE = -3185.50
 <p>[1] Eric Brochu, Vlad M. Cora, Nando de Freitas, <a href="https://arxiv.org/abs/1012.2599">A Tutorial on Bayesian Optimization of Expensive Cost Functions</a>.<br />
 [2] Jonas Mockus, <a href="https://link.springer.com/article/10.1007/BF01099263">Application of Bayesian approach to numerical methods of global and stochastic optimization</a>.<br />
 [3] Donald R. JonesMatthias SchonlauWilliam J. Welch, <a href="https://link.springer.com/article/10.1023/A:1008306431147">Efficient Global Optimization of Expensive Black-Box Functions</a>.<br />
-[4] Jialei Wang, Scott C. Clark, Eric Liu, Peter I. Frazier, <a href="https://arxiv.org/abs/1602.05149">Parallel Bayesian Global Optimization of Expensive Functions</a>.</p>
+[4] Jialei Wang, Scott C. Clark, Eric Liu, Peter I. Frazier, <a href="https://arxiv.org/abs/1602.05149">Parallel Bayesian Global Optimization of Expensive Functions</a>.<br />
+[5] Peter I. Frazier, <a href="https://arxiv.org/abs/1807.02811">A Tutorial on Bayesian Optimization</a>.</p>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:incumbent">
+<p>This assumes noise-free observations. With noisy observations, $f(\mathbf{x}^+)$ is not directly available and is commonly replaced by the maximum of the GP posterior mean at the sample locations, $\mu^+ = \max_{\mathbf{x}_i \in \mathbf{x}_{1:t}} \mu(\mathbf{x}_i)$, a heuristic described in section 2.4 of [1] and used in the implementation below. Acquisition functions derived for noisy observations, such as the knowledge gradient<sup>[5]</sup>, are beyond the scope of this article.&#160;<a class="footnote-backref" href="#fnref:incumbent" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div>
     </div>
 
     <nav class="post-nav">
