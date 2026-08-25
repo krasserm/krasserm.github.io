@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="dark">
-    <meta name="theme-color" content="#0a0e14">
+    <meta name="theme-color" content="#0d1117">
     <title>Martin Krasser</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/pygments.css">
     <link rel="alternate" type="application/atom+xml" title="Martin Krasser Feed" href="/atom.xml">
@@ -20,9 +20,7 @@
             <a href="/" class="nav-brand">Martin Krasser</a>
             <ul class="nav-links">
                 
-                <li><a href="/about/">About</a></li>
-                
-                <li><a href="/">Blog</a></li>
+                <li><a href="/#blog">Blog</a></li>
                 
                 <li><a href="/industry/">Industry</a></li>
                 
@@ -38,85 +36,80 @@
         </div>
     </nav>
 
+    
+
+<header class="hero">
+    <div class="hero-container">
+        <div class="section-head hero-head">
+            <h1 class="page-title">About</h1>
+        </div>
+        <p class="page-lede">AI engineer and architect with a proven track-record in agentic systems, machine learning, distributed systems, and system integration. 8+ years of AI/ML engineering experience and 20+ years of architecting, developing, and operating production software systems at scale. Extensive industry experience in both technical and leadership roles. Active open source contributor.</p>
+        <figure class="gp-figure">
+            <svg id="gp" viewBox="0 0 1000 400" role="img"
+                 aria-label="Gaussian process posterior over an ordered axis of focus topics: system integration, event sourcing, distributed systems, deep learning, Bayesian ML, AI search, and agentic AI. The uncertainty band narrows at each topic and widens between them and beyond the last one.">
+            </svg>
+        </figure>
+    </div>
+</header>
+
+
+
     <main class="main">
-        <div class="container">
+        <div class="container container-wide">
             
-<div class="page">
-    <h1 class="page-title">Blog</h1>
+<section class="section" id="blog">
+    <div class="section-head">
+        
+        <h2 class="page-title">Blog</h2>
+        
+    </div>
 
     
     <aside class="elsewhere">
         <span class="elsewhere-label">also writing at</span>
         <a href="https://gradion-ai.github.io/agents-nanny/">The Agents Nanny</a>
-        <span class="elsewhere-desc">&middot; notes on agentic systems from Gradion AI</span>
+        &middot; notes on agentic systems from Gradion AI
     </aside>
     
 
-    <div class="posts">
+    <ul class="obs-list">
     
-    <article class="post-preview">
-        <h2 class="post-title">
-            <a href="/2025/12/16/code-actions/">Code Actions as Tools</a>
-        </h2>
-        
-        <p class="post-subtitle">Evolving Tool Libraries for Agents</p>
-        
-        <p class="post-meta">
-            <time datetime="2025-12-16">
-                December 16, 2025
-            </time>
-        </p>
-    </article>
+        <li>
+            <a class="obs-row" href="/2025/12/16/code-actions/">
+                <time class="obs-date" datetime="2025-12-16">2025-12-16</time>
+                <span class="obs-title">Code Actions as Tools<span class="obs-sub">Evolving Tool Libraries for Agents</span></span>
+            </a>
+        </li>
     
-    <article class="post-preview">
-        <h2 class="post-title">
-            <a href="/2025/11/12/multi-party-ai/">From single-user to multi-party conversational AI</a>
-        </h2>
-        
-        <p class="post-meta">
-            <time datetime="2025-11-12">
-                November 12, 2025
-            </time>
-        </p>
-    </article>
+        <li>
+            <a class="obs-row" href="/2025/11/12/multi-party-ai/">
+                <time class="obs-date" datetime="2025-11-12">2025-11-12</time>
+                <span class="obs-title">From single-user to multi-party conversational AI</span>
+            </a>
+        </li>
     
-    <article class="post-preview">
-        <h2 class="post-title">
-            <a href="/2025/02/05/deepseek-r1-agent/">DeepSeek-R1 agents with code actions</a>
-        </h2>
-        
-        <p class="post-meta">
-            <time datetime="2025-02-05">
-                February 05, 2025
-            </time>
-        </p>
-    </article>
+        <li>
+            <a class="obs-row" href="/2025/02/05/deepseek-r1-agent/">
+                <time class="obs-date" datetime="2025-02-05">2025-02-05</time>
+                <span class="obs-title">DeepSeek-R1 agents with code actions</span>
+            </a>
+        </li>
     
-    <article class="post-preview">
-        <h2 class="post-title">
-            <a href="/2024/06/26/planner-prompt-masking/">Impact of prompt masking on LLM agent step planning performance</a>
-        </h2>
-        
-        <p class="post-meta">
-            <time datetime="2024-06-26">
-                June 26, 2024
-            </time>
-        </p>
-    </article>
+        <li>
+            <a class="obs-row" href="/2024/06/26/planner-prompt-masking/">
+                <time class="obs-date" datetime="2024-06-26">2024-06-26</time>
+                <span class="obs-title">Impact of prompt masking on LLM agent step planning performance</span>
+            </a>
+        </li>
     
-    <article class="post-preview">
-        <h2 class="post-title">
-            <a href="/2024/05/31/planner-fine-tuning/">Planner fine-tuning on synthetic agent trajectories</a>
-        </h2>
-        
-        <p class="post-meta">
-            <time datetime="2024-05-31">
-                May 31, 2024
-            </time>
-        </p>
-    </article>
+        <li>
+            <a class="obs-row" href="/2024/05/31/planner-fine-tuning/">
+                <time class="obs-date" datetime="2024-05-31">2024-05-31</time>
+                <span class="obs-title">Planner fine-tuning on synthetic agent trajectories</span>
+            </a>
+        </li>
     
-    </div>
+    </ul>
 
     <nav class="pagination">
         
@@ -125,7 +118,7 @@
         <a href="/page/2/" class="pagination-link pagination-older">Older &rarr;</a>
         
     </nav>
-</div>
+</section>
 
         </div>
     </main>
@@ -184,17 +177,6 @@
         </a>
     </li>
     <li>
-        <a href="https://gradion-ai.github.io/agents-nanny/">
-            
-<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
-    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
-</svg>
-
-            gradion-ai.github.io/agents-nanny
-        </a>
-    </li>
-    <li>
         <a href="/llms.txt">
             
 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -223,7 +205,7 @@
     </li>
 </ul>
 
-            <p class="footer-copyright">// Martin Krasser, 2026</p>
+            <p class="footer-copyright">© Martin Krasser, 2026</p>
         </div>
     </footer>
 
@@ -236,5 +218,9 @@
     });
     </script>
     
+
+<script src="/js/gp.js"></script>
+
+
 </body>
 </html>

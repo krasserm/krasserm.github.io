@@ -19,10 +19,8 @@ AI engineer and architect with a proven track-record in agentic systems, machine
 
 
 
-We automate business processes with AI agents grounded in your business logic, integrated into your existing workflows with graduated autonomy (supervised mode progressing to autonomous handling), and improving through human and agentic feedback loops.
+Building custom agentic AI solutions, grounded in the client's business logic, integrated into their existing systems, and continuously self-improving from collaboration with their teams. Developing and operating a team of AI employees for scaling the consulting business.
 
-
-We are active open source contributors, currently focused on self-improving code-action agents and group-conversational AI.
 
 
 
@@ -30,17 +28,17 @@ We are active open source contributors, currently focused on self-improving code
 
 **Company:** [Canto](https://www.canto.com/)
 
-**Roles:** Principal ML Engineer and Architect, Senior Director Machine Learning
+**Roles:** Principal ML Engineer and Architect
 
 **Period:** 2023 - 2024
 
 **Type:** Freelance
 
 
-Development of an AI-powered <a href="https://www.canto.com/product/ai-visual-search/">visual and hybrid search</a> platform built as a cloud-native solution with horizontal scalability as a key feature. Training of custom query processing models with synthetic data to deliver accurate search results across diverse content types.
+Evolution of MerlinOne's AI technology into Canto's cloud-native, horizontally scalable <a href="https://www.canto.com/product/ai-visual-search/">AI Visual Search</a> platform. Development of an end-to-end training pipeline for query processing models, improving search accuracy on customer-specific data across diverse content types.
 
 
-Running in production for 2000+ B2B customers. Responsible for all ML research and development efforts at Canto.
+Running in production for 2000+ B2B customers. Led the AI team and was responsible for all ML research and development efforts at Canto.
 
 
 
@@ -48,23 +46,22 @@ Running in production for 2000+ B2B customers. Responsible for all ML research a
 
 **Company:** [MerlinOne](https://www.canto.com/press-releases/canto-merlinone/)
 
-**Roles:** Principal ML Engineer and Architect, Director Machine Learning
+**Roles:** Principal ML Engineer and Architect
 
 **Period:** 2018 - 2023
 
 **Type:** Freelance
 
 
-Conception and development of a multimodal, agentic AI search engine with semantic understanding of images, videos, documents, and audio, enhanced through domain-specific model fine-tuning for media organizations. Supports facial recognition for identity-constrained searches, and image aesthetics assessment for selecting images with perceived highest quality.
+Conception and development of a multimodal, agentic AI search engine with semantic understanding of images, videos, documents, and audio, enhanced through domain-specific model fine-tuning for media organizations. Supports facial recognition for identity-constrained searches, and image aesthetics assessment for selecting images with perceived highest quality. Design, training, fine-tuning, and deployment of AI models at scale for a wide range of tasks.
 
 
-Running in production at several customer sites, including the publicly accessible <a href="https://newsroom.ap.org/">AP Newsroom</a> (see also <a href="https://www.ap.org/media-center/press-releases/2023/millions-of-ap-images-and-video-now-available-on-single-platform-with-ai-powered-search/">press release</a>). Responsible for all ML research and development efforts at MerlinOne. The success of the Merlin AI Suite was a major factor in the acquisition of MerlinOne by Canto in 2023.
+Running in production at several customer sites, including the publicly accessible <a href="https://newsroom.ap.org/">AP Newsroom</a> (see also <a href="https://www.ap.org/media-center/press-releases/2023/millions-of-ap-images-and-video-now-available-on-single-platform-with-ai-powered-search/">press release</a>). Formed and led the AI team and was responsible for all ML research and development efforts at MerlinOne. The success of the Merlin AI Suite was a major factor in the acquisition of MerlinOne by Canto in 2023.
 
 
 
 ### Applied machine learning study
 
-**Company:** [https://martin-krasser.com](https://martin-krasser.com)
 
 **Roles:** Sabbatical Year
 
@@ -79,7 +76,7 @@ Focused on deep learning and traditional machine learning, supported by a detail
 
 ### Global distribution of a digital asset management system
 
-**Company:** [Red Bull Media House](http://www.redbullmediahouse.com/)
+**Company:** [Red Bull Media House](https://www.redbullmediahouse.com/)
 
 **Roles:** Distributed Systems Engineer
 
@@ -97,7 +94,7 @@ Production deployment to multiple datacenters world-wide. Responsible for concep
 
 ### Streaming platform for sports betting applications
 
-**Company:** [agido GmbH](http://www.agido.com/)
+**Company:** [agido GmbH](https://www.agido.com/)
 
 **Roles:** Distributed Systems Engineer
 
@@ -115,7 +112,7 @@ Consultation on event sourcing best practices for all relevant use cases and res
 
 ### Akka Persistence: actor state persistence via event sourcing
 
-**Company:** [Lightbend](http://www.lightbend.com/)
+**Company:** [Lightbend](https://www.lightbend.com/)
 
 **Roles:** Software Engineer, Software Architect
 
@@ -133,7 +130,7 @@ Implementation in <a href="https://github.com/search?q=%22akka-persistence%22&am
 
 ### Low-latency, high-throughput e-wallet management web service
 
-**Company:** [Eligotech BV](http://www.eligotech.com/)
+**Company:** [Eligotech BV](https://www.eligotech.com/)
 
 **Roles:** Software Engineer, Software Architect
 
@@ -149,25 +146,9 @@ Responsible for conception, design and implementation of Eventsourced and its in
 
 
 
-### Software development and consulting services
-
-**Company:** [https://martin-krasser.com](https://martin-krasser.com)
-
-**Roles:** Independent software engineer and architect
-
-**Period:** 2011 - present
-
-**Type:** Freelance
-
-
-I partner with clients to develop and operate software systems at scale, with a focus on artificial intelligence, distributed systems, event sourcing and system integration. Solutions I built for clients serve thousands of B2B customers worldwide. See <a href="/industry/">industry experience</a> for a selected list of projects, and <a href="/stories/">stories</a> for selected open source contributions.
-
-
-
-
 ### E-Health integration platform based on HL7 and IHE standards
 
-**Company:** [InterComponentWare AG](http://www.icw-global.com/)
+**Company:** [InterComponentWare AG](https://www.icw-global.com/)
 
 **Roles:** Lead Software Architect, Senior Software Engineer
 
@@ -175,7 +156,7 @@ I partner with clients to develop and operate software systems at scale, with a 
 
 
 
-Development of the <a href="https://oehf.github.io/ipf-docs/">Open eHealth Integration Platform</a> (IPF), a platform for integrating healthcare information systems. IPF was open sourced in 2008 after several years of in-house development and application in customer projects. IPF's programming model is a domain-specific language (DSL) for implementing <a href="https://www.enterpriseintegrationpatterns.com/">enterprise integration patterns</a> in healthcare-specific integration solutions, based on <a href="http://www.hl7.org/">HL7</a> and <a href="https://www.ihe.net/">IHE</a> standards.
+Development of the <a href="https://oehf.github.io/ipf-docs/">Open eHealth Integration Platform</a> (IPF), a platform for integrating healthcare information systems. IPF was open sourced in 2008 after several years of in-house development and application in customer projects. IPF's programming model is a domain-specific language (DSL) for implementing <a href="https://www.enterpriseintegrationpatterns.com/">enterprise integration patterns</a> in healthcare-specific integration solutions, based on <a href="https://www.hl7.org/">HL7</a> and <a href="https://www.ihe.net/">IHE</a> standards.
 
 
 Production deployments in many healthcare integration solution world-wide. IPF is still actively maintained today, by contributors from several healthcare integration providers. Responsible for conception, design and implementation of IPF and its application in customer projects. Founder of the open source project and lead developer until 2010.
@@ -184,7 +165,7 @@ Production deployments in many healthcare integration solution world-wide. IPF i
 
 ### Distributed scientific computing solution for a drug discovery pipeline
 
-**Company:** [LION Bioscience AG](http://www.lionbioscience.com/)
+**Company:** [LION Bioscience AG](https://www.lionbioscience.com/)
 
 **Roles:** Senior Software Architect, Senior Software Engineer
 
@@ -201,9 +182,9 @@ Running for several years in production at <a href="https://www.bayer.com/">Baye
 
 ### Ab-initio protein structure prediction
 
-**Company:** [University of Salzburg](http://uni-salzburg.at/), CAME
+**Company:** [University of Salzburg](https://www.uni-salzburg.at/), CAME
 
-**Roles:** Software Developer, Research Assistant
+**Roles:** Research Software Engineer
 
 **Period:** 1999 - 2000
 
@@ -216,7 +197,7 @@ Development of algorithms and software for ab-initio protein structure predictio
 
 ### Patient transportation management system
 
-**Company:** [Austrian Red Cross](http://www.roteskreuz.at/)
+**Company:** [Austrian Red Cross](https://www.roteskreuz.at/)
 
 **Roles:** Software Developer
 

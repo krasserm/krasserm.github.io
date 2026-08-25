@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="dark">
-    <meta name="theme-color" content="#0a0e14">
+    <meta name="theme-color" content="#0d1117">
     <title>Open Source Projects - Martin Krasser</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/pygments.css">
     <link rel="alternate" type="application/atom+xml" title="Martin Krasser Feed" href="/atom.xml">
@@ -20,9 +20,7 @@
             <a href="/" class="nav-brand">Martin Krasser</a>
             <ul class="nav-links">
                 
-                <li><a href="/about/">About</a></li>
-                
-                <li><a href="/">Blog</a></li>
+                <li><a href="/#blog">Blog</a></li>
                 
                 <li><a href="/industry/">Industry</a></li>
                 
@@ -38,587 +36,464 @@
         </div>
     </nav>
 
+    
+
     <main class="main">
-        <div class="container">
+        <div class="container container-wide">
             
-<div class="page">
+
+<div class="page-head">
     <h1 class="page-title">Open Source Projects</h1>
+    <p class="page-lede">Current work at Gradion AI, personal research projects, and contributions to the ecosystems I&#39;ve worked in.</p>
+</div>
 
-    <table class="project-table">
-        <tbody>
-            <tr class="project-section-header">
-                <td colspan="3">Gradion AI Projects</td>
-            </tr>
-            
-            <tr class="project-row">
-                <td class="project-cell-name">
-                    <a href="https://github.com/gradion-ai/freeact" target="_blank" rel="noopener">freeact</a>
-                </td>
-                <td class="project-cell-stars">
-                    
-                    <a href="https://github.com/gradion-ai/freeact/stargazers" class="project-stars-link" data-repo="gradion-ai/freeact" target="_blank" rel="noopener">
-                        <span class="star-count"></span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                        </svg>
-                    </a>
-                    
-                </td>
-                <td class="project-cell-info">
-                    <span class="project-info-wrapper">
-                        <span class="project-info-icon" tabindex="0">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <path d="M12 16v-4"></path>
-                                <path d="M12 8h.01"></path>
-                            </svg>
-                        </span>
-                        <span class="project-tooltip">Lightweight, general-purpose agent that acts via code actions combining Python code, shell commands, and programmatic MCP tool calls, generated in a single inference pass. For programmatic MCP tool calling ("code mode"), it generates typed Python APIs from MCP server schemas and discovers task-relevant tools via agentic and semantic search, loading only what's needed into the context window. Saves successful code actions as reusable tools, supports subagent delegation and application-level approval, and runs locally as both a CLI tool and Python SDK.</span>
-                    </span>
-                </td>
-            </tr>
-            
-            <tr class="project-row">
-                <td class="project-cell-name">
-                    <a href="https://github.com/gradion-ai/ipybox" target="_blank" rel="noopener">ipybox</a>
-                </td>
-                <td class="project-cell-stars">
-                    
-                    <a href="https://github.com/gradion-ai/ipybox/stargazers" class="project-stars-link" data-repo="gradion-ai/ipybox" target="_blank" rel="noopener">
-                        <span class="star-count"></span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                        </svg>
-                    </a>
-                    
-                </td>
-                <td class="project-cell-info">
-                    <span class="project-info-wrapper">
-                        <span class="project-info-icon" tabindex="0">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <path d="M12 16v-4"></path>
-                                <path d="M12 8h.01"></path>
-                            </svg>
-                        </span>
-                        <span class="project-tooltip">Unified execution environment for Python code, shell commands, and programmatic MCP tool calls, all combinable within a single code block executed in a stateful IPython kernel. Generates typed Python APIs from MCP server schemas ("code mode") and supports application-level approval of individual tool calls and shell commands during execution. Runs locally with optional lightweight sandboxing via Anthropic's sandbox-runtime, and is available as a Python SDK, MCP server, and Claude Code plugin.</span>
-                    </span>
-                </td>
-            </tr>
-            
 
-            <tr class="project-section-header">
-                <td colspan="3">Personal Projects</td>
-            </tr>
-            
-            <tr class="project-row">
-                <td class="project-cell-name">
-                    <a href="https://github.com/krasserm/bayesian-machine-learning" target="_blank" rel="noopener">bayesian-machine-learning</a>
-                </td>
-                <td class="project-cell-stars">
-                    
-                    <a href="https://github.com/krasserm/bayesian-machine-learning/stargazers" class="project-stars-link" data-repo="krasserm/bayesian-machine-learning" target="_blank" rel="noopener">
-                        <span class="star-count"></span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                        </svg>
-                    </a>
-                    
-                </td>
-                <td class="project-cell-info">
-                    <span class="project-info-wrapper">
-                        <span class="project-info-icon" tabindex="0">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <path d="M12 16v-4"></path>
-                                <path d="M12 8h.01"></path>
-                            </svg>
-                        </span>
-                        <span class="project-tooltip">A collection of notebooks about Bayesian methods for machine learning, like <a href="/2019/02/23/bayesian-linear-regression/">Bayesian regression</a>, <a href="/2018/03/19/gaussian-processes/">Gaussian processes</a>, <a href="/2018/03/21/bayesian-optimization/">Bayesian optimization</a>, <a href="/2019/03/14/bayesian-neural-networks/">variational inference in Bayesian neural networks</a>, ..., etc. Each notebook covers a single topic and combines an introduction, mathematical basics and a simple implementation.</span>
-                    </span>
-                </td>
-            </tr>
-            
-            <tr class="project-row">
-                <td class="project-cell-name">
-                    <a href="https://github.com/krasserm/perceiver-io" target="_blank" rel="noopener">perceiver-io</a>
-                </td>
-                <td class="project-cell-stars">
-                    
-                    <a href="https://github.com/krasserm/perceiver-io/stargazers" class="project-stars-link" data-repo="krasserm/perceiver-io" target="_blank" rel="noopener">
-                        <span class="star-count"></span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                        </svg>
-                    </a>
-                    
-                </td>
-                <td class="project-cell-info">
-                    <span class="project-info-wrapper">
-                        <span class="project-info-icon" tabindex="0">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <path d="M12 16v-4"></path>
-                                <path d="M12 8h.01"></path>
-                            </svg>
-                        </span>
-                        <span class="project-tooltip">The perceiver-io library is a modular implementation of <a href="https://arxiv.org/abs/2103.03206">Perceiver</a>, <a href="https://arxiv.org/abs/2107.14795">Perceiver IO</a>, and <a href="https://arxiv.org/abs/2202.07765">Perceiver AR</a> in PyTorch, with a PyTorch Lightning integration for distributed training and a Hugging Face integration for inference. The project provides both ported <a href="https://github.com/krasserm/perceiver-io/blob/main/docs/pretrained-models.md#official-models">official models</a> and <a href="https://github.com/krasserm/perceiver-io/blob/main/docs/pretrained-models.md#training-checkpoints">custom models</a> used in <a href="https://github.com/krasserm/perceiver-io/blob/main/docs/training-examples.md">training examples</a>.</span>
-                    </span>
-                </td>
-            </tr>
-            
-            <tr class="project-row">
-                <td class="project-cell-name">
-                    <a href="https://github.com/krasserm/super-resolution" target="_blank" rel="noopener">super-resolution</a>
-                </td>
-                <td class="project-cell-stars">
-                    
-                    <a href="https://github.com/krasserm/super-resolution/stargazers" class="project-stars-link" data-repo="krasserm/super-resolution" target="_blank" rel="noopener">
-                        <span class="star-count"></span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                        </svg>
-                    </a>
-                    
-                </td>
-                <td class="project-cell-info">
-                    <span class="project-info-wrapper">
-                        <span class="project-info-icon" tabindex="0">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <path d="M12 16v-4"></path>
-                                <path d="M12 8h.01"></path>
-                            </svg>
-                        </span>
-                        <span class="project-tooltip">This project provides a Tensorflow 2.x based implementation of three popular single image super-resolution models: <a href="https://arxiv.org/abs/1707.02921">EDSR</a>, <a href="https://arxiv.org/abs/1808.08718">WDSR</a> and <a href="https://arxiv.org/abs/1609.04802">SRGAN</a>. Pre-trained weights, training and inference examples as well as a data loader for the DIV2K dataset are included.</span>
-                    </span>
-                </td>
-            </tr>
-            
-            <tr class="project-row">
-                <td class="project-cell-name">
-                    <a href="https://github.com/krasserm/fairseq-image-captioning" target="_blank" rel="noopener">fairseq-image-captioning</a>
-                </td>
-                <td class="project-cell-stars">
-                    
-                    <a href="https://github.com/krasserm/fairseq-image-captioning/stargazers" class="project-stars-link" data-repo="krasserm/fairseq-image-captioning" target="_blank" rel="noopener">
-                        <span class="star-count"></span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                        </svg>
-                    </a>
-                    
-                </td>
-                <td class="project-cell-info">
-                    <span class="project-info-wrapper">
-                        <span class="project-info-icon" tabindex="0">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <path d="M12 16v-4"></path>
-                                <path d="M12 8h.01"></path>
-                            </svg>
-                        </span>
-                        <span class="project-tooltip">Implements an <em>Image Captioning Transformer</em> with the <a href="https://github.com/facebookresearch/fairseq">fairseq</a> sequence modelling toolkit by combining ideas from <a href="https://arxiv.org/abs/1612.00563">Self-critical Sequence Training for Image Captioning</a> and <a href="https://arxiv.org/abs/1707.07998">Bottom-Up and Top-Down Attention for Image Captioning and Visual Question Answering</a> with the <a href="https://arxiv.org/abs/1706.03762">Transformer</a> architecture.</span>
-                    </span>
-                </td>
-            </tr>
-            
-            <tr class="project-row">
-                <td class="project-cell-name">
-                    <a href="https://github.com/krasserm/face-recognition" target="_blank" rel="noopener">face-recognition</a>
-                </td>
-                <td class="project-cell-stars">
-                    
-                    <a href="https://github.com/krasserm/face-recognition/stargazers" class="project-stars-link" data-repo="krasserm/face-recognition" target="_blank" rel="noopener">
-                        <span class="star-count"></span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                        </svg>
-                    </a>
-                    
-                </td>
-                <td class="project-cell-info">
-                    <span class="project-info-wrapper">
-                        <span class="project-info-icon" tabindex="0">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <path d="M12 16v-4"></path>
-                                <path d="M12 8h.01"></path>
-                            </svg>
-                        </span>
-                        <span class="project-tooltip">Demonstrates how to build a face recognition system with <a href="https://keras.io/">Keras</a>, <a href="http://dlib.net/">Dlib</a> and <a href="https://opencv.org/">OpenCV</a>. The process involves preprocessing images for face alignment, generating 128-dimensional face embeddings with a convolutional neural network (CNN), training classifiers on labeled embeddings and predicting identities of new inputs.</span>
-                    </span>
-                </td>
-            </tr>
-            
-            <tr class="project-row">
-                <td class="project-cell-name">
-                    <a href="https://github.com/krasserm/streamz" target="_blank" rel="noopener">streamz</a>
-                </td>
-                <td class="project-cell-stars">
-                    
-                    <a href="https://github.com/krasserm/streamz/stargazers" class="project-stars-link" data-repo="krasserm/streamz" target="_blank" rel="noopener">
-                        <span class="star-count"></span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                        </svg>
-                    </a>
-                    
-                </td>
-                <td class="project-cell-info">
-                    <span class="project-info-wrapper">
-                        <span class="project-info-icon" tabindex="0">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <path d="M12 16v-4"></path>
-                                <path d="M12 8h.01"></path>
-                            </svg>
-                        </span>
-                        <span class="project-tooltip">Streamz is a combinator library designed to integrate <a href="https://fs2.io">Functional Streams for Scala</a> (FS2), <a href="https://doc.akka.io/docs/akka/current/stream/index.html">Akka Streams</a>, and <a href="https://camel.apache.org/">Apache Camel</a> endpoints, allowing seamless interoperability between these technologies. Camel endpoints can be integrated into FS2 applications with the <a href="https://github.com/krasserm/streamz/blob/master/streamz-camel-fs2/README.md">Camel DSL for FS2</a> and into Akka Streams applications with the <a href="https://github.com/krasserm/streamz/blob/master/streamz-camel-akka/README.md">Camel DSL for Akka Streams</a>.</span>
-                    </span>
-                </td>
-            </tr>
-            
-            <tr class="project-row">
-                <td class="project-cell-name">
-                    <a href="https://github.com/krasserm/akka-stream-eventsourcing" target="_blank" rel="noopener">akka-stream-eventsourcing</a>
-                </td>
-                <td class="project-cell-stars">
-                    
-                    <a href="https://github.com/krasserm/akka-stream-eventsourcing/stargazers" class="project-stars-link" data-repo="krasserm/akka-stream-eventsourcing" target="_blank" rel="noopener">
-                        <span class="star-count"></span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                        </svg>
-                    </a>
-                    
-                </td>
-                <td class="project-cell-info">
-                    <span class="project-info-wrapper">
-                        <span class="project-info-icon" tabindex="0">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <path d="M12 16v-4"></path>
-                                <path d="M12 8h.01"></path>
-                            </svg>
-                        </span>
-                        <span class="project-tooltip">This project brings to <a href="https://doc.akka.io/docs/akka/current/stream/index.html">Akka Streams</a> what <a href="https://doc.akka.io/docs/akka/current/persistence.html">Akka Persistence</a> brings to <a href="https://doc.akka.io/docs/akka/current/index-actors.html">Akka Actors</a>: persistence via event sourcing. In the same way as persistent actors in Akka Persistence, stateful <em>request processors</em> in akka-stream-eventsourcing form a consistency boundary around internal state but additionally provide type safety and end-to-end back-pressure for the whole event sourcing message flow.</span>
-                    </span>
-                </td>
-            </tr>
-            
-        </tbody>
-    </table>
+<section class="section">
+    <div class="section-head">
+        <h2 class="section-title">Gradion AI</h2>
+        <span class="section-meta"><a href="https://github.com/gradion-ai" target="_blank" rel="noopener">github.com/gradion-ai</a></span>
+    </div>
+    <div class="disclosure-list">
+        
+        
+<details class="disclosure">
+    <summary>
+        <span class="disclosure-caret" aria-hidden="true">&#9656;</span>
+        <span class="disclosure-name">freeact</span>
+        <span class="disclosure-links"></span>
+        <span class="disclosure-meta">
 
-    <table class="project-table">
-        <tbody>
-            <tr class="project-section-header">
-                <td colspan="4">Project Contributions</td>
-            </tr>
+<span class="project-stars-link" data-repo="gradion-ai/freeact"><span class="star-glyph" aria-hidden="true">&#9733;</span> <span class="star-count"></span></span>
+
+</span>
+    </summary>
+    <div class="disclosure-body">
+        <p>Lightweight, general-purpose agent that acts via code actions combining Python code, shell commands, and programmatic MCP tool calls, generated in a single inference pass. For programmatic MCP tool calling ("code mode"), it generates typed Python APIs from MCP server schemas and discovers task-relevant tools via agentic and semantic search, loading only what's needed into the context window. Saves successful code actions as reusable tools, supports subagent delegation and application-level approval, and runs locally as both a CLI tool and Python SDK.</p>
+        <p>
+            <a href="https://github.com/gradion-ai/freeact" target="_blank" rel="noopener">github.com/gradion-ai/freeact &rarr;</a>
             
-            <tr class="project-row">
-                <td class="project-cell-name">
-                    <a href="https://github.com/anthropic-experimental/sandbox-runtime" target="_blank" rel="noopener">sandbox-runtime</a>
-                </td>
-                <td class="project-cell-contribs">
-                    
-                    <a href="https://github.com/search?q=repo%3Aanthropic-experimental%2Fsandbox-runtime+author%3Akrasserm&amp;type=pullrequests&amp;s=created&amp;o=desc" target="_blank" rel="noopener">contributions</a>
-                    
-                </td>
-                <td class="project-cell-stars">
-                    
-                    <a href="https://github.com/anthropic-experimental/sandbox-runtime/stargazers" class="project-stars-link" data-repo="anthropic-experimental/sandbox-runtime" target="_blank" rel="noopener">
-                        <span class="star-count"></span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                        </svg>
-                    </a>
-                    
-                </td>
-                <td class="project-cell-info">
-                    <span class="project-info-wrapper">
-                        <span class="project-info-icon" tabindex="0">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <path d="M12 16v-4"></path>
-                                <path d="M12 8h.01"></path>
-                            </svg>
-                        </span>
-                        <span class="project-tooltip">The Sandbox Runtime is a lightweight OS-level sandboxing tool that restricts process access to the filesystem and network without requiring containers. It uses native OS mechanisms (sandbox-exec on macOS, bubblewrap on Linux) to enforce security boundaries, supporting network isolation, filesystem restrictions, and violation monitoring. Originally designed for Claude Code to enable safer AI agents.</span>
-                    </span>
-                </td>
-            </tr>
+        </p>
+    </div>
+</details>
+
+        
+        
+<details class="disclosure">
+    <summary>
+        <span class="disclosure-caret" aria-hidden="true">&#9656;</span>
+        <span class="disclosure-name">ipybox</span>
+        <span class="disclosure-links"></span>
+        <span class="disclosure-meta">
+
+<span class="project-stars-link" data-repo="gradion-ai/ipybox"><span class="star-glyph" aria-hidden="true">&#9733;</span> <span class="star-count"></span></span>
+
+</span>
+    </summary>
+    <div class="disclosure-body">
+        <p>Unified execution environment for Python code, shell commands, and programmatic MCP tool calls, all combinable within a single code block executed in a stateful IPython kernel. Generates typed Python APIs from MCP server schemas ("code mode") and supports application-level approval of individual tool calls and shell commands during execution. Runs locally with optional lightweight sandboxing via Anthropic's sandbox-runtime, and is available as a Python SDK, MCP server, and Claude Code plugin.</p>
+        <p>
+            <a href="https://github.com/gradion-ai/ipybox" target="_blank" rel="noopener">github.com/gradion-ai/ipybox &rarr;</a>
             
-            <tr class="project-row">
-                <td class="project-cell-name">
-                    <a href="https://github.com/ggerganov/llama.cpp" target="_blank" rel="noopener">llama.cpp</a>
-                </td>
-                <td class="project-cell-contribs">
-                    
-                    <a href="https://github.com/search?q=repo%3Aggml-org%2Fllama.cpp+author%3Akrasserm&amp;type=pullrequests" target="_blank" rel="noopener">contributions</a>
-                    
-                </td>
-                <td class="project-cell-stars">
-                    
-                    <a href="https://github.com/ggerganov/llama.cpp/stargazers" class="project-stars-link" data-repo="ggerganov/llama.cpp" target="_blank" rel="noopener">
-                        <span class="star-count"></span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                        </svg>
-                    </a>
-                    
-                </td>
-                <td class="project-cell-info">
-                    <span class="project-info-wrapper">
-                        <span class="project-info-icon" tabindex="0">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <path d="M12 16v-4"></path>
-                                <path d="M12 8h.01"></path>
-                            </svg>
-                        </span>
-                        <span class="project-tooltip">llama.cpp enables large language model (LLM) inference in C/C++, with minimal setup and state-of-the-art performance on a wide variety of hardware. It also supports integer quantization from 1.5-bit to 8-bit, which significantly enhances the speed of inference while reducing memory requirements.</span>
-                    </span>
-                </td>
-            </tr>
+        </p>
+    </div>
+</details>
+
+        
+    </div>
+</section>
+
+<section class="section">
+    <div class="section-head">
+        <h2 class="section-title">Personal projects</h2>
+        <span class="section-meta"><a href="https://github.com/krasserm" target="_blank" rel="noopener">github.com/krasserm</a></span>
+    </div>
+    <div class="disclosure-list">
+        
+        
+<details class="disclosure">
+    <summary>
+        <span class="disclosure-caret" aria-hidden="true">&#9656;</span>
+        <span class="disclosure-name">bayesian-machine-learning</span>
+        <span class="disclosure-links"></span>
+        <span class="disclosure-meta">
+
+<span class="project-stars-link" data-repo="krasserm/bayesian-machine-learning"><span class="star-glyph" aria-hidden="true">&#9733;</span> <span class="star-count"></span></span>
+
+</span>
+    </summary>
+    <div class="disclosure-body">
+        <p>A collection of notebooks about Bayesian methods for machine learning, like <a href="/2019/02/23/bayesian-linear-regression/">Bayesian regression</a>, <a href="/2018/03/19/gaussian-processes/">Gaussian processes</a>, <a href="/2018/03/21/bayesian-optimization/">Bayesian optimization</a>, <a href="/2019/03/14/bayesian-neural-networks/">variational inference in Bayesian neural networks</a>, ..., etc. Each notebook covers a single topic and combines an introduction, mathematical basics and a simple implementation.</p>
+        <p>
+            <a href="https://github.com/krasserm/bayesian-machine-learning" target="_blank" rel="noopener">github.com/krasserm/bayesian-machine-learning &rarr;</a>
             
-            <tr class="project-row">
-                <td class="project-cell-name">
-                    <a href="https://github.com/rbmhtechnology/eventuate" target="_blank" rel="noopener">eventuate</a><sup class="founder-ref">1</sup>
-                </td>
-                <td class="project-cell-contribs">
-                    
-                    <a href="https://github.com/search?q=repo%3ARBMHTechnology%2Feventuate+author%3Akrasserm&amp;type=commits" target="_blank" rel="noopener">contributions</a>
-                    
-                </td>
-                <td class="project-cell-stars">
-                    
-                    <a href="https://github.com/rbmhtechnology/eventuate/stargazers" class="project-stars-link" data-repo="rbmhtechnology/eventuate" target="_blank" rel="noopener">
-                        <span class="star-count"></span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                        </svg>
-                    </a>
-                    
-                </td>
-                <td class="project-cell-info">
-                    <span class="project-info-wrapper">
-                        <span class="project-info-icon" tabindex="0">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <path d="M12 16v-4"></path>
-                                <path d="M12 8h.01"></path>
-                            </svg>
-                        </span>
-                        <span class="project-tooltip"><a href="https://rbmhtechnology.github.io/eventuate/overview.html">Eventuate</a> is a toolkit for building applications composed of event-driven and event-sourced services that communicate via causally ordered event streams. Services can either be co-located on a single node or distributed up to global scale. Service state can be replicated with causal consistency guarantees and remains available for concurrent writes during network partitions.</span>
-                    </span>
-                </td>
-            </tr>
+        </p>
+    </div>
+</details>
+
+        
+        
+<details class="disclosure">
+    <summary>
+        <span class="disclosure-caret" aria-hidden="true">&#9656;</span>
+        <span class="disclosure-name">perceiver-io</span>
+        <span class="disclosure-links"></span>
+        <span class="disclosure-meta">
+
+<span class="project-stars-link" data-repo="krasserm/perceiver-io"><span class="star-glyph" aria-hidden="true">&#9733;</span> <span class="star-count"></span></span>
+
+</span>
+    </summary>
+    <div class="disclosure-body">
+        <p>The perceiver-io library is a modular implementation of <a href="https://arxiv.org/abs/2103.03206">Perceiver</a>, <a href="https://arxiv.org/abs/2107.14795">Perceiver IO</a>, and <a href="https://arxiv.org/abs/2202.07765">Perceiver AR</a> in PyTorch, with a PyTorch Lightning integration for distributed training and a Hugging Face integration for inference. The project provides both ported <a href="https://github.com/krasserm/perceiver-io/blob/main/docs/pretrained-models.md#official-models">official models</a> and <a href="https://github.com/krasserm/perceiver-io/blob/main/docs/pretrained-models.md#training-checkpoints">custom models</a> used in <a href="https://github.com/krasserm/perceiver-io/blob/main/docs/training-examples.md">training examples</a>.</p>
+        <p>
+            <a href="https://github.com/krasserm/perceiver-io" target="_blank" rel="noopener">github.com/krasserm/perceiver-io &rarr;</a>
             
-            <tr class="project-row">
-                <td class="project-cell-name">
-                    <a href="https://github.com/akka/akka" target="_blank" rel="noopener">akka</a>
-                </td>
-                <td class="project-cell-contribs">
-                    
-                    <a href="https://github.com/search?q=repo%3Aakka%2Fakka-core+author%3Akrasserm&amp;type=commits" target="_blank" rel="noopener">contributions</a>
-                    
-                </td>
-                <td class="project-cell-stars">
-                    
-                    <a href="https://github.com/akka/akka/stargazers" class="project-stars-link" data-repo="akka/akka" target="_blank" rel="noopener">
-                        <span class="star-count"></span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                        </svg>
-                    </a>
-                    
-                </td>
-                <td class="project-cell-info">
-                    <span class="project-info-wrapper">
-                        <span class="project-info-icon" tabindex="0">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <path d="M12 16v-4"></path>
-                                <path d="M12 8h.01"></path>
-                            </svg>
-                        </span>
-                        <span class="project-tooltip"><a href="https://akka.io/">Akka</a> is an open-source toolkit for building highly concurrent, distributed, and resilient message-driven applications, implementing the <a href="https://en.wikipedia.org/wiki/Actor_model">Actor Model</a> on the JVM. It provides developers with tools to create systems that scale efficiently, self-heal, maintain responsiveness during failures, and handle high-performance scenarios, all while offering features like distributed data management, reactive streaming, and elastic deployment. My main contribution to Akka is the <a href="https://doc.akka.io/docs/akka/current/persistence.html">Akka Persistence</a> module.</span>
-                    </span>
-                </td>
-            </tr>
+        </p>
+    </div>
+</details>
+
+        
+        
+<details class="disclosure">
+    <summary>
+        <span class="disclosure-caret" aria-hidden="true">&#9656;</span>
+        <span class="disclosure-name">super-resolution</span>
+        <span class="disclosure-links"></span>
+        <span class="disclosure-meta">
+
+<span class="project-stars-link" data-repo="krasserm/super-resolution"><span class="star-glyph" aria-hidden="true">&#9733;</span> <span class="star-count"></span></span>
+
+</span>
+    </summary>
+    <div class="disclosure-body">
+        <p>This project provides a Tensorflow 2.x based implementation of three popular single image super-resolution models: <a href="https://arxiv.org/abs/1707.02921">EDSR</a>, <a href="https://arxiv.org/abs/1808.08718">WDSR</a> and <a href="https://arxiv.org/abs/1609.04802">SRGAN</a>. Pre-trained weights, training and inference examples as well as a data loader for the DIV2K dataset are included.</p>
+        <p>
+            <a href="https://github.com/krasserm/super-resolution" target="_blank" rel="noopener">github.com/krasserm/super-resolution &rarr;</a>
             
-            <tr class="project-row">
-                <td class="project-cell-name">
-                    <a href="https://github.com/akka/alpakka" target="_blank" rel="noopener">alpakka</a>
-                </td>
-                <td class="project-cell-contribs">
-                    
-                    <a href="https://github.com/search?q=repo%3Aakka%2Falpakka+author%3Akrasserm&amp;type=pullrequests" target="_blank" rel="noopener">contributions</a>
-                    
-                </td>
-                <td class="project-cell-stars">
-                    
-                    <a href="https://github.com/akka/alpakka/stargazers" class="project-stars-link" data-repo="akka/alpakka" target="_blank" rel="noopener">
-                        <span class="star-count"></span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                        </svg>
-                    </a>
-                    
-                </td>
-                <td class="project-cell-info">
-                    <span class="project-info-wrapper">
-                        <span class="project-info-icon" tabindex="0">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <path d="M12 16v-4"></path>
-                                <path d="M12 8h.01"></path>
-                            </svg>
-                        </span>
-                        <span class="project-tooltip">The <a href="https://doc.akka.io/docs/alpakka/current/index.html">Alpakka</a> project is an initiative for implementing reactive and stream-aware integration pipelines based on <a href="https://doc.akka.io/docs/akka/current/stream/index.html">Akka Streams</a>. It provides a domain-specific language (DSL) for reactive and stream-oriented programming, with built-in support for end-to-end backpressure. It supports a variety of integrations and ensures interoperability with other <a href="https://www.reactive-streams.org/">Reactive Streams</a> implementations.</span>
-                    </span>
-                </td>
-            </tr>
+        </p>
+    </div>
+</details>
+
+        
+        
+<details class="disclosure">
+    <summary>
+        <span class="disclosure-caret" aria-hidden="true">&#9656;</span>
+        <span class="disclosure-name">fairseq-image-captioning</span>
+        <span class="disclosure-links"></span>
+        <span class="disclosure-meta">
+
+<span class="project-stars-link" data-repo="krasserm/fairseq-image-captioning"><span class="star-glyph" aria-hidden="true">&#9733;</span> <span class="star-count"></span></span>
+
+</span>
+    </summary>
+    <div class="disclosure-body">
+        <p>Implements an <em>Image Captioning Transformer</em> with the <a href="https://github.com/facebookresearch/fairseq">fairseq</a> sequence modelling toolkit by combining ideas from <a href="https://arxiv.org/abs/1612.00563">Self-critical Sequence Training for Image Captioning</a> and <a href="https://arxiv.org/abs/1707.07998">Bottom-Up and Top-Down Attention for Image Captioning and Visual Question Answering</a> with the <a href="https://arxiv.org/abs/1706.03762">Transformer</a> architecture.</p>
+        <p>
+            <a href="https://github.com/krasserm/fairseq-image-captioning" target="_blank" rel="noopener">github.com/krasserm/fairseq-image-captioning &rarr;</a>
             
-            <tr class="project-row">
-                <td class="project-cell-name">
-                    <a href="https://github.com/akka/akka-persistence-cassandra" target="_blank" rel="noopener">akka-persistence-cassandra</a><sup class="founder-ref">1</sup>
-                </td>
-                <td class="project-cell-contribs">
-                    
-                    <a href="https://github.com/search?q=repo%3Aakka%2Fakka-persistence-cassandra+author%3Akrasserm&amp;type=commits" target="_blank" rel="noopener">contributions</a>
-                    
-                </td>
-                <td class="project-cell-stars">
-                    
-                    <a href="https://github.com/akka/akka-persistence-cassandra/stargazers" class="project-stars-link" data-repo="akka/akka-persistence-cassandra" target="_blank" rel="noopener">
-                        <span class="star-count"></span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                        </svg>
-                    </a>
-                    
-                </td>
-                <td class="project-cell-info">
-                    <span class="project-info-wrapper">
-                        <span class="project-info-icon" tabindex="0">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <path d="M12 16v-4"></path>
-                                <path d="M12 8h.01"></path>
-                            </svg>
-                        </span>
-                        <span class="project-tooltip">This project provides a <a href="https://doc.akka.io/docs/akka/current/persistence-plugins.html">persistence plugin</a> for <a href="https://doc.akka.io/docs/akka/current/persistence.html">Akka Persistence</a> that uses <a href="https://cassandra.apache.org/_/index.html">Apache Cassandra</a> as storage backend. Akka Persistence enables stateful <a href="https://akka.io/">Akka</a> actors to persist their state via event sourcing, using persistence plugins that implement a common interface for storage backends.</span>
-                    </span>
-                </td>
-            </tr>
+        </p>
+    </div>
+</details>
+
+        
+        
+<details class="disclosure">
+    <summary>
+        <span class="disclosure-caret" aria-hidden="true">&#9656;</span>
+        <span class="disclosure-name">face-recognition</span>
+        <span class="disclosure-links"></span>
+        <span class="disclosure-meta">
+
+<span class="project-stars-link" data-repo="krasserm/face-recognition"><span class="star-glyph" aria-hidden="true">&#9733;</span> <span class="star-count"></span></span>
+
+</span>
+    </summary>
+    <div class="disclosure-body">
+        <p>Demonstrates how to build a face recognition system with <a href="https://keras.io/">Keras</a>, <a href="http://dlib.net/">Dlib</a> and <a href="https://opencv.org/">OpenCV</a>. The process involves preprocessing images for face alignment, generating 128-dimensional face embeddings with a convolutional neural network (CNN), training classifiers on labeled embeddings and predicting identities of new inputs.</p>
+        <p>
+            <a href="https://github.com/krasserm/face-recognition" target="_blank" rel="noopener">github.com/krasserm/face-recognition &rarr;</a>
             
-            <tr class="project-row">
-                <td class="project-cell-name">
-                    <a href="https://github.com/eligosource/eventsourced" target="_blank" rel="noopener">eventsourced</a><sup class="founder-ref">1</sup>
-                </td>
-                <td class="project-cell-contribs">
-                    
-                    <a href="https://github.com/search?q=repo%3Aeligosource%2Feventsourced+author%3Akrasserm&amp;type=commits" target="_blank" rel="noopener">contributions</a>
-                    
-                </td>
-                <td class="project-cell-stars">
-                    
-                    <a href="https://github.com/eligosource/eventsourced/stargazers" class="project-stars-link" data-repo="eligosource/eventsourced" target="_blank" rel="noopener">
-                        <span class="star-count"></span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                        </svg>
-                    </a>
-                    
-                </td>
-                <td class="project-cell-info">
-                    <span class="project-info-wrapper">
-                        <span class="project-info-icon" tabindex="0">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <path d="M12 16v-4"></path>
-                                <path d="M12 8h.01"></path>
-                            </svg>
-                        </span>
-                        <span class="project-tooltip">Eventsourced is a library for building reliable, scalable, and distributed event-sourced applications. It adds scalable actor state persistence and at-least-once message delivery guarantees to <a href="https://akka.io/">Akka</a>, allowing stateful actors to persist received messages to append-only storage and to recover state by replaying received messages. It is now superseded by the <a href="https://doc.akka.io/docs/akka/current/persistence.html">Akka Persistence</a> module of the Akka project.</span>
-                    </span>
-                </td>
-            </tr>
+        </p>
+    </div>
+</details>
+
+        
+        
+<details class="disclosure">
+    <summary>
+        <span class="disclosure-caret" aria-hidden="true">&#9656;</span>
+        <span class="disclosure-name">streamz</span>
+        <span class="disclosure-links"></span>
+        <span class="disclosure-meta">
+
+<span class="project-stars-link" data-repo="krasserm/streamz"><span class="star-glyph" aria-hidden="true">&#9733;</span> <span class="star-count"></span></span>
+
+</span>
+    </summary>
+    <div class="disclosure-body">
+        <p>Streamz is a combinator library designed to integrate <a href="https://fs2.io">Functional Streams for Scala</a> (FS2), <a href="https://doc.akka.io/docs/akka/current/stream/index.html">Akka Streams</a>, and <a href="https://camel.apache.org/">Apache Camel</a> endpoints, allowing seamless interoperability between these technologies. Camel endpoints can be integrated into FS2 applications with the <a href="https://github.com/krasserm/streamz/blob/master/streamz-camel-fs2/README.md">Camel DSL for FS2</a> and into Akka Streams applications with the <a href="https://github.com/krasserm/streamz/blob/master/streamz-camel-akka/README.md">Camel DSL for Akka Streams</a>.</p>
+        <p>
+            <a href="https://github.com/krasserm/streamz" target="_blank" rel="noopener">github.com/krasserm/streamz &rarr;</a>
             
-            <tr class="project-row">
-                <td class="project-cell-name">
-                    <a href="https://github.com/oehf/ipf" target="_blank" rel="noopener">ipf</a><sup class="founder-ref">1</sup>
-                </td>
-                <td class="project-cell-contribs">
-                    
-                    <a href="https://github.com/search?q=repo%3Aoehf%2Fipf+author%3Akrasserm&amp;type=commits" target="_blank" rel="noopener">contributions</a>
-                    
-                </td>
-                <td class="project-cell-stars">
-                    
-                    <a href="https://github.com/oehf/ipf/stargazers" class="project-stars-link" data-repo="oehf/ipf" target="_blank" rel="noopener">
-                        <span class="star-count"></span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                        </svg>
-                    </a>
-                    
-                </td>
-                <td class="project-cell-info">
-                    <span class="project-info-wrapper">
-                        <span class="project-info-icon" tabindex="0">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <path d="M12 16v-4"></path>
-                                <path d="M12 8h.01"></path>
-                            </svg>
-                        </span>
-                        <span class="project-tooltip">The <a href="https://oehf.github.io/ipf-docs/">Open eHealth Integration Platform</a> (IPF) offers a comprehensive set of tools for creating healthcare-related integration solutions. It is built on top of <a href="https://github.com/apache/camel">Apache Camel</a> and provides a custom domain-specific language (DSL) for implementing <a href="https://www.enterpriseintegrationpatterns.com/">enterprise integration patterns</a> in healthcare-specific integration solutions, based on <a href="http://www.hl7.org/">HL7</a> and <a href="https://www.ihe.net/">IHE</a> standards.</span>
-                    </span>
-                </td>
-            </tr>
+        </p>
+    </div>
+</details>
+
+        
+        
+<details class="disclosure">
+    <summary>
+        <span class="disclosure-caret" aria-hidden="true">&#9656;</span>
+        <span class="disclosure-name">akka-stream-eventsourcing</span>
+        <span class="disclosure-links"></span>
+        <span class="disclosure-meta">
+
+<span class="project-stars-link" data-repo="krasserm/akka-stream-eventsourcing"><span class="star-glyph" aria-hidden="true">&#9733;</span> <span class="star-count"></span></span>
+
+</span>
+    </summary>
+    <div class="disclosure-body">
+        <p>This project brings to <a href="https://doc.akka.io/docs/akka/current/stream/index.html">Akka Streams</a> what <a href="https://doc.akka.io/docs/akka/current/persistence.html">Akka Persistence</a> brings to <a href="https://doc.akka.io/docs/akka/current/index-actors.html">Akka Actors</a>: persistence via event sourcing. In the same way as persistent actors in Akka Persistence, stateful <em>request processors</em> in akka-stream-eventsourcing form a consistency boundary around internal state but additionally provide type safety and end-to-end back-pressure for the whole event sourcing message flow.</p>
+        <p>
+            <a href="https://github.com/krasserm/akka-stream-eventsourcing" target="_blank" rel="noopener">github.com/krasserm/akka-stream-eventsourcing &rarr;</a>
             
-            <tr class="project-row">
-                <td class="project-cell-name">
-                    <a href="https://github.com/apache/camel" target="_blank" rel="noopener">camel</a>
-                </td>
-                <td class="project-cell-contribs">
-                    
-                    <a href="https://github.com/search?q=repo%3Aapache%2Fcamel+krasser&amp;type=commits" target="_blank" rel="noopener">contributions</a>
-                    
-                </td>
-                <td class="project-cell-stars">
-                    
-                    <a href="https://github.com/apache/camel/stargazers" class="project-stars-link" data-repo="apache/camel" target="_blank" rel="noopener">
-                        <span class="star-count"></span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                        </svg>
-                    </a>
-                    
-                </td>
-                <td class="project-cell-info">
-                    <span class="project-info-wrapper">
-                        <span class="project-info-icon" tabindex="0">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <path d="M12 16v-4"></path>
-                                <path d="M12 8h.01"></path>
-                            </svg>
-                        </span>
-                        <span class="project-tooltip"><a href="https://camel.apache.org/">Apache Camel</a> is an integration framework that simplifies the integration of different systems by supporting numerous <a href="https://www.enterpriseintegrationpatterns.com/">enterprise integration patterns</a> and data formats. It can be used standalone or embedded in other applications, making it deployable to various environments including cloud-based services.</span>
-                    </span>
-                </td>
-            </tr>
+        </p>
+    </div>
+</details>
+
+        
+    </div>
+</section>
+
+<section class="section">
+    <div class="section-head">
+        <h2 class="section-title">Contributions</h2>
+        <span class="section-meta">expand for details</span>
+    </div>
+    <div class="disclosure-list">
+        
+        
+<details class="disclosure">
+    <summary>
+        <span class="disclosure-caret" aria-hidden="true">&#9656;</span>
+        <span class="disclosure-name">sandbox-runtime</span>
+        <span class="disclosure-links"><a href="https://github.com/search?q=repo%3Aanthropic-experimental%2Fsandbox-runtime+author%3Akrasserm&amp;type=pullrequests&amp;s=created&amp;o=desc" target="_blank" rel="noopener">contributions</a></span>
+        <span class="disclosure-meta">
+
+<span class="project-stars-link" data-repo="anthropic-experimental/sandbox-runtime"><span class="star-glyph" aria-hidden="true">&#9733;</span> <span class="star-count"></span></span>
+
+</span>
+    </summary>
+    <div class="disclosure-body">
+        <p>The Sandbox Runtime is a lightweight OS-level sandboxing tool that restricts process access to the filesystem and network without requiring containers. It uses native OS mechanisms (sandbox-exec on macOS, bubblewrap on Linux) to enforce security boundaries, supporting network isolation, filesystem restrictions, and violation monitoring. Originally designed for Claude Code to enable safer AI agents.</p>
+        <p>
+            <a href="https://github.com/anthropic-experimental/sandbox-runtime" target="_blank" rel="noopener">github.com/anthropic-experimental/sandbox-runtime &rarr;</a>
             
-        </tbody>
-    </table>
-    <p class="founder-footnote">
+            <span class="disclosure-body-contrib">&nbsp;&middot;&nbsp; <a href="https://github.com/search?q=repo%3Aanthropic-experimental%2Fsandbox-runtime+author%3Akrasserm&amp;type=pullrequests&amp;s=created&amp;o=desc" target="_blank" rel="noopener">contributions &rarr;</a></span>
+            
+        </p>
+    </div>
+</details>
+
+        
+        
+<details class="disclosure">
+    <summary>
+        <span class="disclosure-caret" aria-hidden="true">&#9656;</span>
+        <span class="disclosure-name">llama.cpp</span>
+        <span class="disclosure-links"><a href="https://github.com/search?q=repo%3Aggml-org%2Fllama.cpp+author%3Akrasserm&amp;type=pullrequests" target="_blank" rel="noopener">contributions</a></span>
+        <span class="disclosure-meta">
+
+<span class="project-stars-link" data-repo="ggerganov/llama.cpp"><span class="star-glyph" aria-hidden="true">&#9733;</span> <span class="star-count"></span></span>
+
+</span>
+    </summary>
+    <div class="disclosure-body">
+        <p>llama.cpp enables large language model (LLM) inference in C/C++, with minimal setup and state-of-the-art performance on a wide variety of hardware. It also supports integer quantization from 1.5-bit to 8-bit, which significantly enhances the speed of inference while reducing memory requirements.</p>
+        <p>
+            <a href="https://github.com/ggerganov/llama.cpp" target="_blank" rel="noopener">github.com/ggerganov/llama.cpp &rarr;</a>
+            
+            <span class="disclosure-body-contrib">&nbsp;&middot;&nbsp; <a href="https://github.com/search?q=repo%3Aggml-org%2Fllama.cpp+author%3Akrasserm&amp;type=pullrequests" target="_blank" rel="noopener">contributions &rarr;</a></span>
+            
+        </p>
+    </div>
+</details>
+
+        
+        
+<details class="disclosure">
+    <summary>
+        <span class="disclosure-caret" aria-hidden="true">&#9656;</span>
+        <span class="disclosure-name">eventuate<sup class="founder-ref">1</sup></span>
+        <span class="disclosure-links"><a href="https://github.com/search?q=repo%3ARBMHTechnology%2Feventuate+author%3Akrasserm&amp;type=commits" target="_blank" rel="noopener">contributions</a></span>
+        <span class="disclosure-meta">
+
+<span class="project-stars-link" data-repo="rbmhtechnology/eventuate"><span class="star-glyph" aria-hidden="true">&#9733;</span> <span class="star-count"></span></span>
+
+</span>
+    </summary>
+    <div class="disclosure-body">
+        <p><a href="https://rbmhtechnology.github.io/eventuate/overview.html">Eventuate</a> is a toolkit for building applications composed of event-driven and event-sourced services that communicate via causally ordered event streams. Services can either be co-located on a single node or distributed up to global scale. Service state can be replicated with causal consistency guarantees and remains available for concurrent writes during network partitions.</p>
+        <p>
+            <a href="https://github.com/rbmhtechnology/eventuate" target="_blank" rel="noopener">github.com/rbmhtechnology/eventuate &rarr;</a>
+            
+            <span class="disclosure-body-contrib">&nbsp;&middot;&nbsp; <a href="https://github.com/search?q=repo%3ARBMHTechnology%2Feventuate+author%3Akrasserm&amp;type=commits" target="_blank" rel="noopener">contributions &rarr;</a></span>
+            
+        </p>
+    </div>
+</details>
+
+        
+        
+<details class="disclosure">
+    <summary>
+        <span class="disclosure-caret" aria-hidden="true">&#9656;</span>
+        <span class="disclosure-name">akka</span>
+        <span class="disclosure-links"><a href="https://github.com/search?q=repo%3Aakka%2Fakka-core+author%3Akrasserm&amp;type=commits" target="_blank" rel="noopener">contributions</a></span>
+        <span class="disclosure-meta">
+
+<span class="project-stars-link" data-repo="akka/akka"><span class="star-glyph" aria-hidden="true">&#9733;</span> <span class="star-count"></span></span>
+
+</span>
+    </summary>
+    <div class="disclosure-body">
+        <p><a href="https://akka.io/">Akka</a> is an open-source toolkit for building highly concurrent, distributed, and resilient message-driven applications, implementing the <a href="https://en.wikipedia.org/wiki/Actor_model">Actor Model</a> on the JVM. It provides developers with tools to create systems that scale efficiently, self-heal, maintain responsiveness during failures, and handle high-performance scenarios, all while offering features like distributed data management, reactive streaming, and elastic deployment. My main contribution to Akka is the <a href="https://doc.akka.io/docs/akka/current/persistence.html">Akka Persistence</a> module.</p>
+        <p>
+            <a href="https://github.com/akka/akka" target="_blank" rel="noopener">github.com/akka/akka &rarr;</a>
+            
+            <span class="disclosure-body-contrib">&nbsp;&middot;&nbsp; <a href="https://github.com/search?q=repo%3Aakka%2Fakka-core+author%3Akrasserm&amp;type=commits" target="_blank" rel="noopener">contributions &rarr;</a></span>
+            
+        </p>
+    </div>
+</details>
+
+        
+        
+<details class="disclosure">
+    <summary>
+        <span class="disclosure-caret" aria-hidden="true">&#9656;</span>
+        <span class="disclosure-name">alpakka</span>
+        <span class="disclosure-links"><a href="https://github.com/search?q=repo%3Aakka%2Falpakka+author%3Akrasserm&amp;type=pullrequests" target="_blank" rel="noopener">contributions</a></span>
+        <span class="disclosure-meta">
+
+<span class="project-stars-link" data-repo="akka/alpakka"><span class="star-glyph" aria-hidden="true">&#9733;</span> <span class="star-count"></span></span>
+
+</span>
+    </summary>
+    <div class="disclosure-body">
+        <p>The <a href="https://doc.akka.io/docs/alpakka/current/index.html">Alpakka</a> project is an initiative for implementing reactive and stream-aware integration pipelines based on <a href="https://doc.akka.io/docs/akka/current/stream/index.html">Akka Streams</a>. It provides a domain-specific language (DSL) for reactive and stream-oriented programming, with built-in support for end-to-end backpressure. It supports a variety of integrations and ensures interoperability with other <a href="https://www.reactive-streams.org/">Reactive Streams</a> implementations.</p>
+        <p>
+            <a href="https://github.com/akka/alpakka" target="_blank" rel="noopener">github.com/akka/alpakka &rarr;</a>
+            
+            <span class="disclosure-body-contrib">&nbsp;&middot;&nbsp; <a href="https://github.com/search?q=repo%3Aakka%2Falpakka+author%3Akrasserm&amp;type=pullrequests" target="_blank" rel="noopener">contributions &rarr;</a></span>
+            
+        </p>
+    </div>
+</details>
+
+        
+        
+<details class="disclosure">
+    <summary>
+        <span class="disclosure-caret" aria-hidden="true">&#9656;</span>
+        <span class="disclosure-name">akka-persistence-cassandra<sup class="founder-ref">1</sup></span>
+        <span class="disclosure-links"><a href="https://github.com/search?q=repo%3Aakka%2Fakka-persistence-cassandra+author%3Akrasserm&amp;type=commits" target="_blank" rel="noopener">contributions</a></span>
+        <span class="disclosure-meta">
+
+<span class="project-stars-link" data-repo="akka/akka-persistence-cassandra"><span class="star-glyph" aria-hidden="true">&#9733;</span> <span class="star-count"></span></span>
+
+</span>
+    </summary>
+    <div class="disclosure-body">
+        <p>This project provides a <a href="https://doc.akka.io/docs/akka/current/persistence-plugins.html">persistence plugin</a> for <a href="https://doc.akka.io/docs/akka/current/persistence.html">Akka Persistence</a> that uses <a href="https://cassandra.apache.org/_/index.html">Apache Cassandra</a> as storage backend. Akka Persistence enables stateful <a href="https://akka.io/">Akka</a> actors to persist their state via event sourcing, using persistence plugins that implement a common interface for storage backends.</p>
+        <p>
+            <a href="https://github.com/akka/akka-persistence-cassandra" target="_blank" rel="noopener">github.com/akka/akka-persistence-cassandra &rarr;</a>
+            
+            <span class="disclosure-body-contrib">&nbsp;&middot;&nbsp; <a href="https://github.com/search?q=repo%3Aakka%2Fakka-persistence-cassandra+author%3Akrasserm&amp;type=commits" target="_blank" rel="noopener">contributions &rarr;</a></span>
+            
+        </p>
+    </div>
+</details>
+
+        
+        
+<details class="disclosure">
+    <summary>
+        <span class="disclosure-caret" aria-hidden="true">&#9656;</span>
+        <span class="disclosure-name">eventsourced<sup class="founder-ref">1</sup></span>
+        <span class="disclosure-links"><a href="https://github.com/search?q=repo%3Aeligosource%2Feventsourced+author%3Akrasserm&amp;type=commits" target="_blank" rel="noopener">contributions</a></span>
+        <span class="disclosure-meta">
+
+<span class="project-stars-link" data-repo="eligosource/eventsourced"><span class="star-glyph" aria-hidden="true">&#9733;</span> <span class="star-count"></span></span>
+
+</span>
+    </summary>
+    <div class="disclosure-body">
+        <p>Eventsourced is a library for building reliable, scalable, and distributed event-sourced applications. It adds scalable actor state persistence and at-least-once message delivery guarantees to <a href="https://akka.io/">Akka</a>, allowing stateful actors to persist received messages to append-only storage and to recover state by replaying received messages. It is now superseded by the <a href="https://doc.akka.io/docs/akka/current/persistence.html">Akka Persistence</a> module of the Akka project.</p>
+        <p>
+            <a href="https://github.com/eligosource/eventsourced" target="_blank" rel="noopener">github.com/eligosource/eventsourced &rarr;</a>
+            
+            <span class="disclosure-body-contrib">&nbsp;&middot;&nbsp; <a href="https://github.com/search?q=repo%3Aeligosource%2Feventsourced+author%3Akrasserm&amp;type=commits" target="_blank" rel="noopener">contributions &rarr;</a></span>
+            
+        </p>
+    </div>
+</details>
+
+        
+        
+<details class="disclosure">
+    <summary>
+        <span class="disclosure-caret" aria-hidden="true">&#9656;</span>
+        <span class="disclosure-name">ipf<sup class="founder-ref">1</sup></span>
+        <span class="disclosure-links"><a href="https://github.com/search?q=repo%3Aoehf%2Fipf+author%3Akrasserm&amp;type=commits" target="_blank" rel="noopener">contributions</a></span>
+        <span class="disclosure-meta">
+
+<span class="project-stars-link" data-repo="oehf/ipf"><span class="star-glyph" aria-hidden="true">&#9733;</span> <span class="star-count"></span></span>
+
+</span>
+    </summary>
+    <div class="disclosure-body">
+        <p>The <a href="https://oehf.github.io/ipf-docs/">Open eHealth Integration Platform</a> (IPF) offers a comprehensive set of tools for creating healthcare-related integration solutions. It is built on top of <a href="https://github.com/apache/camel">Apache Camel</a> and provides a custom domain-specific language (DSL) for implementing <a href="https://www.enterpriseintegrationpatterns.com/">enterprise integration patterns</a> in healthcare-specific integration solutions, based on <a href="http://www.hl7.org/">HL7</a> and <a href="https://www.ihe.net/">IHE</a> standards.</p>
+        <p>
+            <a href="https://github.com/oehf/ipf" target="_blank" rel="noopener">github.com/oehf/ipf &rarr;</a>
+            
+            <span class="disclosure-body-contrib">&nbsp;&middot;&nbsp; <a href="https://github.com/search?q=repo%3Aoehf%2Fipf+author%3Akrasserm&amp;type=commits" target="_blank" rel="noopener">contributions &rarr;</a></span>
+            
+        </p>
+    </div>
+</details>
+
+        
+        
+<details class="disclosure">
+    <summary>
+        <span class="disclosure-caret" aria-hidden="true">&#9656;</span>
+        <span class="disclosure-name">camel</span>
+        <span class="disclosure-links"><a href="https://github.com/search?q=repo%3Aapache%2Fcamel+krasser&amp;type=commits" target="_blank" rel="noopener">contributions</a></span>
+        <span class="disclosure-meta">
+
+<span class="project-stars-link" data-repo="apache/camel"><span class="star-glyph" aria-hidden="true">&#9733;</span> <span class="star-count"></span></span>
+
+</span>
+    </summary>
+    <div class="disclosure-body">
+        <p><a href="https://camel.apache.org/">Apache Camel</a> is an integration framework that simplifies the integration of different systems by supporting numerous <a href="https://www.enterpriseintegrationpatterns.com/">enterprise integration patterns</a> and data formats. It can be used standalone or embedded in other applications, making it deployable to various environments including cloud-based services.</p>
+        <p>
+            <a href="https://github.com/apache/camel" target="_blank" rel="noopener">github.com/apache/camel &rarr;</a>
+            
+            <span class="disclosure-body-contrib">&nbsp;&middot;&nbsp; <a href="https://github.com/search?q=repo%3Aapache%2Fcamel+krasser&amp;type=commits" target="_blank" rel="noopener">contributions &rarr;</a></span>
+            
+        </p>
+    </div>
+</details>
+
+        
+    </div>
+    <p class="footnote">
         <sup>1</sup> I'm the project founder, sponsored by a client or employer.
     </p>
-</div>
+</section>
 
         </div>
     </main>
@@ -677,17 +552,6 @@
         </a>
     </li>
     <li>
-        <a href="https://gradion-ai.github.io/agents-nanny/">
-            
-<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
-    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
-</svg>
-
-            gradion-ai.github.io/agents-nanny
-        </a>
-    </li>
-    <li>
         <a href="/llms.txt">
             
 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -716,7 +580,7 @@
     </li>
 </ul>
 
-            <p class="footer-copyright">// Martin Krasser, 2026</p>
+            <p class="footer-copyright">© Martin Krasser, 2026</p>
         </div>
     </footer>
 
@@ -729,7 +593,7 @@
     });
     </script>
     
-<script id="stars-data" data-stars='{"gradion-ai/freeact": 129, "gradion-ai/ipybox": 73, "krasserm/bayesian-machine-learning": 1917, "krasserm/perceiver-io": 535, "krasserm/super-resolution": 1511, "krasserm/fairseq-image-captioning": 319, "krasserm/face-recognition": 384, "krasserm/streamz": 280, "krasserm/akka-stream-eventsourcing": 101, "anthropic-experimental/sandbox-runtime": 5060, "ggerganov/llama.cpp": 125491, "rbmhtechnology/eventuate": 703, "akka/akka": 13276, "akka/alpakka": 1268, "akka/akka-persistence-cassandra": 326, "eligosource/eventsourced": 825, "oehf/ipf": 192, "apache/camel": 6297}' data-build-time="1787632215080"></script>
+<script id="stars-data" data-stars='{"gradion-ai/freeact": 129, "gradion-ai/ipybox": 73, "krasserm/bayesian-machine-learning": 1917, "krasserm/perceiver-io": 535, "krasserm/super-resolution": 1511, "krasserm/fairseq-image-captioning": 319, "krasserm/face-recognition": 384, "krasserm/streamz": 280, "krasserm/akka-stream-eventsourcing": 101, "anthropic-experimental/sandbox-runtime": 5061, "ggerganov/llama.cpp": 125559, "rbmhtechnology/eventuate": 703, "akka/akka": 13275, "akka/alpakka": 1268, "akka/akka-persistence-cassandra": 326, "eligosource/eventsourced": 825, "oehf/ipf": 192, "apache/camel": 6297}' data-build-time="1787663614804"></script>
 <script src="/js/stars.js"></script>
 
 </body>

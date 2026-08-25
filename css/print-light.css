@@ -1,4 +1,4 @@
-/* Standalone light theme for PDF printing - replaces site CSS */
+/* Standalone light theme for PDF printing - overrides site CSS */
 
 /* Reset problematic properties */
 * {
@@ -32,6 +32,10 @@ body {
 }
 
 /* Page title */
+.page-head {
+    padding: 0;
+}
+
 .page-title {
     font-size: 24pt;
     font-weight: 600;
@@ -42,12 +46,17 @@ body {
     padding-left: 0;
 }
 
-.page-title::before {
-    display: none;
+/* Section headings */
+.section {
+    margin-top: 0;
 }
 
-/* Headings */
-h2 {
+.section-head {
+    display: block;
+    margin: 0;
+}
+
+.section-title {
     font-size: 14pt;
     font-weight: 600;
     color: #1f2328;
@@ -64,17 +73,21 @@ a {
 }
 
 /* Paragraphs */
-p {
+p, .post-content, .post-content p {
     margin: 0.5em 0;
     color: #424a53;
 }
 
-/* Experience list */
-.experience-list {
+/* Experience panels as a timeline */
+.panel-list {
     display: block;
+    margin: 0;
 }
 
-.experience {
+.panel {
+    background: #ffffff;
+    border: none;
+    border-radius: 0;
     padding: 0.75em 0 0.75em 1.5em;
     border-left: 2px solid #d0d7de;
     margin-bottom: 0.5em;
@@ -82,7 +95,7 @@ p {
     page-break-inside: avoid;
 }
 
-.experience::before {
+.panel::before {
     content: '';
     position: absolute;
     left: -5px;
@@ -94,11 +107,12 @@ p {
     border-radius: 50%;
 }
 
-.experience-header {
+.panel-head {
     display: block;
+    margin: 0;
 }
 
-.experience-roles {
+.panel-title {
     font-size: 12pt;
     font-weight: 600;
     color: #1f2328;
@@ -107,54 +121,49 @@ p {
     border: none;
 }
 
-.experience-company {
+.panel-sub {
     font-size: 11pt;
+    font-family: inherit;
     color: #0550ae;
     margin: 0 0 0.125em 0;
 }
 
-.experience-dates {
+.panel-sub a {
+    color: #0550ae;
+}
+
+.panel-meta {
+    display: block;
     font-size: 9pt;
     color: #6e7781;
-    margin: 0 0 0.5em 0;
+    margin: 0 0 0.25em 0;
     font-family: monospace;
+    white-space: normal;
 }
 
-.experience-freelance {
-    color: #57606a;
-}
-
-.experience-title {
+.panel-strong {
     font-family: monospace;
     font-size: 10pt;
     font-weight: 400;
     color: #57606a;
-    margin: 0.5em 0 0 0;
+    margin: 0.5em 0 0.125em 0;
 }
 
-.experience-title::before {
+.panel-strong::before {
     content: '//';
     color: #0969da;
     margin-right: 0.5em;
 }
 
-.experience-title + .experience-description {
-    margin-top: 0.125em;
-}
-
-.experience-title + .experience-description p {
-    margin-top: 0;
-}
-
-.experience-description,
-.experience-story {
+.panel p {
     font-size: 10pt;
     color: #424a53;
+    margin: 0.25em 0;
 }
 
-.experience-description p,
-.experience-story p {
-    margin: 0.25em 0;
+.panel .story {
+    color: #57606a;
+    font-style: italic;
 }
 
 /* Social links */
@@ -180,10 +189,11 @@ p {
     height: 14px;
     vertical-align: middle;
     margin-right: 0.5em;
+    color: #0969da;
 }
 
 /* Page breaks */
-.page {
+.resume {
     page-break-after: auto;
 }
 

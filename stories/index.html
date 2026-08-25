@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="dark">
-    <meta name="theme-color" content="#0a0e14">
+    <meta name="theme-color" content="#0d1117">
     <title>Selected stories - Martin Krasser</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/pygments.css">
     <link rel="alternate" type="application/atom+xml" title="Martin Krasser Feed" href="/atom.xml">
@@ -30,9 +30,7 @@ MathJax = {
             <a href="/" class="nav-brand">Martin Krasser</a>
             <ul class="nav-links">
                 
-                <li><a href="/about/">About</a></li>
-                
-                <li><a href="/">Blog</a></li>
+                <li><a href="/#blog">Blog</a></li>
                 
                 <li><a href="/industry/">Industry</a></li>
                 
@@ -48,15 +46,20 @@ MathJax = {
         </div>
     </nav>
 
-    <main class="main">
-        <div class="container">
-            
-<div class="page">
-    <h1 class="page-title">Selected stories</h1>
     
 
-    <div class="post-content">
-        <p>The following are selected stories about my <a href="/open-source/">open source</a> work in <a href="#artificial-intelligence">artificial intelligence</a>, <a href="#distributed-systems">distributed systems</a>, <a href="#event-sourcing">event sourcing</a> and <a href="#system-integration">system integration</a>. Part of it was in the context of <a href="/industry/">industry projects</a>.</p>
+    <main class="main">
+        <div class="container ">
+            
+
+<div class="page-head">
+    <h1 class="page-title">Selected stories</h1>
+    
+</div>
+
+
+<div class="post-content">
+    <p>The following are selected stories about my <a href="/open-source/">open source</a> work in <a href="#artificial-intelligence">artificial intelligence</a>, <a href="#distributed-systems">distributed systems</a>, <a href="#event-sourcing">event sourcing</a> and <a href="#system-integration">system integration</a>. Part of it was in the context of <a href="/industry/">industry projects</a>.</p>
 <h2 id="artificial-intelligence">Artificial intelligence</h2>
 <p>While most of my AI work at <a href="https://gradion.ai/">gradion.ai</a> happens in closed-source projects, I keep contributing to open source as well.</p>
 <p>One area of contribution is agents that act via <em>code actions</em> rather than JSON tool calls. Agents generate code to call tools programmatically. The advantage of this approach is that multiple tool calls can be combined in a single action using Python's control flow. Successful code actions can be reused as tools in later steps, enabling the agent to persist what worked well in executable form and enhancing their own tool library over time. I am experimenting with this approach in <a href="https://github.com/gradion-ai/freeact">freeact</a>, a lightweight, general-purpose code action agent. It also serves as a basis for later experiments, for example, creating user interfaces programmatically, specific for the current task and scenario. Code execution runs locally in a secure sandbox provided by <a href="https://github.com/gradion-ai/ipybox">ipybox</a>, a production-grade code execution sandbox for agents that act via Python code actions.</p>
@@ -72,10 +75,9 @@ MathJax = {
 <p>In 2013, Eventsourced attracted the interest of <a href="https://www.lightbend.com/">Lightbend</a> (formerly Typesafe) and we decided to start a collaboration to build <a href="https://doc.akka.io/docs/akka/current/persistence.html">Akka Persistence</a> which is now the official successor of Eventsourced. I was responsible for the complete development of Akka Persistence, from initial idea to production quality code. Akka Persistence has numerous production deployments today and is used as persistence mechanism in the <a href="https://www.lagomframework.com/">Lagom microservices framework</a>. I also developed the <a href="https://github.com/akka/akka-persistence-cassandra">Cassandra storage plugin</a> for Akka Persistence which is now the officially recommended plugin for using Akka Persistence in production.</p>
 <p>In 2014, I started to further develop the idea of Akka Persistence in the <a href="https://github.com/RBMHTechnology/eventuate">Eventuate</a> open source project. Among other features, Eventuate additionally supports the replication of persistent actors, up to <a href="/2015/01/13/event-sourcing-at-global-scale/">global scale</a>. The replication mechanism supports a causal consistency model which is the strongest form of consistency that is still compatible with AP of CAP. The concepts of Eventuate are closely related to those of operation-based CRDTs which is further described in <a href="/2016/10/19/operation-based-crdt-framework/">this blog post</a> (see also section <a href="#distributed-systems">Distributed Systems</a>).</p>
 <h2 id="system-integration">System integration</h2>
-<p>In 2006, I started to work on a project at <a href="http://www.icw-global.com/">ICW</a> in which we integrated hospital information systems of several customers using IHE standards. Technical basis for the integration solutions was the <a href="http://camel.apache.org/">Apache Camel</a> integration framework for which I developed integration components that implement actor interfaces of several <a href="https://www.ihe.net/">IHE</a> profiles and a DSL for processing  <a href="http://www.hl7.org/">HL7</a> messages and <a href="http://hl7.de/themen/hl7-cda-clinical-document-architecture/">CDA</a> documents (see also <a href="https://dzone.com/articles/introduction-open-ehealth">this article</a> for an introduction). In 2009, these extensions have been open sourced as <a href="http://oehf.github.io/ipf/">Open eHealth Integration Platform</a> (IPF) of which I'm the founder and initial lead developer. IPF has many production deployments in international customer projects today and is still actively developed by ICW, the sponsor of the open source project. IPF is a central component of ICW's <em>eHealth Suite</em> and provides connectivity to a wide range of healthcare information systems. Its standard compliance has been certified in several <a href="https://www.ihe.net/connectathon.aspx">IHE Connectathons</a>. During my work on IPF I also became an Apache Camel committer.</p>
+<p>In 2006, I started to work on a project at <a href="http://www.icw-global.com/">ICW</a> in which we integrated hospital information systems of several customers using IHE standards. Technical basis for the integration solutions was the <a href="http://camel.apache.org/">Apache Camel</a> integration framework for which I developed integration components that implement actor interfaces of several <a href="https://www.ihe.net/">IHE</a> profiles and a DSL for processing  <a href="http://www.hl7.org/">HL7</a> messages and <a href="http://hl7.de/themen/hl7-cda-clinical-document-architecture/">CDA</a> documents (see also <a href="https://dzone.com/articles/introduction-open-ehealth">this article</a> for an introduction). In 2008, these extensions have been open sourced as <a href="https://oehf.github.io/ipf-docs/">Open eHealth Integration Platform</a> (IPF) of which I'm the founder and initial lead developer. IPF has many production deployments in international customer projects today and is still actively maintained, by contributors from several healthcare integration providers. IPF provides connectivity to a wide range of healthcare information systems. Its standard compliance has been certified in several <a href="https://www.ihe.net/connectathon.aspx">IHE Connectathons</a>. During my work on IPF I also became an Apache Camel committer.</p>
 <p>To meet the increasing scalability requirements in some IPF projects I started to investigate alternatives to Apache Camel's routing engine. I decided to use <a href="https://akka.io/">Akka</a> actors for message routing and processing which proved to be a better basis for scaling IPF applications under load. The result of these efforts was the <a href="https://doc.akka.io/docs/akka/2.5.4/scala/camel.html">akka-camel</a> module that I contributed to Akka in 2011. It implements a generic integration layer between Akka actors and Apache Camel components, including the IHE components of IPF.</p>
 <p>I also developed other routing engine alternatives that follow a pure functional programming approach. A first attempt was <a href="https://github.com/krasserm/scalaz-camel">scalaz-camel</a> which is now superseded by the <a href="https://github.com/krasserm/streamz">Streamz</a> project which I actively developed with other contributors over many years. It allows application developers to integrate Apache Camel components into <a href="https://github.com/functional-streams-for-scala/fs2">FS2</a> applications with a high-level integration DSL. It also supports that DSL on top of <a href="https://doc.akka.io/docs/akka/current/stream/index.html">Akka Streams</a>. Streamz is meanwhile the official replacement for akka-camel and part of the <a href="https://github.com/akka/alpakka">Alpakka</a> ecosystem.</p>
-    </div>
 </div>
 
         </div>
@@ -135,17 +137,6 @@ MathJax = {
         </a>
     </li>
     <li>
-        <a href="https://gradion-ai.github.io/agents-nanny/">
-            
-<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
-    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
-</svg>
-
-            gradion-ai.github.io/agents-nanny
-        </a>
-    </li>
-    <li>
         <a href="/llms.txt">
             
 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -174,7 +165,7 @@ MathJax = {
     </li>
 </ul>
 
-            <p class="footer-copyright">// Martin Krasser, 2026</p>
+            <p class="footer-copyright">© Martin Krasser, 2026</p>
         </div>
     </footer>
 
