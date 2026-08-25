@@ -1,5 +1,7 @@
 # Blog Posts
 
+Also writing at [The Agents Nanny](https://gradion-ai.github.io/agents-nanny/), notes on agentic systems from Gradion AI.
+
 - [Code Actions as Tools](https://krasserm.github.io/2025/12/16/code-actions/index.md): Evolving Tool Libraries for Agents
 - [From single-user to multi-party conversational AI](https://krasserm.github.io/2025/11/12/multi-party-ai/index.md)
 - [DeepSeek-R1 agents with code actions](https://krasserm.github.io/2025/02/05/deepseek-r1-agent/index.md)

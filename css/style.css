@@ -24,12 +24,12 @@
     --green: #3fb950;
 
     /* Colors - Cyan alpha variants */
-    --cyan-02: var(--cyan-02);
-    --cyan-03: var(--cyan-03);
-    --cyan-05: var(--cyan-05);
-    --cyan-10: var(--cyan-10);
-    --cyan-20: var(--cyan-20);
-    --cyan-30: var(--cyan-30);
+    --cyan-02: rgba(61, 212, 230, 0.02);
+    --cyan-03: rgba(61, 212, 230, 0.03);
+    --cyan-05: rgba(61, 212, 230, 0.05);
+    --cyan-10: rgba(61, 212, 230, 0.1);
+    --cyan-20: rgba(61, 212, 230, 0.2);
+    --cyan-30: rgba(61, 212, 230, 0.3);
 
     /* Colors - Text */
     --text-primary: #e6edf3;
@@ -241,6 +241,48 @@ a:hover {
     width: 18px;
     height: 18px;
     flex-shrink: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Elsewhere Note (company blog cross-reference)
+   -------------------------------------------------------------------------- */
+.elsewhere {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 0.5rem;
+    row-gap: 0.125rem;
+    margin: -1rem 0 2.25rem 0;
+    padding: 0.625rem 1rem;
+    border: 1px dashed var(--grid-major);
+    border-left: 3px solid var(--cyan);
+    border-radius: 2px;
+    background: var(--cyan-03);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+}
+
+.elsewhere-label {
+    color: var(--text-muted);
+}
+
+.elsewhere-label::before {
+    content: '//';
+    color: var(--cyan);
+    margin-right: 0.5rem;
+}
+
+.elsewhere a {
+    color: var(--cyan);
+}
+
+.elsewhere a:hover {
+    color: var(--cyan-light);
+}
+
+.elsewhere-desc {
+    color: var(--text-muted);
 }
 
 /* --------------------------------------------------------------------------
